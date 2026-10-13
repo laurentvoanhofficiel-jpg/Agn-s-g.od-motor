@@ -1,0 +1,177 @@
+
+**Interprétation du score :**
+
+| Score | Couleur | Signification |
+|---|---|---|
+| ≥ 7,5 | 🟢 vert | Lecture solide, à retenir |
+| 5–7,4 | 🟠 orange | Lecture plausible, à vérifier |
+| < 5 | 🔴 rouge | Lecture faible ou hallucinée |
+
+### Validation bootstrap
+
+Le bootstrap est validé si le score sur 11 critères est **≥ 8,5/10**. Les critères :
+
+1. c absent au v1
+2. c absent au v2
+3. c présent au v3
+4. p absent au v1
+5. p présent au v2
+6. E=mc² impossible au v1
+7. E=mc² impossible au v2
+8. E=mc² possible au v3
+9. Formule complète correcte
+10. Correspondances mot→objet (≥ 3/5)
+11. Généralisation méthodologique présente
+
+---
+
+## Détection des hallucinations
+
+Le principal danger de cette méthode est **l'interprétation trop simple** qui produit des hallucinations validées à tort.
+
+### Mesures de protection
+
+1. **Signalement explicite** : chaque interprétation reçoit un niveau de risque.
+2. **Pénalité au score** : un risque élevé divise le score par 1,43.
+3. **Prompt strict** : le system prompt avertit explicitement l'IA des dangers.
+4. **Règle du cumul** : un objet ne peut être introduit que si son mot-source est présent.
+
+### Exemples de pièges
+
+| Mot | Piège | Correction |
+|---|---|---|
+| « Dieu créa » | Simple verbe d'action | Opération = transfert d'énergie |
+| « Lumière » | Lumière visible | Constante c |
+| « Eaux » | Eau physique | Milieu, fluide, vide agité |
+| « Jour » | 24 heures | Période cosmologique / phase |
+| « Esprit » | Esprit religieux | Quantité de mouvement p |
+
+---
+
+## Persistance
+
+### IndexedDB
+
+| Store | Contenu |
+|---|---|
+| `readings` | Toutes les analyses (avec scores) |
+| `images` | Toutes les images générées (URL) |
+| `questions` | Questions étendues par l'IA |
+| `kv` | Méthode verrouillée (clé `locked_method`) |
+
+### localStorage
+
+| Clé | Contenu |
+|---|---|
+| `gdec3_keys` | Clés API Agnès AI |
+| `gdec3_lock` | Méthode verrouillée (duplicata) |
+
+### Reprise après fermeture
+
+À l'ouverture, l'app restaure automatiquement :
+- Les clés API
+- La méthode verrouillée
+- Toutes les analyses
+- Toutes les images
+- Toutes les questions étendues
+
+---
+
+## Limites et honnêteté intellectuelle
+
+### Ce que ce projet n'est pas
+
+- ❌ Une preuve scientifique de quoi que ce soit
+- ❌ Une lecture religieuse ou théologique
+- ❌ Une lecture scientiste qui nierait le texte
+- ❌ Un substitut à la physique théorique
+
+### Ce que ce projet est
+
+- ✅ Un **exercice heuristique** de lecture adogmatique
+- ✅ Une **exploration structurée** des homologies forme/texte
+- ✅ Un **outil pédagogique** sur la détection d'hallucinations IA
+- ✅ Une **infrastructure** pour tester des hypothèses interprétatives
+
+### Limites reconnues
+
+1. **L'homologie n'est pas une preuve.** Une correspondance structurelle entre un texte ancien et une formule moderne peut être fortuite.
+2. **La notation est subjective.** Les scores proviennent d'un LLM, non d'une expertise humaine validée.
+3. **Le biais de confirmation existe.** On peut toujours trouver des correspondances en cherchant assez.
+4. **Le texte n'est pas un traité scientifique.** Il ne donne ni équations, ni constantes, ni mécanismes.
+
+### Règle d'or
+
+> **L'IA doit toujours signaler honnêtement ses échecs.** La question `LIMITE` force cette honnêteté.
+
+---
+
+## Feuille de route
+
+### Court terme
+
+- [ ] Export JSON / CSV des analyses
+- [ ] Filtrage par jour / catégorie / score
+- [ ] Comparaison de deux exécutions bootstrap
+- [ ] Mode multi-utilisateur (clés séparées)
+
+### Moyen terme
+
+- [ ] Étendre au-delà de Genèse 1 (Exode, Psaumes…)
+- [ ] Corpus comparés (Coran, Bhagavad-Gita, Tao Te King)
+- [ ] Générateur d'images narratives (branches par verset)
+- [ ] Détection de consensus inter-modèles (Agnès + autres)
+
+### Long terme
+
+- [ ] Publication des meilleures analyses comme corpus ouvert
+- [ ] Interface de recherche sémantique sur toutes les analyses
+- [ ] Détection automatique de redondances / contradictions
+- [ ] Validation croisée avec des physiciens humains
+
+---
+
+## Contribution
+
+Les contributions sont bienvenues :
+
+1. Fork le dépôt
+2. Crée une branche (`git checkout -b feature/amelioration`)
+3. Commit tes changements (`git commit -m 'Ajout de X'`)
+4. Push la branche (`git push origin feature/amelioration`)
+5. Ouvre une Pull Request
+
+### Idées de contribution
+
+- Nouvelles questions d'analyse (soumises à validation manuelle)
+- Amélioration du parser JSON
+- Optimisation du rate limiter
+- Traductions (anglais, espagnol, arabe, hébreu)
+- Documentation scientifique de référence
+
+---
+
+## Crédits
+
+- **Inspiration** : lecture adogmatique des premiers chapitres de la Genèse
+- **API** : [Agnès AI](https://platform.agnes-ai.com) (Singapour)
+- **Modèles** : `agnes-2.5-flash` (texte) · `agnes-image-2.1-flash` (image)
+- **Démonstration fondatrice** : E = mc² émergeant de Genèse 1:1-3
+
+---
+
+## Licence
+
+MIT — Utilise, modifie, distribue librement.
+
+---
+
+> *« La lumière n'apparaît qu'à la ligne 3. Avant, aucune formule relativiste n'est disponible. C'est cela, la démonstration. »*
+>
+> — Genesis·Decoder
+
+---
+
+**Version** : v3.0
+**Dernière mise à jour** : 2026
+**Auteur** : [ton nom / pseudo GitHub]
