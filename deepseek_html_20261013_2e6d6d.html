@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Genesis·Decoder v3</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a10;color:#e0e0e8;max-width:920px;margin:0 auto;padding:12px;font-size:14px;line-height:1.5}
+h1{font-size:18px;color:#e6b45a;margin-bottom:4px}
+h2{font-size:14px;color:#39d0d8;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.05em}
+h3{font-size:13px;color:#c8a0ff;margin:10px 0 6px}
+section{background:#14141c;border:1px solid #2a2a38;border-radius:8px;padding:12px;margin-bottom:12px}
+label{display:block;font-size:12px;color:#888;margin-bottom:4px;font-weight:600}
+textarea,input,select{width:100%;padding:9px;background:#0a0a10;border:1px solid #2a2a38;color:#e0e0e8;border-radius:4px;font-family:ui-monospace,monospace;font-size:13px;box-sizing:border-box}
+textarea:focus,input:focus,select:focus{outline:none;border-color:#e6b45a}
+textarea{min-height:80px;resize:vertical;line-height:1.5}
+button{padding:10px 16px;background:#e6b45a;color:#000;border:none;border-radius:4px;font-weight:700;cursor:pointer;font-size:14px;transition:.15s}
+button:hover:not(:disabled){opacity:.9}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.sec{background:#2a2a38;color:#e0e0e8;border:1px solid #3a3a48}
+button.cyan{background:#39d0d8;color:#000}
+button.green{background:#4cc38a;color:#000}
+button.danger{background:#c04040;color:#fff}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.row button{flex:1;min-width:120px}
+.hint{font-size:11px;color:#666;margin-top:4px;line-height:1.5}
+#console{background:#000;border:1px solid #2a2a38;border-radius:6px;height:420px;overflow-y:auto;padding:10px;font-family:ui-monospace,monospace;font-size:11px;line-height:1.55}
+.ce{padding:2px 0;border-bottom:1px solid #111;word-break:break-word}
+.ce.ok{color:#4cc38a}
+.ce.err{color:#e05555}
+.ce.warn{color:#d8983f}
+.ce.gold{color:#e6b45a;font-weight:600}
+.ce.lock{color:#39d0d8;font-weight:600}
+.ce.ai{color:#c8a0ff}
+.ce .tag{display:inline-block;font-size:9px;padding:1px 5px;background:#2a2a38;border-radius:3px;margin-right:5px;text-transform:uppercase;font-weight:700}
+.ce.gold .tag{background:#4a3a10;color:#e6b45a}
+.ce.lock .tag{background:#103a3c;color:#39d0d8}
+.ce.ok .tag{background:#103a1c;color:#4cc38a}
+.ce.err .tag{background:#3a1010;color:#e05555}
+.ce.ai .tag{background:#2a103a;color:#c8a0ff}
+.ritem{padding:10px;background:#0a0a10;border:1px solid #2a2a38;border-radius:4px;margin-bottom:6px;font-size:12px}
+.ritem .head{display:flex;gap:6px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
+.ritem .cat{font-size:9px;padding:2px 6px;background:#3a2a5a;color:#c8a0ff;border-radius:3px;text-transform:uppercase;font-weight:700}
+.ritem .qtag{font-size:9px;padding:2px 6px;background:#1a3a3c;color:#39d0d8;border-radius:3px;text-transform:uppercase;font-weight:700}
+.ritem .score{font-size:11px;font-weight:700;margin-left:auto;padding:2px 8px;border-radius:100px;font-family:ui-monospace,monospace}
+.ritem .formula{font-family:ui-monospace,monospace;color:#e6b45a;font-size:13px;margin:5px 0;word-break:break-word}
+.ritem .question{color:#39d0d8;font-size:12px;font-style:italic;margin:4px 0;padding-left:8px;border-left:2px solid #39d0d8}
+.ritem .why{color:#999;font-size:11.5px;margin-top:4px;line-height:1.5}
+.ritem .meta{display:flex;gap:4px;margin-top:6px;font-size:10px;color:#777;flex-wrap:wrap}
+.ritem .meta span{background:#1a1a24;padding:2px 6px;border-radius:3px;font-family:ui-monospace,monospace}
+.ritem .risk{font-size:10px;padding:2px 6px;border-radius:3px;font-weight:700;text-transform:uppercase}
+.risk.faible{background:#0a2a1a;color:#4cc38a}
+.risk.moyen{background:#2a1a0a;color:#d8983f}
+.risk.eleve{background:#2a0a0a;color:#e05555}
+.ritem.best{border-color:#e6b45a;background:#18140a}
+.sh{background:#4cc38a;color:#000}
+.sm{background:#d8983f;color:#000}
+.sl{background:#e05555;color:#fff}
+.check{padding:3px 0;font-size:11.5px;font-family:ui-monospace,monospace}
+.check.ok::before{content:'✓ ';color:#4cc38a;font-weight:700}
+.check.ko::before{content:'✕ ';color:#e05555;font-weight:700}
+.verse{border:1px solid #2a2a38;border-radius:6px;padding:10px;margin-bottom:10px;background:#0a0a10}
+.verse .vh{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.verse .vh .tag{background:#e6b45a;color:#000;font-size:10px;padding:2px 8px;border-radius:100px;font-weight:700;text-transform:uppercase}
+.verse .vh .tag.lock{background:#39d0d8;color:#000}
+.verse .vh .lbl{color:#888;font-family:ui-monospace,monospace;font-size:11px}
+.verse .vt{font-style:italic;color:#c8c8d0;font-size:13px;margin-bottom:8px;padding-left:10px;border-left:2px solid #2a2a38;line-height:1.6}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+.gal .gc{background:#0a0a10;border:1px solid #2a2a38;border-radius:4px;overflow:hidden}
+.gal img{width:100%;aspect-ratio:1;object-fit:cover;background:#000;display:block;cursor:pointer}
+.gal .gl{padding:6px;font-size:10px;color:#777;line-height:1.35}
+.gal .gl b{color:#e6b45a;display:block;font-size:10.5px;margin-bottom:2px}
+#toast{position:fixed;top:12px;left:50%;transform:translateX(-50%) translateY(-100px);background:#e6b45a;color:#000;padding:10px 20px;border-radius:100px;font-weight:700;z-index:100;transition:.3s;max-width:90%;text-align:center;font-size:13px}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#toast.err{background:#e05555;color:#fff}
+#toast.ok{background:#4cc38a;color:#000}
+#toast.warn{background:#d8983f;color:#000}
+.hidden{display:none!important}
+.big{font-size:32px;font-weight:800;text-align:center;padding:12px;font-family:ui-monospace,monospace}
+.stat{display:flex;gap:8px;margin:10px 0}
+.stat div{flex:1;text-align:center;background:#0a0a10;border:1px solid #2a2a38;padding:10px;border-radius:4px}
+.stat div b{display:block;font-size:22px;color:#e6b45a;font-family:ui-monospace,monospace;font-weight:800}
+.stat div span{font-size:10px;color:#666;text-transform:uppercase;font-weight:700;letter-spacing:.05em}
+.tabs{display:flex;gap:4px;overflow-x:auto;margin-bottom:10px;padding-bottom:4px}
+.tabs button{padding:8px 14px;background:#14141c;color:#888;border:1px solid #2a2a38;border-radius:100px;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0;font-family:inherit;cursor:pointer}
+.tabs button.on{background:#e6b45a;color:#000;border-color:#e6b45a}
+.keyrow{display:flex;gap:8px;align-items:center;padding:6px 8px;background:#0a0a10;border:1px solid #2a2a38;border-radius:4px;margin-bottom:4px;font-family:ui-monospace,monospace;font-size:11px}
+.keyrow .id{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888}
+.keyrow .kb{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;text-transform:uppercase}
+.kb.ok{background:#0a2a1a;color:#4cc38a}
+.kb.cool{background:#2a1a0a;color:#d8983f}
+.kb.dead{background:#2a0a0a;color:#e05555}
+.method-step{padding:8px 10px;background:#0a0a10;border-radius:4px;margin-bottom:5px;font-size:12px;line-height:1.6;font-family:ui-monospace,monospace}
+.method-step b{color:#e6b45a}
+.method-step .present{color:#4cc38a}
+.method-step .absent{color:#e05555}
+.method-final{background:#18140a;border:1px solid #e6b45a;padding:10px;border-radius:4px;text-align:center;font-family:ui-monospace,monospace;color:#e6b45a;font-weight:700;font-size:13px;margin-top:6px}
+.progress{height:5px;background:#0a0a10;border-radius:3px;overflow:hidden;margin-top:8px}
+.progress i{display:block;height:100%;background:#e6b45a;width:0;transition:width .3s}
+</style>
+</head>
+<body>
+
+<h1>Genesis·Decoder v3</h1>
+<div class="hint" style="margin-bottom:12px">Moteur de méthode · Démonstration E=mc² verrouillée · 14 questions d'analyse par verset</div>
+
+<!-- ═══════════════ CLÉS API ═══════════════ -->
+<section id="secKeys">
+<h2>🔑 Clés API Agnès AI</h2>
+<label>Une clé sk-… par ligne — clique sur VALIDER pour enregistrer</label>
+<textarea id="keysIn" rows="4" placeholder="sk-xxxxxxxxxxxxxxxx&#10;sk-yyyyyyyyyyyyyyyy" spellcheck="false" autocomplete="off"></textarea>
+<div class="row" style="margin-top:8px">
+<button class="green" id="saveKeysBtn">✓ VALIDER LES CLÉS</button>
+<button class="sec" id="clearKeysBtn" style="flex:0 0 100px">Effacer</button>
+</div>
+<div class="hint" id="keyStatus">Aucune clé enregistrée</div>
+<div id="keysView" style="margin-top:8px"></div>
+<div class="hint">Rotation auto · cooldown 65 s sur 429 · 2 requêtes simultanées max par clé · intervalle 2,5 s. <b>Clique sur VALIDER ou sors du champ texte pour enregistrer.</b></div>
+</section>
+
+<!-- ═══════════════ MÉTHODE ═══════════════ -->
+<section id="secMethod">
+<h2>🧬 La méthode (embarquée dans le moteur)</h2>
+<div class="hint" style="margin-bottom:8px">Cette méthode est transmise à l'IA à chaque lecture. Elle a été validée sur Genèse 1:1-3.</div>
+
+<h3>◆ Question initiale</h3>
+<div class="method-step">« Si Dieu créa l'univers, il lui fallut de l'<b>énergie</b>. »</div>
+
+<h3>◆ Recherche dans chaque ligne</h3>
+<div class="method-step"><b>Ligne 1</b> · « Au commencement, Dieu créa les cieux et la terre. »<br>
+→ Dieu créa = <span class="present">E (énergie)</span> · cieux = <span class="present">vide</span> · terre = <span class="present">m (masse)</span> · commencement = <span class="present">t (temps)</span><br>
+→ Présents : <span class="present">E · m · vide · t</span> — Absents : <span class="absent">c · p</span><br>
+→ <b>E=mc² IMPOSSIBLE</b> (c manquant)</div>
+
+<div class="method-step"><b>Ligne 2</b> · « La terre était informe et vide, et l'Esprit de Dieu se mouvait au-dessus des eaux. »<br>
+→ Esprit qui se mouvait = seul verbe de déplacement = <span class="present">p (quantité de mouvement)</span><br>
+→ eaux = fluide, milieu · informe = état indifférencié<br>
+→ Présents : <span class="present">E · m · vide · t · p</span> — Absents : <span class="absent">c</span><br>
+→ <b>E=mc² IMPOSSIBLE</b> (c toujours manquant)</div>
+
+<div class="method-step"><b>Ligne 3</b> · « Dieu dit : Que la lumière soit ! Et la lumière fut. »<br>
+→ lumière = <span class="present">c (vitesse intrinsèque, constante, invariante, limite)</span><br>
+→ Présents : <span class="present">E · m · vide · t · p · c</span> — Absents : <span class="absent">∅</span><br>
+→ <b>E²=(mc²)²+(pc)² POSSIBLE</b></div>
+
+<div class="method-final">E² = (mc²)² + (pc)² → E = mc² (si p = 0)</div>
+
+<h3>◆ Clé de la démonstration</h3>
+<div class="method-step">
+- La lumière (c) n'apparaît qu'à la <b>ligne 3</b>.<br>
+- Avant la ligne 3, aucune formule relativiste n'est disponible.<br>
+- E=mc² exige c. Elle ne pouvait émerger qu'à la ligne 3.<br>
+- L'<b>ordre</b> du texte (masse/vide → mouvement → lumière) reproduit l'ordre logique de la physique relativiste.
+</div>
+
+<h3>◆ Règle héritée pour tous les versets suivants</h3>
+<div class="method-step" style="background:#0a1a1c;border-left:2px solid #39d0d8">
+<b>RÈGLE DU MOTEUR :</b> un objet scientifique nouveau ne peut apparaître que si son mot-source apparaît <b>textuellement</b> dans le verset courant. Une formule n'est possible que si <b>toutes ses variables</b> sont déjà présentes dans le cumul. <b>Interdiction absolue d'anticiper.</b>
+</div>
+
+<h3>◆ Danger principal</h3>
+<div class="method-step" style="background:#2a0a0a;border-left:2px solid #e05555">
+L'<b>interprétation trop simple</b> produit des hallucinations validées à tort.<br>
+- « Dieu créa » n'est PAS simplement Dieu + créa. C'est une opération = transfert d'énergie.<br>
+- « Lumière » n'est PAS la lumière visible. C'est la constante c.<br>
+- « Eaux » n'est PAS de l'eau. C'est un milieu, un fluide, un vide agité.<br>
+Pour CHAQUE interprétation, un score de <b>rigueur</b> et un signalement de <b>risque d'hallucination</b> sont exigés.
+</div>
+</section>
+
+<!-- ═══════════════ BOOTSTRAP ═══════════════ -->
+<section id="secBoot">
+<h2>▶ Bootstrap — reproduire la démonstration</h2>
+<div class="hint" style="margin-bottom:8px">L'IA refait la démonstration pas à pas. Un validateur vérifie 11 critères objectifs. Score ≥ 8,5/10 → méthode verrouillée.</div>
+<div class="row">
+<button class="cyan" id="bootBtn">🧬 LANCER LE BOOTSTRAP</button>
+<button class="sec" id="bootRetryBtn" style="flex:0 0 100px">↻ Refaire</button>
+</div>
+<div id="bootView" style="margin-top:10px"></div>
+</section>
+
+<!-- ═══════════════ CONFIG ═══════════════ -->
+<section>
+<h2>⚙️ Pipeline</h2>
+<div class="row">
+<div style="flex:1;min-width:200px">
+<label>Versets à décoder</label>
+<select id="versetRange">
+<option value="days" selected>Jours 1 à 7</option>
+<option value="day1">Seulement Jour 1</option>
+<option value="all">Jours 1–7 + auto-extension IA</option>
+</select>
+</div>
+<div style="flex:1;min-width:200px">
+<label>Analyses par verset</label>
+<select id="nPerVerse">
+<option value="3">3 (aperçu rapide)</option>
+<option value="6" selected>6</option>
+<option value="10">10 (approfondi)</option>
+<option value="14">14 (toutes les questions)</option>
+</select>
+</div>
+</div>
+<div class="row">
+<div style="flex:1;min-width:200px">
+<label>Auto-images (score ≥ 8)</label>
+<select id="autoImg">
+<option value="0">Aucune</option>
+<option value="3" selected>Top 3 par verset</option>
+<option value="5">Top 5 par verset</option>
+</select>
+</div>
+<div style="flex:1;min-width:200px">
+<label>Auto-extension IA</label>
+<select id="autoExt">
+<option value="off">Désactivée</option>
+<option value="on" selected>Toutes les 50 analyses</option>
+<option value="agg">Toutes les 20 analyses</option>
+</select>
+</div>
+</div>
+<div class="row">
+<div style="flex:1"><label>Température lectures</label><input type="text" id="tempIn" value="0.7"></div>
+<div style="flex:1"><label>Température bootstrap (stricte)</label><input type="text" id="tempBoot" value="0.3"></div>
+</div>
+</section>
+
+<!-- ═══════════════ BOUTONS PRINCIPAUX ═══════════════ -->
+<div class="row" style="margin-bottom:12px">
+<button class="gold" id="startBtn" style="background:#e6b45a" disabled>▶ LANCER LE PIPELINE</button>
+<button class="sec" id="pauseBtn" style="flex:0 0 80px" disabled>⏸</button>
+<button class="danger" id="stopBtn" style="flex:0 0 80px" disabled>⏹</button>
+</div>
+
+<!-- ═══════════════ STATS ═══════════════ -->
+<div class="stat">
+<div><b id="sKeys">0</b><span>Clés actives</span></div>
+<div><b id="sRead">0</b><span>Analyses</span></div>
+<div><b id="sImg">0</b><span>Images</span></div>
+</div>
+<div class="progress"><i id="progBar"></i></div>
+<div class="hint" id="progEta" style="margin-top:6px">—</div>
+
+<!-- ═══════════════ TABS ═══════════════ -->
+<div class="tabs" id="tabs" style="margin-top:12px">
+<button class="on" data-t="live">▶ Live</button>
+<button data-t="best">★ Meilleures</button>
+<button data-t="verses">📜 Versets</button>
+<button data-t="gallery">🖼 Galerie</button>
+<button data-t="lib">📚 Bibliothèque</button>
+</div>
+
+<div id="paneLive"><div id="console"></div></div>
+<div id="paneBest" class="hidden"><div id="bestView"></div></div>
+<div id="paneVerses" class="hidden"><div id="versesView"></div></div>
+<div id="paneGallery" class="hidden"><div class="gal" id="gallery"></div></div>
+<div id="paneLib" class="hidden">
+<div class="hint" style="margin-bottom:8px">Chaque verset reçoit les 14 questions d'analyse. Chaque question produit une réponse notée (rigueur / fidélité / nouveauté / risque d'hallucination).</div>
+<div id="libView"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════
+   CONFIG
+   ═══════════════════════════════════════════════════════════════ */
+const API_BASE = 'https://apihub.agnes-ai.com/v1';
+const MODEL_TEXT = 'agnes-2.5-flash';
+const MODEL_IMG = 'agnes-image-2.1-flash';
+const LS_KEYS = 'gdec3_keys';
+const LS_LOCK = 'gdec3_lock';
+const IDB_NAME = 'gdec3';
+const IDB_VER = 1;
+const MAX_LOG = 500;
+const COOLDOWN_429 = 65000;
+const MIN_INTERVAL = 2500;
+const MAX_CONCURRENT = 2;
+
+/* ═══════════════════════════════════════════════════════════════
+   VERSETS
+   ═══════════════════════════════════════════════════════════════ */
+const VERSES = [
+  {id:'v1', lbl:'Gn 1:1', day:0, kind:'boot', txt:"Au commencement, Dieu créa les cieux et la terre."},
+  {id:'v2', lbl:'Gn 1:2', day:0, kind:'boot', txt:"La terre était informe et vide, et l'Esprit de Dieu se mouvait au-dessus des eaux."},
+  {id:'v3', lbl:'Gn 1:3', day:0, kind:'boot', txt:"Dieu dit : Que la lumière soit ! Et la lumière fut."},
+  {id:'v4', lbl:'Gn 1:4-5', day:1, kind:'day', txt:"Dieu vit que la lumière était bonne ; et Dieu sépara la lumière d'avec les ténèbres. Dieu appela la lumière jour, et il appela les ténèbres nuit. Ainsi, il y eut un soir, et il y eut un matin : ce fut le premier jour."},
+  {id:'v5', lbl:'Gn 1:6-8', day:2, kind:'day', txt:"Dieu dit : Qu'il y ait une étendue entre les eaux, et qu'elle sépare les eaux d'avec les eaux. Et Dieu fit l'étendue, et il sépara les eaux qui sont au-dessous de l'étendue d'avec les eaux qui sont au-dessus de l'étendue. Et cela fut ainsi. Dieu appela l'étendue ciel."},
+  {id:'v6', lbl:'Gn 1:9-13', day:3, kind:'day', txt:"Dieu dit : Que les eaux qui sont au-dessous du ciel se rassemblent en un seul lieu, et que le sec paraisse. Et cela fut ainsi. Dieu appela le sec terre, et il appela l'amas des eaux mers. Puis Dieu dit : Que la terre produise de la verdure, des herbes portant semence, des arbres fruitiers donnant sur la terre du fruit selon leur espèce, et qui contiennent leur semence ! Et cela fut ainsi."},
+  {id:'v7', lbl:'Gn 1:14-19', day:4, kind:'day', txt:"Dieu dit : Qu'il y ait des luminaires dans l'étendue du ciel, pour séparer le jour d'avec la nuit ; que ce soient des signes pour marquer les époques, les jours et les années ; et qu'ils servent de luminaires dans l'étendue du ciel, pour éclairer la terre. Et cela fut ainsi. Dieu fit les deux grands luminaires, le plus grand luminaire pour présider au jour, et le plus petit pour présider à la nuit ; il fit aussi les étoiles."},
+  {id:'v8', lbl:'Gn 1:20-23', day:5, kind:'day', txt:"Dieu dit : Que les eaux produisent en abondance des animaux vivants, et que des oiseaux volent sur la terre vers l'étendue du ciel. Dieu créa les grands poissons et tous les animaux vivants qui se meuvent, et que les eaux produisirent en abondance selon leur espèce ; il créa aussi tout oiseau ailé selon son espèce. Dieu les bénit, en disant : Soyez féconds, multipliez, et remplissez les eaux des mers ; et que les oiseaux multiplient sur la terre."},
+  {id:'v9', lbl:'Gn 1:24-31', day:6, kind:'day', txt:"Dieu dit : Que la terre produise des animaux vivants selon leur espèce, du bétail, des reptiles et des animaux terrestres, selon leur espèce. Et cela fut ainsi. Puis Dieu dit : Faisons l'homme à notre image, selon notre ressemblance, et qu'il domine sur les poissons de la mer, sur les oiseaux du ciel, sur le bétail, sur toute la terre. Dieu créa l'homme à son image, il le créa à l'image de Dieu, il créa l'homme et la femme."},
+  {id:'v10', lbl:'Gn 2:1-3', day:7, kind:'day', txt:"Ainsi furent achevés les cieux et la terre, et toute leur armée. Dieu acheva au septième jour son œuvre, qu'il avait faite : et il se reposa au septième jour de toute son œuvre. Dieu bénit le septième jour, et il le sanctifia, parce qu'en ce jour il se reposa de toute son œuvre."}
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   LES 14 QUESTIONS D'ANALYSE (pour chaque verset des jours 1-7)
+   ═══════════════════════════════════════════════════════════════ */
+const QUESTIONS = [
+  {id:'Q01', code:'QUESTION_FONDAMENTALE', lbl:'Question fondamentale', q:"Quelle est LA question scientifique fondamentale que ce verset pose ? Formule-la explicitement. Un scientifique qui lit ce verset se demande : quoi ?"},
+  {id:'Q02', code:'MOTS_NOUVEAUX', lbl:'Mots nouveaux', q:"Quels mots apparaissent pour la PREMIÈRE fois par rapport au cumul des versets précédents ?"},
+  {id:'Q03', code:'INTERPRETATION', lbl:'Interprétation rigoureuse', q:"Quelle est l'interprétation scientifique rigoureuse de chaque mot nouveau ? ATTENTION au danger d'interprétation trop simple. Justifie chaque choix."},
+  {id:'Q04', code:'RIGUEUR', lbl:'Rigueur et hallucination', q:"Pour chaque interprétation : donne un score de rigueur 0-10 et un signalement de risque d'hallucination ('faible', 'moyen', 'élevé')."},
+  {id:'Q05', code:'FORMULE', lbl:'Formule possible', q:"Quelle formule scientifique devient POSSIBLE avec les nouveaux éléments présents ? Si aucune, dis-le. Si oui, écris-la."},
+  {id:'Q06', code:'BLOCS', lbl:'Blocs de sens', q:"Comment grouper les phrases de ce verset en blocs scientifiques cohérents ? Chaque bloc = une opération ou un objet."},
+  {id:'Q07', code:'INTENTION', lbl:'But / intention', q:"Quel est le BUT apparent du verset dans la progression narrative ? Que cherche-t-il à faire advenir ?"},
+  {id:'Q08', code:'PISTE', lbl:'Piste de recherche', q:"Quelle piste de recherche scientifique ce verset ouvre-t-il ?"},
+  {id:'Q09', code:'MYSTERE', lbl:'Mystère actuel', q:"À quel grand mystère scientifique ACTUEL ce verset fait-il écho (matière noire, énergie noire, gravité quantique, unification, conscience, origine de la vie, flèche du temps, asymétrie matière-antimatière) ?"},
+  {id:'Q10', code:'INVENTION', lbl:'Invention possible', q:"Quelle invention ou quel dispositif expérimental pourrait découler de cette lecture ?"},
+  {id:'Q11', code:'COHERENCE', lbl:'Cohérence cumulée', q:"Quelle cohérence avec les versets précédents ? Le cumul est-il respecté ? Score de cohérence 0-10."},
+  {id:'Q12', code:'CHRONOLOGIE', lbl:'Ordre logique', q:"L'ordre temporel / logique est-il respecté par rapport à la physique (ce qui doit venir avant ce qui vient après) ?"},
+  {id:'Q13', code:'MECANISME', lbl:'Mécanisme physique', q:"Quel mécanisme physique est sous-jacent (interaction, transition, conservation, brisure de symétrie) ?"},
+  {id:'Q14', code:'LIMITE', lbl:'Limite honnête', q:"Où cette lecture échoue-t-elle ? Sois honnête sur les limites de l'homologie structurelle. Aucune complaisance."}
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   MÉTHODE DE RÉFÉRENCE (démonstration E=mc²)
+   ═══════════════════════════════════════════════════════════════ */
+const METHOD_REF = {
+  formule_finale:'E^2 = (mc^2)^2 + (pc)^2',
+  reduction_repos:'E = mc^2 (si p = 0)',
+  condition_emergence:'c apparaît au verset 3. Avant, aucune formule relativiste n\'est disponible.',
+  generalisation_methode:'Chaque verset introduit un objet nouveau. Une formule n\'est possible que si toutes ses variables sont présentes dans le cumul. Un objet scientifique nouveau n\'émerge que si son mot-source apparaît textuellement dans le verset.',
+  correspondances:{cieux:'vide', terre:'m', 'Esprit qui se mouvait':'p', lumière:'c', 'Dieu créa':'E', commencement:'t'},
+  cumul_final:['E','m','vide','t','p','c']
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   PROMPTS
+   ═══════════════════════════════════════════════════════════════ */
+const SYS_BOOT = `Tu es un analyste scientifique adogmatique. Tu traites le texte biblique comme un système formel de variables. Tu ne crois rien, tu ne nies rien.
+
+DÉMARCHE SCIENTIFIQUE DE RÉFÉRENCE (déjà validée sur Genèse 1:1-3) :
+
+Question initiale : « Si Dieu créa l'univers, il lui fallut de l'énergie. »
+Nous avons cherché dans chaque ligne les variables physiques correspondantes.
+
+Ligne 1 : « Au commencement, Dieu créa les cieux et la terre. »
+→ Dieu créa = énergie E (toute création requiert de l'énergie)
+→ cieux = vide (condition nécessaire à la propagation de la lumière)
+→ terre = masse m
+→ commencement = temps t
+→ Présents : E, m, vide, t. Absents : c, p.
+→ E=mc² IMPOSSIBLE car c manquant.
+
+Ligne 2 : « La terre était informe et vide, et l'Esprit de Dieu se mouvait au-dessus des eaux. »
+→ Esprit qui se mouvait = seul verbe de déplacement = quantité de mouvement p
+→ eaux = fluide, milieu
+→ Présents : E, m, vide, t, p. Absents : c.
+→ E=mc² IMPOSSIBLE car c toujours manquant.
+
+Ligne 3 : « Dieu dit : Que la lumière soit ! Et la lumière fut. »
+→ lumière = c (vitesse intrinsèque, constante, invariante, limite)
+→ Présents : E, m, vide, t, p, c.
+→ E²=(mc²)²+(pc)² POSSIBLE. Si p=0, E=mc².
+
+CLÉ DE LA DÉMONSTRATION :
+- c (lumière) n'apparaît qu'à la ligne 3.
+- Avant la ligne 3, aucune formule relativiste n'est disponible.
+- E=mc² exige c. Elle ne pouvait émerger qu'à la ligne 3.
+- L'ORDRE du texte (masse/vide → mouvement → lumière) reproduit l'ordre logique de la physique relativiste.
+
+RÈGLE DU MOTEUR (à appliquer STRICTEMENT) :
+1. Chaque nom = objet scientifique potentiel.
+2. Chaque verbe = opération physique.
+3. Un objet scientifique ne peut être introduit QUE si son mot-source apparaît textuellement dans le verset courant.
+4. Une formule n'est possible QUE si toutes ses variables sont présentes dans le cumul.
+5. INTERDICTION d'anticiper une variable avant son apparition textuelle.
+6. INTERDICTION d'interpréter un mot de manière trop simple.
+
+DANGER PRINCIPAL : l'interprétation trop simple.
+- « Dieu créa » n'est PAS simplement Dieu + créa. C'est une opération créatrice = transfert d'énergie.
+- « Lumière » n'est PAS la lumière visible. C'est la constante c.
+- « Eaux » n'est PAS de l'eau. C'est un milieu, un fluide, un vide agité.
+Pour CHAQUE interprétation, donne un score de rigueur et signale les risques d'hallucination.
+
+Tu retournes UNIQUEMENT du JSON valide, sans markdown, sans phrase autour.`;
+
+function buildBootUser(){
+  const v = VERSES.slice(0,3);
+  return `Reproduis la démonstration E=mc² sur les trois premiers versets de la Genèse.
+
+VERSET 1 : « ${v[0].txt} »
+VERSET 2 : « ${v[1].txt} »
+VERSET 3 : « ${v[2].txt} »
+
+Retourne ce JSON exact :
+{
+  "etapes": [
+    {
+      "verset": 1,
+      "texte": "...",
+      "mots_variables": [{"mot":"...","objet":"...","justification":"...","rigueur":0-10}],
+      "present": ["E","m","vide","t"],
+      "absent": ["c","p"],
+      "formules_possibles": [],
+      "formules_impossibles": [{"formule":"...","raison":"..."}],
+      "verdict": "...",
+      "question_fondamentale": "..."
+    },
+    {"verset":2, "texte":"...", "mots_variables":[], "present":[], "absent":[], "formules_possibles":[], "formules_impossibles":[], "verdict":"...", "question_fondamentale":"..."},
+    {"verset":3, "texte":"...", "mots_variables":[], "present":[], "absent":[], "formules_possibles":[], "formules_impossibles":[], "verdict":"...", "question_fondamentale":"..."}
+  ],
+  "formule_finale": "E^2 = (mc^2)^2 + (pc)^2",
+  "reduction_repos": "E = mc^2 (si p = 0)",
+  "condition_emergence": "...",
+  "generalisation_methode": "...",
+  "auto_evaluation": {"score": 0-10, "points_forts": [], "points_faibles": []}
+}
+
+Contraintes strictes :
+- c ABSENT dans "present" aux versets 1 et 2, PRÉSENT au verset 3.
+- p ABSENT au verset 1, PRÉSENT au verset 2.
+- E=mc² dans "formules_impossibles" aux versets 1 et 2.
+- E=mc² dans "formules_possibles" au verset 3.
+- Correspondances attendues : cieux=vide, terre=m, Esprit qui se mouvait=p, lumière=c, Dieu créa=E, commencement=t.`;
+}
+
+function buildDailySystem(locked){
+  return `Tu es un analyste scientifique adogmatique. Tu appliques la MÉTHODE VALIDÉE sur Genèse 1:1-3 à un nouveau verset.
+
+MÉTHODE VALIDÉE (verrouillée) :
+${JSON.stringify(locked)}
+
+RÈGLE DU MOTEUR — non négociable :
+- Un objet scientifique nouveau n'apparaît QUE si son mot-source est présent TEXTUELLEMENT dans le verset.
+- Une formule n'est possible que si TOUTES ses variables sont déjà présentes dans le cumul.
+- INTERDICTION d'anticiper une variable.
+- INTERDICTION d'interpréter un mot de manière trop simple (produit des hallucinations validées à tort).
+
+DANGER PRINCIPAL : l'interprétation trop simple.
+- « Dieu dit » n'est PAS une simple parole. C'est une opération, une actualisation.
+- « Lumière » n'est PAS la lumière visible. C'est la constante c.
+- « Eaux » n'est PAS de l'eau. C'est un milieu, un fluide.
+Pour CHAQUE interprétation : score de rigueur + signalement de risque d'hallucination ('faible', 'moyen', 'élevé').
+
+Tu produis UNIQUEMENT du JSON valide, sans markdown, sans phrase autour.`;
+}
+
+function buildDailyUser(verse, cumul, question){
+  return `MÉTHODE HÉRITÉE :
+- Formule de référence : ${METHOD_REF.formule_finale}
+- Cumul des variables AVANT ce verset : ${JSON.stringify(cumul.present)}
+- Absents AVANT ce verset : ${JSON.stringify(cumul.absent)}
+- Règle : un objet scientifique nouveau n'apparaît QUE si son mot-source est présent dans le verset.
+
+VERSET À DÉCODER : « ${verse.txt} »
+RÉFÉRENCE : ${verse.lbl} · Jour ${verse.day}
+
+QUESTION D'ANALYSE À TRAITER (${question.code}) : ${question.lbl}
+${question.q}
+
+Retourne UNIQUEMENT ce JSON :
+{
+  "question_code": "${question.code}",
+  "reponse": "réponse détaillée à la question posée (2-6 phrases)",
+  "rigueur": 0-10,
+  "risque_hallucination": "faible|moyen|élevé",
+  "formule": "formule scientifique (LaTeX simple) ou vide",
+  "mots_nouveaux": ["mot1","mot2"],
+  "objets_scientifiques": [{"mot":"...","objet":"...","justification":"...","rigueur":0-10,"risque":"faible|moyen|élevé"}],
+  "present_cumul": ["variables présentes APRÈS ce verset"],
+  "absent_cumul": ["variables encore absentes APRÈS ce verset"],
+  "formule_possible": true|false,
+  "physique_appelee": "domaine scientifique",
+  "mystere_actuel": "mystère scientifique actuel associé",
+  "invention_possible": "piste d'invention ou expérience",
+  "intention_verset": "but apparent du verset",
+  "coherence": 0-10,
+  "scientific_validity": 0-10,
+  "textual_fidelity": 0-10,
+  "novelty": 0-10,
+  "reasoning": "justification globale en 2-4 phrases",
+  "image_prompt": "prompt visuel en anglais, 30-60 mots, cinematic, no text, no watermark"
+}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════ */
+const state = {
+  keys: [],
+  running: false,
+  paused: false,
+  stopped: false,
+  readings: [],
+  images: [],
+  extendedQuestions: [],
+  lockedMethod: null,
+  methodLocked: false,
+  currentVerse: null,
+  totalTasks: 0,
+  doneTasks: 0,
+  startTime: 0
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILS
+   ═══════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nowT = () => new Date().toLocaleTimeString('fr-FR',{hour12:false});
+const clamp = (v,a,b) => Math.max(a, Math.min(b, Number(v)||0));
+
+let toastT;
+function toast(m, t){
+  const el = $('toast');
+  el.textContent = m;
+  el.className = 'on ' + (t||'');
+  clearTimeout(toastT);
+  toastT = setTimeout(()=>el.className='', 2800);
+}
+
+function cLog(msg, cls){
+  const c = $('console');
+  const d = document.createElement('div');
+  d.className = 'ce ' + (cls||'info');
+  d.innerHTML = '<span style="color:#555;margin-right:6px">'+nowT()+'</span>' + esc(msg);
+  c.appendChild(d);
+  while(c.children.length > MAX_LOG) c.removeChild(c.firstChild);
+  c.scrollTop = c.scrollHeight;
+}
+function cLogTag(tag, msg, cls){
+  const c = $('console');
+  const d = document.createElement('div');
+  d.className = 'ce ' + (cls||'info');
+  d.innerHTML = '<span style="color:#555;margin-right:6px">'+nowT()+'</span><span class="tag">'+esc(tag)+'</span>' + esc(msg);
+  c.appendChild(d);
+  while(c.children.length > MAX_LOG) c.removeChild(c.firstChild);
+  c.scrollTop = c.scrollHeight;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INDEXEDDB
+   ═══════════════════════════════════════════════════════════════ */
+let _db = null;
+function idb(){
+  return new Promise((res,rej)=>{
+    if(_db) return res(_db);
+    if(!window.indexedDB) return rej(new Error('IDB indisponible'));
+    const rq = indexedDB.open(IDB_NAME, IDB_VER);
+    rq.onupgradeneeded = e => {
+      const d = e.target.result;
+      if(!d.objectStoreNames.contains('readings')) d.createObjectStore('readings',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('images')) d.createObjectStore('images',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('questions')) d.createObjectStore('questions',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('kv')) d.createObjectStore('kv');
+    };
+    rq.onsuccess = e => { _db = e.target.result; res(_db); };
+    rq.onerror = () => rej(rq.error);
+  });
+}
+function idbAdd(s,v){ return idb().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(s,'readwrite'); const rq=tx.objectStore(s).add(v); rq.onsuccess=()=>res(rq.result); tx.onerror=()=>rej(tx.error); })); }
+function idbPut(s,v,k){ return idb().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(s,'readwrite'); if(k!==undefined) tx.objectStore(s).put(v,k); else tx.objectStore(s).put(v); tx.oncomplete=()=>res(true); tx.onerror=()=>rej(tx.error); })); }
+function idbGetAll(s){ return idb().then(db=>new Promise((res,rej)=>{ const rq=db.transaction(s).objectStore(s).getAll(); rq.onsuccess=()=>res(rq.result||[]); rq.onerror=()=>rej(rq.error); })); }
+function idbGet(s,k){ return idb().then(db=>new Promise((res,rej)=>{ const rq=db.transaction(s).objectStore(s).get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); })); }
+
+/* ═══════════════════════════════════════════════════════════════
+   GESTION DES CLÉS
+   ═══════════════════════════════════════════════════════════════ */
+function loadKeys(){
+  try{
+    const raw = localStorage.getItem(LS_KEYS);
+    if(!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter(k => typeof k === 'string' && k.startsWith('sk-')) : [];
+  }catch(e){ return []; }
+}
+function saveKeysToStorage(keys){
+  try { localStorage.setItem(LS_KEYS, JSON.stringify(keys)); } catch(e){}
+}
+function saveKeysFromInput(){
+  const raw = $('keysIn').value || '';
+  const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  const valid = [];
+  const invalid = [];
+  const seen = new Set();
+  lines.forEach(k => {
+    if(!k.startsWith('sk-')){ invalid.push(k); return; }
+    if(seen.has(k)) return;
+    seen.add(k);
+    valid.push(k);
+  });
+  // Préserve les états existants
+  const old = {};
+  state.keys.forEach(k => old[k.key] = k);
+  state.keys = valid.map(k => old[k] || {
+    key: k, cooldown: 0, lastReq: 0, count: 0, busy: 0, errors: 0, active: true
+  });
+  saveKeysToStorage(valid);
+  renderKeys();
+  const status = valid.length + ' clé(s) active(s)'
+    + (invalid.length ? ' · ' + invalid.length + ' ligne(s) invalide(s) ignorée(s)' : '');
+  $('keyStatus').textContent = status;
+  $('keyStatus').style.color = valid.length ? '#4cc38a' : '#888';
+  if(valid.length) toast(valid.length + ' clé(s) enregistrée(s)', 'ok');
+  updateStartButtons();
+  updateStats();
+}
+function clearKeys(){
+  $('keysIn').value = '';
+  state.keys = [];
+  saveKeysToStorage([]);
+  renderKeys();
+  $('keyStatus').textContent = 'Aucune clé enregistrée';
+  $('keyStatus').style.color = '#888';
+  toast('Clés effacées', 'warn');
+  updateStartButtons();
+}
+function renderKeys(){
+  const el = $('keysView');
+  if(!state.keys.length){ el.innerHTML = ''; $('sKeys').textContent = '0'; return; }
+  const now = Date.now();
+  let active = 0;
+  el.innerHTML = state.keys.map((k,i) => {
+    let cls = 'ok', tx = 'OK';
+    if(!k.active){ cls = 'dead'; tx = 'morte'; }
+    else if(k.cooldown > now){ cls = 'cool'; tx = 'cool ' + Math.ceil((k.cooldown-now)/1000) + 's'; }
+    else active++;
+    return '<div class="keyrow"><span class="id">#' + (i+1) + ' · ' + esc(k.key.slice(0,10)) + '…' + esc(k.key.slice(-4)) + '</span><span style="color:#666">' + k.count + '</span><span class="kb ' + cls + '">' + tx + '</span></div>';
+  }).join('');
+  $('sKeys').textContent = active;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SÉLECTION DE CLÉ + RATE LIMIT
+   ═══════════════════════════════════════════════════════════════ */
+function anyActiveKey(){ return state.keys.some(k => k.active); }
+function pickKey(){
+  const now = Date.now();
+  const ready = state.keys.filter(k =>
+    k.active && k.cooldown < now && now - k.lastReq >= MIN_INTERVAL && k.busy < MAX_CONCURRENT
+  );
+  if(!ready.length) return null;
+  ready.sort((a,b) => (a.count - b.count) || (a.lastReq - b.lastReq));
+  return ready[0];
+}
+function acquireKey(){
+  return new Promise((res, rej) => {
+    const t0 = Date.now();
+    (function loop(){
+      if(state.stopped) return rej(new Error('Arrêt'));
+      const k = pickKey();
+      if(k){ k.busy++; k.lastReq = Date.now(); k.count++; renderKeys(); return res(k); }
+      if(!anyActiveKey()) return rej(new Error('Aucune clé active'));
+      if(Date.now() - t0 > 120000) return rej(new Error('Timeout clés'));
+      setTimeout(loop, 200);
+    })();
+  });
+}
+function releaseKey(k){ if(k){ k.busy = Math.max(0, k.busy-1); renderKeys(); } }
+
+/* ═══════════════════════════════════════════════════════════════
+   API CLIENT
+   ═══════════════════════════════════════════════════════════════ */
+async function apiFetch(url, opts, maxRetries=4){
+  let lastErr = null;
+  for(let attempt = 0; attempt < maxRetries; attempt++){
+    if(state.stopped) throw new Error('Arrêt');
+    let k = null;
+    try{
+      k = await acquireKey();
+      const headers = Object.assign({}, opts.headers||{}, {'Authorization':'Bearer ' + k.key});
+      const res = await fetch(url, Object.assign({}, opts, {headers}));
+      const retryAfter = parseInt(res.headers.get('Retry-After')||'0', 10)||0;
+      if(res.ok){ k.errors = 0; releaseKey(k); return res; }
+      let errTxt = '';
+      try { errTxt = (await res.clone().text()).slice(0, 300); } catch(e){}
+      if(res.status === 401 || res.status === 403){
+        k.errors = (k.errors||0) + 1;
+        if(k.errors >= 3) k.active = false;
+        releaseKey(k);
+        throw {status: res.status, message: 'HTTP ' + res.status + ' — clé invalide'};
+      }
+      if(res.status === 429){
+        const wait = retryAfter ? retryAfter*1000 : COOLDOWN_429;
+        k.cooldown = Date.now() + wait;
+        releaseKey(k);
+        cLogTag('429', 'clé …' + k.key.slice(-4) + ' → cooldown ' + Math.round(wait/1000) + 's', 'warn');
+        await sleep(Math.min(wait, 5000));
+        continue;
+      }
+      if(res.status === 400 || res.status === 404){
+        releaseKey(k);
+        throw {status: res.status, message: 'HTTP ' + res.status + ' — ' + errTxt.slice(0,140)};
+      }
+      if([500,502,503,504].includes(res.status)){
+        releaseKey(k); lastErr = new Error('HTTP ' + res.status);
+        await sleep(1500 + attempt*1500); continue;
+      }
+      releaseKey(k); lastErr = new Error('HTTP ' + res.status);
+      await sleep(1000 + attempt*1000);
+    }catch(e){
+      if(k) releaseKey(k);
+      if(e.message === 'Arrêt') throw e;
+      if(e.status === 400 || e.status === 401 || e.status === 403 || e.status === 404) throw e;
+      lastErr = e;
+      await sleep(1200 + attempt*800);
+    }
+  }
+  throw lastErr || new Error('Échec API');
+}
+
+async function askText(system, user, maxTok=2000, temp=0.7){
+  const body = {
+    model: MODEL_TEXT,
+    messages: [{role:'system', content: system}, {role:'user', content: user}],
+    temperature: temp,
+    max_tokens: maxTok,
+    reasoning_effort: 'none',
+    chat_template_kwargs: {enable_thinking: false}
+  };
+  const res = await apiFetch(API_BASE + '/chat/completions', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  }, 3);
+  const data = await res.json();
+  const c = data.choices && data.choices[0] && data.choices[0].message;
+  return (c && c.content) || (c && c.reasoning_content) || '';
+}
+
+async function askImage(prompt, ratio='1:1', size='1K'){
+  const body = {
+    model: MODEL_IMG,
+    prompt: String(prompt).slice(0, 1900),
+    n: 1, size, ratio
+  };
+  const res = await apiFetch(API_BASE + '/images/generations', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  }, 3);
+  const data = await res.json();
+  const item = data.data && data.data[0];
+  if(!item) throw new Error('Pas d\'image');
+  if(item.url) return item.url;
+  if(item.b64_json) return 'data:image/png;base64,' + item.b64_json;
+  throw new Error('Format image inconnu');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   JSON PARSER TOLÉRANT
+   ═══════════════════════════════════════════════════════════════ */
+function parseJsonLoose(text){
+  if(!text) return null;
+  let c = String(text).trim();
+  const fm = c.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if(fm) c = fm[1].trim();
+  const fb = c.indexOf('{');
+  if(fb < 0) return null;
+  c = c.slice(fb);
+  const lb = c.lastIndexOf('}');
+  if(lb > 0) c = c.slice(0, lb+1);
+  // Échappe les caractères de contrôle dans les chaînes
+  let out = '', inS = false, escF = false;
+  for(let i = 0; i < c.length; i++){
+    const ch = c[i];
+    if(escF){ out += ch; escF = false; continue; }
+    if(ch === '\\'){ out += ch; escF = true; continue; }
+    if(ch === '"'){ inS = !inS; out += ch; continue; }
+    if(inS){
+      if(ch === '\n'){ out += '\\n'; continue; }
+      if(ch === '\r'){ out += '\\r'; continue; }
+      if(ch === '\t'){ out += '\\t'; continue; }
+      const code = ch.charCodeAt(0);
+      if(code < 32){ out += '\\u' + code.toString(16).padStart(4,'0'); continue; }
+    }
+    out += ch;
+  }
+  out = out.replace(/,\s*([}\]])/g, '$1');
+  try { return JSON.parse(out); } catch(e){}
+  // Équilibrage
+  let ob = 0, ok = 0, inS2 = false, esc2 = false;
+  for(let i = 0; i < out.length; i++){
+    const ch = out[i];
+    if(esc2){ esc2 = false; continue; }
+    if(ch === '\\'){ esc2 = true; continue; }
+    if(ch === '"'){ inS2 = !inS2; continue; }
+    if(inS2) continue;
+    if(ch === '{') ob++;
+    else if(ch === '}') ob--;
+    else if(ch === '[') ok++;
+    else if(ch === ']') ok--;
+  }
+  let r = out;
+  if(inS2) r += '"';
+  while(ok > 0){ r += ']'; ok--; }
+  while(ob > 0){ r += '}'; ob--; }
+  try { return JSON.parse(r); } catch(e){ return null; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VALIDATEUR BOOTSTRAP
+   ═══════════════════════════════════════════════════════════════ */
+function validateBootstrap(json){
+  const checks = [];
+  const push = (nom, ok, poids, detail) => checks.push({nom, ok, poids, detail: detail||''});
+  if(!json || !Array.isArray(json.etapes)){
+    return {score: 0, checks: [{nom:'JSON structuré', ok: false, poids: 1, detail: 'etapes manquant'}], valide: false};
+  }
+  const e = json.etapes;
+  const v1 = e.find(x => x.verset === 1) || {};
+  const v2 = e.find(x => x.verset === 2) || {};
+  const v3 = e.find(x => x.verset === 3) || {};
+  const norm = s => String(s||'').toLowerCase();
+  const hasV = (arr, name) => (arr||[]).some(x => norm(x) === norm(name) || norm(x).includes(norm(name)));
+  const hasFI = (arr, rx) => (arr||[]).some(f => rx.test(typeof f === 'string' ? f : (f.formule || '')));
+  const hasFP = (arr, rx) => (arr||[]).some(f => rx.test(typeof f === 'string' ? f : (f.formule || '')));
+
+  push('c absent au v1', !hasV(v1.present, 'c'), 1, hasV(v1.present,'c')?'c détecté à tort':'');
+  push('c absent au v2', !hasV(v2.present, 'c'), 1, hasV(v2.present,'c')?'c détecté à tort':'');
+  push('c présent au v3', hasV(v3.present, 'c') || norm(JSON.stringify(v3.mots_variables||[])).includes('"c"'), 1);
+  push('p absent au v1', !hasV(v1.present, 'p'), 0.8, hasV(v1.present,'p')?'p détecté à tort':'');
+  push('p présent au v2', hasV(v2.present, 'p') || norm(JSON.stringify(v2.mots_variables||[])).includes('"p"') || norm(JSON.stringify(v2.mots_variables||[])).includes('mouvement'), 0.8);
+  push('E=mc² impossible au v1', hasFI(v1.formules_impossibles, /E\s*=\s*m\s*c/i), 1);
+  push('E=mc² impossible au v2', hasFI(v2.formules_impossibles, /E\s*=\s*m\s*c/i), 1);
+  push('E=mc² possible au v3', hasFP(v3.formules_possibles, /E\s*=\s*m\s*c/i), 1);
+  const okFull = /E\s*\^?2?\s*=\s*\(\s*m\s*c\s*\^?2?\s*\)\s*\^?2?\s*\+\s*\(\s*p\s*c\s*\)\s*\^?2?/i.test(json.formule_finale || '');
+  push('formule complète correcte', okFull, 1.2);
+  const map = {};
+  e.forEach(step => (step.mots_variables||[]).forEach(m => {
+    if(m.mot && m.objet) map[norm(m.mot)] = norm(m.objet);
+  }));
+  const expected = [['cieux','vide'], ['terre','m'], ['lumière','c'], ['esprit','p'], ['dieu créa','e']];
+  let hits = 0;
+  for(const [mot, obj] of expected){
+    const found = Object.entries(map).find(([k]) => k.includes(mot));
+    if(found && found[1].includes(obj)) hits++;
+    else if(norm(JSON.stringify(e)).includes(mot) && norm(JSON.stringify(e)).includes(obj)) hits++;
+  }
+  push('correspondances mot→objet (' + hits + '/5)', hits >= 3, 1, hits >= 3 ? '' : 'trop peu');
+  push('généralisation présente', (json.generalisation_methode||'').length > 40, 0.8);
+
+  const total = checks.reduce((a,c) => a + c.poids, 0);
+  const obtained = checks.reduce((a,c) => a + (c.ok ? c.poids : 0), 0);
+  const score = +(10 * obtained / total).toFixed(2);
+  return {score, checks, valide: score >= 8.5};
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BOOTSTRAP
+   ═══════════════════════════════════════════════════════════════ */
+async function runBootstrap(){
+  if(!anyActiveKey()){ toast('Ajoute au moins une clé','err'); return; }
+  cLogTag('BOOT', '▶ Bootstrap lancé — l\'IA doit reproduire la démonstration E=mc²', 'gold');
+  $('bootBtn').disabled = true;
+  $('bootRetryBtn').disabled = true;
+  $('bootView').innerHTML = '<div class="hint">⏳ L\'IA raisonne étape par étape…</div>';
+  cLogTag('BOOT', 'v1 → variables attendues : E, m, vide, t', 'info');
+  await sleep(400);
+  cLogTag('BOOT', 'v2 → ajout attendu : p (Esprit qui se meut)', 'info');
+  await sleep(400);
+  cLogTag('BOOT', 'v3 → ajout attendu : c (lumière) → formule possible', 'info');
+  await sleep(400);
+
+  const tempBoot = parseFloat($('tempBoot').value) || 0.30;
+
+  try{
+    const user = buildBootUser();
+    const raw = await askText(SYS_BOOT, user, 3000, tempBoot);
+    const json = parseJsonLoose(raw);
+    if(!json) throw new Error('JSON invalide reçu du modèle');
+
+    const validation = validateBootstrap(json);
+
+    const checkRows = validation.checks.map(c => {
+      return '<div class="check ' + (c.ok ? 'ok' : 'ko') + '">' + esc(c.nom) + (c.detail ? ' — ' + esc(c.detail) : '') + '</div>';
+    }).join('');
+
+    const scoreColor = validation.score >= 8.5 ? '#4cc38a' : (validation.score >= 6 ? '#d8983f' : '#e05555');
+
+    $('bootView').innerHTML =
+      '<div class="big" style="color:' + scoreColor + '">' + validation.score.toFixed(2) + ' / 10</div>'
+      + '<div style="padding:10px;background:#0a0a10;border-radius:4px;margin-bottom:10px">' + checkRows + '</div>'
+      + (validation.valide
+        ? '<div class="hint" style="color:#4cc38a;font-weight:700;margin-bottom:8px">✓ DÉMONSTRATION VALIDÉE — la méthode est verrouillée, les jours peuvent s\'ouvrir.</div>'
+        : '<div class="hint" style="color:#e05555;font-weight:700;margin-bottom:8px">✕ Démonstration non validée (score &lt; 8,5). Clique sur ↻ Refaire.</div>')
+      + '<div style="padding:10px;background:#0a0a10;border-radius:4px;font-size:12px;line-height:1.6">'
+      + '<div><b style="color:#e6b45a">formule_finale :</b> ' + esc(json.formule_finale || '—') + '</div>'
+      + '<div><b style="color:#e6b45a">reduction_repos :</b> ' + esc(json.reduction_repos || '—') + '</div>'
+      + '<div><b style="color:#e6b45a">condition_emergence :</b> ' + esc((json.condition_emergence||'').slice(0,260)) + '</div>'
+      + '<div><b style="color:#e6b45a">généralisation :</b> ' + esc((json.generalisation_methode||'').slice(0,300)) + '</div>'
+      + '</div>';
+
+    cLogTag('BOOT', '★ score bootstrap : ' + validation.score.toFixed(2) + '/10', validation.valide ? 'lock' : 'err');
+    validation.checks.forEach(c => {
+      cLogTag('BOOT', (c.ok ? '✓ ' : '✕ ') + c.nom + (c.detail ? ' — ' + c.detail : ''), c.ok ? 'ok' : 'err');
+    });
+
+    if(validation.valide){
+      state.methodLocked = true;
+      state.lockedMethod = {
+        formule_finale: json.formule_finale,
+        reduction_repos: json.reduction_repos,
+        condition_emergence: json.condition_emergence,
+        generalisation_methode: json.generalisation_methode,
+        etapes: json.etapes,
+        cumul_final: ['E','m','vide','t','p','c'],
+        verrouille_at: Date.now()
+      };
+      try { localStorage.setItem(LS_LOCK, JSON.stringify(state.lockedMethod)); } catch(e){}
+      try { await idbPut('kv', state.lockedMethod, 'locked_method'); } catch(e){}
+      cLogTag('BOOT', '🔒 MÉTHODE VERROUILLÉE — les jours 1 à 7 peuvent maintenant être décodés', 'lock');
+      toast('Démonstration validée — méthode verrouillée','ok');
+      const demo = {
+        verseId:'v3', verseLbl:'Gn 1:1-3 (bootstrap)',
+        verseTxt:'Au commencement… lumière fut.',
+        question_code:'BOOT', question_lbl:'Démonstration E=mc²',
+        formula: json.formule_finale || 'E^2=(mc^2)^2+(pc)^2',
+        reponse: 'Démonstration validée : ' + json.condition_emergence,
+        coherence: 10, scientific_validity: 10, textual_fidelity: 10, novelty: 9,
+        rigueur: 10, risque_hallucination: 'faible',
+        reasoning: 'Score bootstrap ' + validation.score.toFixed(2) + '/10',
+        context: 'Relativité restreinte',
+        score: 9.9, time: Date.now(), isBoot: true
+      };
+      state.readings.push(demo);
+      try { await idbAdd('readings', demo); } catch(e){}
+      renderBest();
+    } else {
+      state.methodLocked = false;
+      state.lockedMethod = null;
+      toast('Démonstration non validée — réessaie','err');
+    }
+  }catch(e){
+    cLogTag('BOOT', 'échec : ' + e.message, 'err');
+    $('bootView').innerHTML = '<div class="hint" style="color:#e05555">✕ Échec : ' + esc(e.message) + '</div>';
+    toast('Échec bootstrap','err');
+  }finally{
+    $('bootBtn').disabled = false;
+    $('bootRetryBtn').disabled = false;
+    updateStartButtons();
+    updateStats();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LECTURE D'UN VERSET AVEC UNE QUESTION D'ANALYSE
+   ═══════════════════════════════════════════════════════════════ */
+async function runDailyReading(verse, cumul, question, temperature){
+  const sys = buildDailySystem(state.lockedMethod);
+  const user = buildDailyUser(verse, cumul, question);
+  const raw = await askText(sys, user, 2000, temperature);
+  const j = parseJsonLoose(raw);
+  if(!j) throw new Error('JSON invalide');
+
+  const reading = {
+    verseId: verse.id,
+    verseLbl: verse.lbl,
+    verseTxt: verse.txt,
+    day: verse.day,
+    question_code: question.code,
+    question_lbl: question.lbl,
+    reponse: String(j.reponse||'').slice(0, 900),
+    rigueur: clamp(j.rigueur, 0, 10),
+    risque_hallucination: String(j.risque_hallucination||'moyen').toLowerCase(),
+    formula: String(j.formule||'').slice(0, 300),
+    mots_nouveaux: Array.isArray(j.mots_nouveaux) ? j.mots_nouveaux.slice(0, 12) : [],
+    objets_scientifiques: Array.isArray(j.objets_scientifiques) ? j.objets_scientifiques.slice(0, 12) : [],
+    present_cumul: Array.isArray(j.present_cumul) ? j.present_cumul : [],
+    absent_cumul: Array.isArray(j.absent_cumul) ? j.absent_cumul : [],
+    formule_possible: !!j.formule_possible,
+    physique_appelee: String(j.physique_appelee||'').slice(0, 200),
+    mystere_actuel: String(j.mystere_actuel||'').slice(0, 200),
+    invention_possible: String(j.invention_possible||'').slice(0, 300),
+    intention_verset: String(j.intention_verset||'').slice(0, 200),
+    coherence: clamp(j.coherence, 0, 10),
+    scientific_validity: clamp(j.scientific_validity, 0, 10),
+    textual_fidelity: clamp(j.textual_fidelity, 0, 10),
+    novelty: clamp(j.novelty, 0, 10),
+    reasoning: String(j.reasoning||'').slice(0, 800),
+    context: String(j.physique_appelee||'').slice(0, 200),
+    image_prompt: String(j.image_prompt||'').slice(0, 500),
+    time: Date.now(),
+    methodInherited: true
+  };
+  // Score composite : pénalise les hallucinations élevées
+  const hallucPenalty = reading.risque_hallucination === 'eleve' || reading.risque_hallucination === 'élevé' ? 0.7
+                       : reading.risque_hallucination === 'moyen' ? 0.9 : 1;
+  reading.score = +((reading.coherence*0.30 + reading.scientific_validity*0.30 + reading.textual_fidelity*0.25 + reading.novelty*0.10 + reading.rigueur*0.05) * hallucPenalty).toFixed(2);
+  return reading;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PIPELINE
+   ═══════════════════════════════════════════════════════════════ */
+async function runPipeline(){
+  if(!anyActiveKey()){ toast('Ajoute au moins une clé','err'); return; }
+  if(!state.methodLocked){ toast('Lance d\'abord le bootstrap et valide la démonstration','warn'); return; }
+  if(state.running) return;
+
+  state.running = true;
+  state.paused = false;
+  state.stopped = false;
+  state.doneTasks = 0;
+  state.totalTasks = 0;
+  state.startTime = Date.now();
+  updateStartButtons();
+
+  const temperature = parseFloat($('tempIn').value) || 0.7;
+  const nPer = parseInt($('nPerVerse').value) || 6;
+  const range = $('versetRange').value;
+
+  let verses = [];
+  if(range === 'day1') verses = VERSES.filter(v => v.day === 1);
+  else verses = VERSES.filter(v => v.kind === 'day');
+
+  const pool = () => QUESTIONS.concat(state.extendedQuestions);
+  const subset = () => {
+    const all = pool().slice();
+    for(let i = all.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [all[i], all[j]] = [all[j], all[i]]; }
+    return all.slice(0, Math.min(nPer, all.length));
+  };
+
+  let cumul = { present: ['E','m','vide','t','p','c'], absent: [] };
+
+  for(const v of verses){
+    if(state.stopped) break;
+    state.currentVerse = v;
+    cLogTag('DAY', '═══ Jour ' + v.day + ' · ' + v.lbl + ' ═══', 'gold');
+    cLogTag('DAY', 'Cumul hérité : ' + JSON.stringify(cumul.present), 'info');
+
+    const questions = subset();
+    for(const q of questions){
+      if(state.stopped) break;
+      while(state.paused && !state.stopped) await sleep(300);
+      if(state.stopped) break;
+
+      state.totalTasks++;
+      try{
+        cLogTag(q.code, v.lbl + ' · ' + q.lbl + ' …', 'info');
+        const reading = await runDailyReading(v, cumul, q, temperature);
+        state.readings.push(reading);
+        state.doneTasks++;
+        try { await idbAdd('readings', reading); } catch(e){}
+
+        const cls = reading.score >= 7.5 ? 'ok' : (reading.score >= 5 ? 'warn' : 'err');
+        cLogTag(q.code, '★' + reading.score.toFixed(1) + ' · rig ' + reading.rigueur + ' · risque ' + reading.risque_hallucination + (reading.formula ? ' · ' + reading.formula.slice(0,50) : ''), cls);
+        if(reading.reponse) cLogTag('  ↳', reading.reponse.slice(0, 180), 'info');
+        if(reading.score >= 7.5 && reading.reasoning) cLogTag('  ★', reading.reasoning.slice(0, 160), 'gold');
+
+        if(Array.isArray(reading.present_cumul) && reading.present_cumul.length){
+          cumul.present = reading.present_cumul;
+          cumul.absent = reading.absent_cumul || [];
+        }
+
+        renderBest(); updateStats(); updateBar();
+
+        const autoImgN = parseInt($('autoImg').value) || 0;
+        if(autoImgN && reading.score >= 8 && reading.image_prompt){
+          triggerImage(reading).catch(()=>{});
+        }
+
+        const autoExt = $('autoExt').value;
+        if(autoExt !== 'off'){
+          const every = autoExt === 'agg' ? 20 : 50;
+          if(state.doneTasks > 0 && state.doneTasks % every === 0){
+            extendQuestions().catch(()=>{});
+          }
+        }
+        await sleep(300 + Math.random()*400);
+      }catch(e){
+        cLogTag(q.code, v.lbl + ' : ' + e.message, 'err');
+        if(e.message === 'Arrêt') break;
+      }
+    }
+    await sleep(600);
+  }
+
+  cLogTag('SYS', '✔ Pipeline terminé — ' + state.doneTasks + ' analyses, ' + state.images.length + ' images', 'gold');
+  state.running = false;
+  state.stopped = true;
+  updateStartButtons();
+}
+
+async function triggerImage(reading){
+  if(!anyActiveKey()) return;
+  if(!reading.image_prompt || reading.image_prompt.length < 6) return;
+  try{
+    cLogTag('IMG', 'génération · ' + reading.question_code + ' · ' + (reading.formula||'').slice(0,40) + '…', 'ai');
+    const url = await askImage(reading.image_prompt, '1:1', '1K');
+    const entry = {
+      readingId: reading.id, url,
+      prompt: reading.image_prompt,
+      formula: reading.formula,
+      verse: reading.verseLbl,
+      question: reading.question_code,
+      time: Date.now()
+    };
+    state.images.push(entry);
+    try { await idbAdd('images', entry); } catch(e){}
+    renderGallery();
+    updateStats();
+    cLogTag('IMG', '✓ image ajoutée', 'ok');
+  }catch(e){
+    cLogTag('IMG', 'échec : ' + e.message, 'err');
+  }
+}
+
+async function extendQuestions(){
+  if(!anyActiveKey()) return;
+  cLogTag('EXT', 'auto-extension : l\'IA propose de nouvelles questions d\'analyse …', 'gold');
+  try{
+    const existing = QUESTIONS.concat(state.extendedQuestions).map(q => q.code + '·' + q.lbl).join(', ');
+    const sys = 'Tu produis UNIQUEMENT du JSON valide, sans markdown.';
+    const user = `Questions d'analyse déjà utilisées pour décoder la Genèse comme un système formel : ${existing.slice(0, 3000)}
+
+Propose 5 NOUVELLES questions d'analyse originales (méthodes d'approche différentes) qui n'existent pas dans cette liste. Chaque question doit pouvoir être posée à n'importe quel verset.
+Retourne : {"questions":[{"code":"CODE_COURT","lbl":"nom court","q":"la question complète à poser"}]}`;
+    const raw = await askText(sys, user, 1200, 0.95);
+    const j = parseJsonLoose(raw);
+    if(!j || !Array.isArray(j.questions)) throw new Error('Extension invalide');
+    let added = 0;
+    for(const q of j.questions){
+      if(!q.code || !q.lbl || !q.q) continue;
+      const id = 'ext_' + Date.now() + '_' + added;
+      const ext = {id, code: String(q.code).slice(0, 20), lbl: String(q.lbl).slice(0, 40), q: String(q.q).slice(0, 600), extended: true};
+      state.extendedQuestions.push(ext);
+      try { await idbPut('questions', ext); } catch(e){}
+      added++;
+    }
+    cLogTag('EXT', '✔ ' + added + ' nouvelles questions intégrées', 'ok');
+    renderLib();
+  }catch(e){
+    cLogTag('EXT', 'échec : ' + e.message, 'err');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UI RENDERING
+   ═══════════════════════════════════════════════════════════════ */
+function updateStats(){
+  $('sRead').textContent = state.readings.length;
+  $('sImg').textContent = state.images.length;
+}
+function updateBar(){
+  const p = state.totalTasks ? Math.round(100 * state.doneTasks / Math.max(1, state.totalTasks)) : 0;
+  $('progBar').style.width = p + '%';
+  if(state.running && state.doneTasks > 0){
+    const dt = (Date.now() - state.startTime) / 1000;
+    const rate = state.doneTasks / dt;
+    const rem = Math.max(0, state.totalTasks - state.doneTasks);
+    const eta = rate > 0 ? Math.round(rem/rate) : 0;
+    $('progEta').textContent = state.doneTasks + '/' + state.totalTasks + ' · ~' + rate.toFixed(2) + ' ana/s · reste ~' + eta + 's';
+  } else {
+    $('progEta').textContent = state.readings.length + ' analyses · ' + state.images.length + ' images · ' + (state.methodLocked ? '🔒 méthode verrouillée' : '⚠ bootstrap non validé');
+  }
+}
+function updateStartButtons(){
+  const has = anyActiveKey();
+  $('bootBtn').disabled = !has || state.running;
+  $('bootRetryBtn').disabled = !has || state.running;
+  $('startBtn').disabled = !has || !state.methodLocked || state.running;
+  $('pauseBtn').disabled = !state.running;
+  $('stopBtn').disabled = !state.running;
+}
+function renderBest(){
+  const view = $('bestView');
+  const sorted = state.readings.slice().sort((a,b) => b.score - a.score).slice(0, 60);
+  if(!sorted.length){ view.innerHTML = '<div class="hint">Pas encore d\'analyse.</div>'; return; }
+  view.innerHTML = sorted.map((r,i) => {
+    const cls = r.score >= 7.5 ? 'sh' : (r.score >= 5 ? 'sm' : 'sl');
+    const risk = (r.risque_hallucination || 'moyen').replace('élevé','eleve');
+    const vars = (r.objets_scientifiques||[]).slice(0,4).map(v => '<span>' + esc(v.mot||'') + ' → ' + esc(v.objet||'') + '</span>').join(' ');
+    return '<div class="ritem' + (i<3?' best':'') + '">'
+      + '<div class="head">'
+      + '<span class="cat">' + esc(r.question_code) + '</span>'
+      + (r.methodInherited ? '<span class="qtag">🔒 méthode</span>' : '')
+      + '<span style="color:#888;font-size:10.5px;font-family:ui-monospace,monospace">' + esc(r.verseLbl) + ' · ' + esc(r.question_lbl) + '</span>'
+      + '<span class="score ' + cls + '">★ ' + r.score.toFixed(1) + '</span>'
+      + '</div>'
+      + (r.reponse ? '<div class="question">' + esc(r.reponse.slice(0,220)) + '</div>' : '')
+      + (r.formula ? '<div class="formula">' + esc(r.formula) + '</div>' : '')
+      + (r.reasoning ? '<div class="why">' + esc(r.reasoning.slice(0,180)) + '</div>' : '')
+      + '<div class="meta">'
+      + vars
+      + '<span>coh:' + r.coherence + '</span>'
+      + '<span>sci:' + r.scientific_validity + '</span>'
+      + '<span>txt:' + r.textual_fidelity + '</span>'
+      + '<span>nov:' + r.novelty + '</span>'
+      + '<span>rig:' + r.rigueur + '</span>'
+      + '<span class="risk ' + risk + '">risque ' + esc(r.risque_hallucination||'?') + '</span>'
+      + '</div>'
+      + (r.mystere_actuel ? '<div class="why">🎯 Mystère : ' + esc(r.mystere_actuel.slice(0,140)) + '</div>' : '')
+      + (r.invention_possible ? '<div class="why">💡 Invention : ' + esc(r.invention_possible.slice(0,140)) + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+function renderVerses(){
+  const view = $('versesView');
+  view.innerHTML = VERSES.map(v => {
+    const rs = state.readings.filter(r => r.verseId === v.id).sort((a,b) => b.score - a.score);
+    const top = rs.slice(0, 5);
+    const tagCls = v.kind === 'boot' ? 'tag lock' : 'tag';
+    return '<div class="verse">'
+      + '<div class="vh"><span class="' + tagCls + '">' + (v.day > 0 ? ('JOUR ' + v.day) : 'BOOT') + '</span><span class="lbl">' + esc(v.lbl) + '</span><span style="margin-left:auto;color:#666;font-family:ui-monospace,monospace;font-size:10.5px">' + rs.length + ' analyse(s)</span></div>'
+      + '<div class="vt">' + esc(v.txt) + '</div>'
+      + (top.length ? top.map(r => {
+          const cls = r.score >= 7.5 ? 'sh' : (r.score >= 5 ? 'sm' : 'sl');
+          const risk = (r.risque_hallucination||'moyen').replace('élevé','eleve');
+          return '<div class="ritem best">'
+            + '<div class="head"><span class="cat">' + esc(r.question_code) + '</span><span style="color:#888;font-size:10.5px">' + esc(r.question_lbl) + '</span><span class="score ' + cls + '">★ ' + r.score.toFixed(1) + '</span></div>'
+            + (r.reponse ? '<div class="question">' + esc(r.reponse.slice(0,180)) + '</div>' : '')
+            + (r.formula ? '<div class="formula">' + esc(r.formula) + '</div>' : '')
+            + '<div class="meta"><span class="risk ' + risk + '">risque ' + esc(r.risque_hallucination||'?') + '</span><span>rig:' + r.rigueur + '</span></div>'
+            + '</div>';
+        }).join('') : '<div class="hint">Aucune analyse pour ce verset.</div>')
+      + '</div>';
+  }).join('');
+}
+function renderGallery(){
+  const g = $('gallery');
+  if(!state.images.length){ g.innerHTML = '<div class="hint" style="padding:20px;text-align:center;grid-column:1/-1">Les images générées apparaîtront ici.</div>'; return; }
+  g.innerHTML = state.images.slice().reverse().map(im => {
+    return '<div class="gc"><img src="' + esc(im.url) + '" loading="lazy" alt="" onclick="window.open(this.src)"><div class="gl"><b>' + esc(im.verse||'') + ' · ' + esc(im.question||'') + '</b>' + esc((im.formula||'').slice(0,60)) + '</div></div>';
+  }).join('');
+}
+function renderLib(){
+  const all = QUESTIONS.concat(state.extendedQuestions);
+  const view = $('libView');
+  view.innerHTML = all.map(q => {
+    return '<div class="ritem">'
+      + '<div class="head"><span class="cat">' + esc(q.code) + '</span>' + (q.extended ? '<span class="qtag" style="background:#2a103a;color:#c8a0ff">[IA]</span>' : '') + '</div>'
+      + '<div style="font-weight:700;font-size:12.5px;color:#e6b45a;margin-bottom:4px">' + esc(q.lbl) + '</div>'
+      + '<div style="font-size:11.5px;color:#999;line-height:1.55">' + esc(q.q) + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TABS
+   ═══════════════════════════════════════════════════════════════ */
+document.querySelectorAll('#tabs button').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('#tabs button').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    const target = t.dataset.t;
+    ['live','best','verses','gallery','lib'].forEach(x => {
+      const pane = $('pane' + x.charAt(0).toUpperCase() + x.slice(1));
+      if(pane) pane.classList.toggle('hidden', x !== target);
+    });
+    if(target === 'best') renderBest();
+    if(target === 'verses') renderVerses();
+    if(target === 'gallery') renderGallery();
+    if(target === 'lib') renderLib();
+  };
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   ÉVÉNEMENTS
+   ═══════════════════════════════════════════════════════════════ */
+$('saveKeysBtn').onclick = () => saveKeysFromInput();
+$('clearKeysBtn').onclick = () => clearKeys();
+
+// Auto-save : sur input (débounce 600ms), sur blur, sur entrée
+let keySaveTimer = null;
+$('keysIn').addEventListener('input', () => {
+  clearTimeout(keySaveTimer);
+  keySaveTimer = setTimeout(() => {
+    // Save silencieux (pas de toast)
+    const raw = $('keysIn').value || '';
+    const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    const valid = [];
+    const seen = new Set();
+    lines.forEach(k => {
+      if(!k.startsWith('sk-')) return;
+      if(seen.has(k)) return;
+      seen.add(k);
+      valid.push(k);
+    });
+    const old = {};
+    state.keys.forEach(k => old[k.key] = k);
+    state.keys = valid.map(k => old[k] || {
+      key: k, cooldown: 0, lastReq: 0, count: 0, busy: 0, errors: 0, active: true
+    });
+    saveKeysToStorage(valid);
+    renderKeys();
+    $('keyStatus').textContent = valid.length + ' clé(s) active(s) (auto-sauvegardé)';
+    $('keyStatus').style.color = valid.length ? '#4cc38a' : '#888';
+    updateStartButtons();
+    updateStats();
+  }, 600);
+});
+$('keysIn').addEventListener('blur', () => {
+  clearTimeout(keySaveTimer);
+  saveKeysFromInput();
+});
+$('keysIn').addEventListener('keydown', e => {
+  if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){
+    e.preventDefault();
+    saveKeysFromInput();
+  }
+});
+
+$('bootBtn').onclick = () => runBootstrap();
+$('bootRetryBtn').onclick = () => runBootstrap();
+$('startBtn').onclick = () => {
+  if(!state.methodLocked){ toast('Lance d\'abord le bootstrap','warn'); return; }
+  if(state.running) return;
+  runPipeline().catch(e => {
+    cLogTag('SYS', 'erreur pipeline : ' + e.message, 'err');
+    state.running = false;
+    updateStartButtons();
+  });
+};
+$('pauseBtn').onclick = () => {
+  state.paused = !state.paused;
+  $('pauseBtn').textContent = state.paused ? '▶' : '⏸';
+  cLogTag('SYS', state.paused ? '⏸ pause' : '▶ reprise', 'warn');
+  updateStartButtons();
+};
+$('stopBtn').onclick = () => {
+  state.stopped = true;
+  state.running = false;
+  state.paused = false;
+  cLogTag('SYS', '⏹ arrêt demandé', 'err');
+  updateStartButtons();
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════ */
+(async function init(){
+  // Restaure clés
+  const stored = loadKeys();
+  if(stored.length){
+    $('keysIn').value = stored.join('\n');
+    state.keys = stored.map(k => ({
+      key: k, cooldown: 0, lastReq: 0, count: 0, busy: 0, errors: 0, active: true
+    }));
+    $('keyStatus').textContent = stored.length + ' clé(s) restaurée(s)';
+    $('keyStatus').style.color = '#4cc38a';
+  }
+  renderKeys();
+
+  // Restaure méthode verrouillée
+  try{
+    const locked = await idbGet('kv', 'locked_method');
+    if(locked && locked.formule_finale){
+      state.lockedMethod = locked;
+      state.methodLocked = true;
+      $('bootView').innerHTML = '<div class="hint" style="color:#39d0d8">🔒 Méthode restaurée depuis IndexedDB — la démonstration est déjà validée.</div>';
+      cLogTag('SYS', '🔒 Méthode verrouillée restaurée', 'lock');
+    }
+  }catch(e){}
+
+  // Restaure lectures, images, questions étendues
+  try{
+    const rs = await idbGetAll('readings');
+    if(rs && rs.length){ state.readings = rs; cLogTag('SYS', '↻ ' + rs.length + ' analyses restaurées', 'ok'); }
+    const im = await idbGetAll('images');
+    if(im && im.length){ state.images = im; cLogTag('SYS', '↻ ' + im.length + ' images restaurées', 'ok'); }
+    const ex = await idbGetAll('questions');
+    if(ex && ex.length){ state.extendedQuestions = ex; cLogTag('SYS', '↻ ' + ex.length + ' questions IA restaurées', 'ok'); }
+  }catch(e){
+    cLogTag('SYS', 'IndexedDB indisponible : ' + e.message, 'warn');
+  }
+
+  renderBest();
+  renderVerses();
+  renderGallery();
+  renderLib();
+  updateStats();
+  updateBar();
+  updateStartButtons();
+
+  cLogTag('SYS', 'Genesis·Decoder v3 — moteur complet', 'gold');
+  cLogTag('SYS', QUESTIONS.length + ' questions d\'analyse × chaque verset', 'info');
+  cLogTag('SYS', 'Démo validée : Genèse 1:1-3 → E=mc²', 'info');
+  cLogTag('SYS', 'Étapes : 1) colle tes clés et clique sur VALIDER  2) lance le bootstrap  3) lance le pipeline', 'gold');
+
+  if(!stored.length){
+    setTimeout(() => toast('Colle tes clés Agnès puis clique sur VALIDER', 'warn'), 800);
+  }
+})();
+
+// Refresh périodique de l'UI (cooldowns, ETA)
+setInterval(() => {
+  renderKeys();
+  if(state.running) updateBar();
+}, 1500);
+</script>
+</body>
+</html>
