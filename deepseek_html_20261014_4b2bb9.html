@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Genesis·Decoder v8</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{font:14px/1.5 system-ui,sans-serif;background:#0a0a10;color:#d8d8e0;max-width:1100px;margin:0 auto;padding:10px}
+h1{font-size:17px;color:#e6b45a}
+h2{font-size:12px;color:#39d0d8;margin:10px 0 6px;text-transform:uppercase}
+textarea,input,select{width:100%;padding:8px;background:#0a0a10;border:1px solid #2a2a38;color:#d8d8e0;border-radius:4px;font:12px ui-monospace,monospace}
+textarea:focus,input:focus{outline:none;border-color:#e6b45a}
+textarea{min-height:60px}
+button{padding:8px 12px;background:#e6b45a;color:#000;border:0;border-radius:4px;font:700 12px system-ui;cursor:pointer}
+button:disabled{opacity:.4}
+button.sec{background:#2a2a38;color:#d8d8e0}
+button.cyan{background:#39d0d8}
+button.green{background:#4cc38a}
+button.red{background:#c04040;color:#fff}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.row button{flex:1;min-width:90px}
+.hint{font-size:11px;color:#666;margin-top:4px}
+.card{background:#14141c;border:1px solid #2a2a38;border-radius:6px;padding:10px;margin-bottom:8px}
+.tabs{display:flex;gap:4px;overflow-x:auto;margin:10px 0 8px}
+.tabs button{background:#14141c;color:#888;border:1px solid #2a2a38;border-radius:100px;font-weight:700;padding:6px 12px;white-space:nowrap;flex-shrink:0}
+.tabs button.on{background:#e6b45a;color:#000;border-color:#e6b45a}
+.stat{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
+.stat div{flex:1;min-width:55px;text-align:center;background:#0a0a10;border:1px solid #2a2a38;padding:6px;border-radius:4px}
+.stat div b{display:block;font:800 18px ui-monospace;color:#e6b45a}
+.stat div span{font-size:9px;color:#666;text-transform:uppercase}
+#console{background:#000;border:1px solid #2a2a38;border-radius:4px;height:400px;overflow-y:auto;padding:8px;font:11px/1.5 ui-monospace}
+#console .e{padding:1px 0;border-bottom:1px solid #111;word-break:break-word}
+#console .e .t{color:#555;margin-right:6px}
+#console .ok{color:#4cc38a}#console .err{color:#e05555}#console .warn{color:#d8983f}
+#console .gold{color:#e6b45a}#console .lock{color:#39d0d8}#console .ai{color:#c8a0ff}
+#console .disc{color:#ff64d0;font-weight:700}#console .evo{color:#4cc38a;font-weight:700}
+#narration{background:#0f0f16;border:1px solid #2a2a38;border-radius:6px;padding:12px;height:520px;overflow-y:auto;font-size:13.5px;line-height:1.7}
+#narration .n{padding:6px 0;border-bottom:1px solid #1a1a24}
+#narration .n:last-child{border-bottom:0}
+#narration .n .t{font:10px ui-monospace;color:#555}
+#narration .n .s{color:#e6b45a;font-weight:700;font-size:11px;text-transform:uppercase}
+#narration .n .x{margin-top:2px}
+#narration .n .x em{color:#39d0d8;font-style:normal}
+#narration .n .x strong{color:#e6b45a}
+#narration .f{font:12px ui-monospace;color:#4cc38a;display:block;margin:4px 0;padding:5px 8px;background:#0a1a0f;border-left:2px solid #4cc38a;border-radius:3px}
+#narration .disc{background:#1a0a1a;border-left:2px solid #ff64d0;padding:6px 10px;margin:4px 0;border-radius:3px;color:#ff64d0}
+#narration .valid{background:#0a1a0f;border-left:2px solid #4cc38a;padding:6px 10px;margin:4px 0;border-radius:3px;color:#4cc38a}
+.ritem{padding:8px;background:#0a0a10;border:1px solid #2a2a38;border-radius:4px;margin-bottom:5px;font-size:12px}
+.ritem .h{display:flex;gap:5px;margin-bottom:4px;flex-wrap:wrap;align-items:center}
+.ritem .lens{font:9px ui-monospace;padding:2px 5px;background:#3a2a5a;color:#c8a0ff;border-radius:3px;text-transform:uppercase;font-weight:700}
+.ritem .ref{font:10px ui-monospace;color:#888}
+.ritem .sc{font:700 11px ui-monospace;margin-left:auto;padding:2px 6px;border-radius:100px}
+.ritem .f{font:12px ui-monospace;color:#e6b45a;margin:4px 0;word-break:break-word}
+.ritem .w{color:#999;font-size:11.5px;margin-top:3px}
+.ritem .m{display:flex;gap:3px;margin-top:4px;font:9px ui-monospace;color:#777;flex-wrap:wrap}
+.ritem .m span{background:#1a1a24;padding:2px 5px;border-radius:3px}
+.sh{background:#4cc38a;color:#000}.sm{background:#d8983f;color:#000}.sl{background:#e05555;color:#fff}
+.ritem.best{border-color:#e6b45a;background:#18140a}
+.ritem.disc{border-color:#ff64d0;background:#1a0a1a}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:5px}
+.gal .g{background:#0a0a10;border:1px solid #2a2a38;border-radius:4px;overflow:hidden}
+.gal img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:pointer}
+.gal .c{padding:5px;font:10px ui-monospace;color:#777;line-height:1.3}
+.gal .c b{color:#e6b45a;display:block}
+.krow{display:flex;gap:6px;padding:5px 8px;background:#0a0a10;border:1px solid #2a2a38;border-radius:4px;margin-bottom:3px;font:11px ui-monospace;align-items:center}
+.krow .id{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888}
+.kb{font:9px ui-monospace;padding:2px 5px;border-radius:3px;font-weight:700;text-transform:uppercase}
+.kb.ok{background:#0a2a1a;color:#4cc38a}.kb.cool{background:#2a1a0a;color:#d8983f}.kb.dead{background:#2a0a0a;color:#e05555}
+.prog{height:4px;background:#0a0a10;border-radius:2px;overflow:hidden;margin-top:6px}
+.prog i{display:block;height:100%;background:#e6b45a;width:0;transition:width .3s}
+.lc{padding:8px;background:#0a0a10;border:1px solid #2a2a38;border-radius:4px;margin-bottom:5px;font-size:11.5px;border-left:3px solid #39d0d8}
+.lc.exp{border-left-color:#d8983f}
+.lc.spec{border-left-color:#4cc38a}
+.lc.pru{border-left-color:#e05555;opacity:.5}
+.lc .h{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
+.lc .code{font:700 11px ui-monospace;color:#c8a0ff}
+.lc .lbl{color:#e6b45a;font-weight:700}
+.lc .perf{margin-left:auto;font:10px ui-monospace;color:#888}
+.lc .q{color:#999;line-height:1.4;margin-top:3px}
+.badge{font:9px ui-monospace;padding:1px 5px;border-radius:100px;font-weight:700;text-transform:uppercase}
+.badge.c{background:#0a2a3a;color:#39d0d8}.badge.e{background:#2a1a0a;color:#d8983f}
+.badge.s{background:#0a2a1a;color:#4cc38a}.badge.p{background:#2a0a0a;color:#e05555}
+#hb{position:fixed;bottom:10px;right:10px;background:rgba(15,15,22,.95);border:1px solid #2a2a38;border-radius:100px;padding:5px 12px;font:11px ui-monospace;color:#4cc38a;display:flex;gap:6px;align-items:center;z-index:90}
+#hb .d{width:7px;height:7px;border-radius:50%;background:#4cc38a;animation:p 1.5s infinite}
+#hb.pause .d{background:#d8983f;animation:none}#hb.stop .d{background:#e05555;animation:none}
+@keyframes p{50%{opacity:.3}}
+#toast{position:fixed;top:10px;left:50%;transform:translateX(-50%) translateY(-100px);background:#e6b45a;color:#000;padding:8px 16px;border-radius:100px;font-weight:700;z-index:100;transition:.3s;font-size:12px}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#toast.err{background:#e05555;color:#fff}#toast.ok{background:#4cc38a}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+
+<h1>Genesis·Decoder <span style="font-size:11px;color:#39d0d8">v8</span></h1>
+<div class="hint">Moteur perpétuel · l'IA connaît la Bible · aucune donnée dans le code</div>
+
+<div class="card">
+<h2>🔑 Clés API</h2>
+<textarea id="keysIn" rows="3" placeholder="sk-...&#10;sk-..." spellcheck="false"></textarea>
+<div class="row" style="margin-top:6px">
+<button class="green" id="startBtn">✓ VALIDER ET DÉMARRER</button>
+<button class="sec" id="clearBtn" style="flex:0 0 80px">Effacer</button>
+</div>
+<div class="row">
+<button class="sec" id="pauseBtn" style="display:none">⏸ Pause</button>
+<button class="red" id="stopBtn" style="display:none">⏹ Stop</button>
+</div>
+<div class="hint" id="keyStatus">Aucune clé</div>
+<div id="keysView" style="margin-top:6px"></div>
+</div>
+
+<div class="stat">
+<div><b id="sK">0</b><span>Clés</span></div>
+<div><b id="sR">0</b><span>Analyses</span></div>
+<div><b id="sD">0</b><span>Découvertes</span></div>
+<div><b id="sL">0</b><span>Angles</span></div>
+<div><b id="sI">0</b><span>Images</span></div>
+<div><b id="sV">0</b><span>Versets</span></div>
+</div>
+<div class="hint">Convergence : <b id="convL" style="color:#4cc38a">0 %</b> · Cycle : <b id="cycleL">0</b> · Position : <b id="posL">—</b></div>
+<div class="prog"><i id="pbar"></i></div>
+
+<div class="tabs" id="tabs">
+<button class="on" data-t="home">🏠 Accueil</button>
+<button data-t="best">★ Meilleures</button>
+<button data-t="disc">💎 Découvertes</button>
+<button data-t="img">🖼 Images</button>
+<button data-t="cons">🖥 Console</button>
+<button data-t="self">🧬 Auto-org</button>
+</div>
+
+<div id="pHome"><div id="narration"></div></div>
+<div id="pBest" class="hide"><div id="bestView"></div></div>
+<div id="pDisc" class="hide"><div id="discView"></div></div>
+<div id="pImg" class="hide"><div class="gal" id="gallery"></div></div>
+<div id="pCons" class="hide"><div id="console"></div></div>
+<div id="pSelf" class="hide"><div id="selfView"></div></div>
+
+<div id="hb" class="stop"><span class="d"></span><span id="hbT">Inactif</span></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONFIG
+   ═══════════════════════════════════════════════════════════════════ */
+const API = 'https://apihub.agnes-ai.com/v1';
+const MT = 'agnes-2.5-flash';
+const MI = 'agnes-image-2.1-flash';
+const LS_K = 'gd8_k';
+const DB = 'gd8';
+const DBV = 1;
+const MAX_LOG = 500;
+const RPM = 10;                         // clés gratuites = 10 RPM effectif
+const MIN_INT = Math.ceil(60000/RPM);   // 6000 ms
+const COOL_429 = 65000;
+const TIMEOUT = 60000;
+const CONC = 1;                         // 1 appel simultané par clé
+
+/* ═══════════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════════ */
+const S = {
+  keys: [],
+  running: false, paused: false, stopped: false,
+  lenses: [], method: [], readings: [], discoveries: [], images: [],
+  books: [], book: 0, chapter: 1,
+  cumul: { present: ['E','m','vide','t','p','c'], domains: [], direction: '' },
+  cycle: 0, convergence: 0, locked: false,
+  verseCount: 0
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   LENSES INITIAUX (5 seulement — l'IA en créera d'autres)
+   ═══════════════════════════════════════════════════════════════════ */
+const SEED_LENSES = [
+  {id:'L1', code:'COSMO', lbl:'Cosmologique', q:"Lis ce verset comme une description cosmologique : origine, expansion, structure à grande échelle, fond diffus.", status:'core', p:{n:0, avg:0, best:0}},
+  {id:'L2', code:'QUANT', lbl:'Quantique', q:"Lis ce verset comme une description quantique : superposition, intrication, effondrement, fluctuations du vide.", status:'core', p:{n:0, avg:0, best:0}},
+  {id:'L3', code:'INFO', lbl:'Information', q:"Lis ce verset comme un énoncé d'information : bit, qubit, entropie de Shannon, holographie.", status:'core', p:{n:0, avg:0, best:0}},
+  {id:'L4', code:'BIO', lbl:'Biologique', q:"Lis ce verset comme une description biologique : ADN, métabolisme, reproduction, conscience.", status:'core', p:{n:0, avg:0, best:0}},
+  {id:'L5', code:'INTENT', lbl:'Intention', q:"Quelle est l'INTENTION du verset ? Quelle question nous pousse-t-il à poser ?", status:'core', p:{n:0, avg:0, best:0}}
+];
+
+const SEED_METHOD = [
+  {id:'R1', name:'Source textuelle', desc:'Chaque variable doit avoir un mot-source présent textuellement.', w:1.0},
+  {id:'R2', name:'Pas d\'anticipation', desc:'Aucun objet avant son apparition textuelle.', w:1.0},
+  {id:'R3', name:'Pas de sur-simplification', desc:'« lumière » ≠ lumière visible, c\'est la constante c.', w:1.0},
+  {id:'R4', name:'Intention obligatoire', desc:'Chaque verset a une intention, une question.', w:1.0},
+  {id:'R5', name:'Cohérence cumulée', desc:'Cohérence avec le cumul des variables et domaines.', w:1.0}
+];
+
+/* ═══════════════════════════════════════════════════════════════════
+   UTILS
+   ═══════════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nowT = () => new Date().toLocaleTimeString('fr-FR',{hour12:false});
+const cl = (v,a,b) => Math.max(a, Math.min(b, Number(v)||0));
+
+let toastT;
+function toast(m,t){ const el=$('toast'); el.textContent=m; el.className='on '+(t||''); clearTimeout(toastT); toastT=setTimeout(()=>el.className='',2500); }
+
+function log(msg, cls){
+  const c = $('console'); if(!c) return;
+  const d = document.createElement('div');
+  d.className = 'e ' + (cls||'');
+  d.innerHTML = '<span class="t">'+nowT()+'</span>' + esc(msg);
+  c.appendChild(d);
+  while(c.children.length > MAX_LOG) c.removeChild(c.firstChild);
+  c.scrollTop = c.scrollHeight;
+}
+function tag(t, msg, cls){
+  const c = $('console'); if(!c) return;
+  const d = document.createElement('div');
+  d.className = 'e ' + (cls||'');
+  d.innerHTML = '<span class="t">'+nowT()+'</span><b style="color:#c8a0ff">['+esc(t)+']</b> ' + esc(msg);
+  c.appendChild(d);
+  while(c.children.length > MAX_LOG) c.removeChild(c.firstChild);
+  c.scrollTop = c.scrollHeight;
+}
+function say(speaker, text, cls){
+  const n = $('narration'); if(!n) return;
+  const d = document.createElement('div');
+  d.className = 'n' + (cls ? ' ' + cls : '');
+  d.innerHTML = '<div class="t">' + nowT() + '</div><div class="s">' + esc(speaker) + '</div><div class="x">' + text + '</div>';
+  n.appendChild(d);
+  while(n.children.length > 200) n.removeChild(n.firstChild);
+  n.scrollTop = n.scrollHeight;
+}
+function sayF(f, expl){
+  const n = $('narration'); if(!n) return;
+  const d = document.createElement('div');
+  d.className = 'n';
+  d.innerHTML = '<span class="f">' + esc(f) + '</span>' + (expl ? '<div class="x">' + expl + '</div>' : '');
+  n.appendChild(d);
+  while(n.children.length > 200) n.removeChild(n.firstChild);
+  n.scrollTop = n.scrollHeight;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INDEXEDDB
+   ═══════════════════════════════════════════════════════════════════ */
+let _db = null;
+function db(){
+  return new Promise((res, rej) => {
+    if(_db) return res(_db);
+    if(!window.indexedDB) return rej(new Error('IDB'));
+    const rq = indexedDB.open(DB, DBV);
+    rq.onupgradeneeded = e => {
+      const d = e.target.result;
+      ['readings','images','discoveries','lenses','method','chapters','kv'].forEach(s => {
+        if(!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: s === 'kv' ? undefined : 'id', autoIncrement: s !== 'kv' && s !== 'lenses' && s !== 'method' && s !== 'chapters' });
+      });
+      const tx = rq.transaction;
+      const st = e.target.result;
+      if(!st.objectStoreNames.contains('chapters')) st.createObjectStore('chapters', { keyPath: 'id' });
+      if(!st.objectStoreNames.contains('lenses')) st.createObjectStore('lenses', { keyPath: 'id' });
+      if(!st.objectStoreNames.contains('method')) st.createObjectStore('method', { keyPath: 'id' });
+    };
+    rq.onsuccess = e => { _db = e.target.result; res(_db); };
+    rq.onerror = () => rej(rq.error);
+  });
+}
+function dbAdd(s, v){ return db().then(d => new Promise((res, rej) => { const tx = d.transaction(s,'readwrite'); const rq = tx.objectStore(s).add(v); rq.onsuccess = () => res(rq.result); tx.onerror = () => rej(tx.error); })); }
+function dbPut(s, v, k){ return db().then(d => new Promise((res, rej) => { const tx = d.transaction(s,'readwrite'); if(k !== undefined) tx.objectStore(s).put(v, k); else tx.objectStore(s).put(v); tx.oncomplete = () => res(true); tx.onerror = () => rej(tx.error); })); }
+function dbAll(s){ return db().then(d => new Promise((res, rej) => { const rq = d.transaction(s).objectStore(s).getAll(); rq.onsuccess = () => res(rq.result || []); rq.onerror = () => rej(rq.error); })); }
+function dbGet(s, k){ return db().then(d => new Promise((res, rej) => { const rq = d.transaction(s).objectStore(s).get(k); rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error); })); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   KEYS
+   ═══════════════════════════════════════════════════════════════════ */
+function loadKeys(){
+  try { const r = localStorage.getItem(LS_K); return r ? JSON.parse(r).filter(k => typeof k === 'string' && k.startsWith('sk-')) : []; } catch(e){ return []; }
+}
+function saveKeys(k){ try { localStorage.setItem(LS_K, JSON.stringify(k)); } catch(e){} }
+function rebuildKeys(){
+  const raw = ($('keysIn').value || '').split(/\r?\n/).map(x => x.trim()).filter(x => x.startsWith('sk-'));
+  const seen = new Set(); const valid = [];
+  raw.forEach(k => { if(!seen.has(k)){ seen.add(k); valid.push(k); } });
+  const old = {}; S.keys.forEach(k => old[k.key] = k);
+  S.keys = valid.map(k => old[k] || { key: k, cool: 0, last: 0, n: 0, busy: 0, errors: 0, active: true });
+  saveKeys(valid);
+  renderKeys();
+  $('keyStatus').textContent = valid.length + ' clé(s) active(s)';
+  $('keyStatus').style.color = valid.length ? '#4cc38a' : '#666';
+  updateStats();
+  if(valid.length && !S.running) startEngine();
+}
+function renderKeys(){
+  const el = $('keysView'); if(!el) return;
+  if(!S.keys.length){ el.innerHTML = ''; $('sK').textContent = '0'; return; }
+  const now = Date.now(); let active = 0;
+  el.innerHTML = S.keys.map((k,i) => {
+    let cls = 'ok', tx = 'OK';
+    if(!k.active){ cls = 'dead'; tx = 'morte'; }
+    else if(k.cool > now){ cls = 'cool'; tx = 'cool ' + Math.ceil((k.cool-now)/1000) + 's'; }
+    else active++;
+    return '<div class="krow"><span class="id">#' + (i+1) + ' ' + esc(k.key.slice(0,10)) + '…' + esc(k.key.slice(-4)) + '</span><span style="color:#666">' + k.n + '</span><span class="kb ' + cls + '">' + tx + '</span></div>';
+  }).join('');
+  $('sK').textContent = active;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RATE LIMITER
+   ═══════════════════════════════════════════════════════════════════ */
+function anyKey(){ return S.keys.some(k => k.active); }
+function pickKey(){
+  const now = Date.now();
+  const ready = S.keys.filter(k => k.active && k.cool < now && now - k.last >= MIN_INT && k.busy < CONC);
+  if(!ready.length) return null;
+  ready.sort((a,b) => (a.n - b.n) || (a.last - b.last));
+  return ready[0];
+}
+function acquire(){
+  return new Promise((res, rej) => {
+    const t0 = Date.now();
+    (function loop(){
+      if(S.stopped) return rej(new Error('Arrêt'));
+      const k = pickKey();
+      if(k){ k.busy++; k.last = Date.now(); k.n++; renderKeys(); return res(k); }
+      if(!anyKey()) return rej(new Error('Aucune clé'));
+      if(Date.now() - t0 > 180000) return rej(new Error('Timeout clés'));
+      setTimeout(loop, 300);
+    })();
+  });
+}
+function release(k){ if(k){ k.busy = Math.max(0, k.busy-1); renderKeys(); } }
+
+/* ═══════════════════════════════════════════════════════════════════
+   API
+   ═══════════════════════════════════════════════════════════════════ */
+async function call(url, opts, tries = 4){
+  let last;
+  for(let a = 0; a < tries; a++){
+    if(S.stopped) throw new Error('Arrêt');
+    let k = null;
+    try{
+      k = await acquire();
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), TIMEOUT);
+      const headers = Object.assign({}, opts.headers || {}, { 'Authorization': 'Bearer ' + k.key });
+      const res = await fetch(url, Object.assign({}, opts, { headers, signal: ctl.signal }));
+      clearTimeout(timer);
+      const ra = parseInt(res.headers.get('Retry-After') || '0', 10) || 0;
+      if(res.ok){ k.errors = 0; release(k); return res; }
+      let txt = '';
+      try { txt = (await res.clone().text()).slice(0, 300); } catch(e){}
+      if(res.status === 401 || res.status === 403){
+        k.errors++; if(k.errors >= 3) k.active = false;
+        release(k);
+        throw { status: res.status, message: 'HTTP ' + res.status };
+      }
+      if(res.status === 429){
+        const w = ra ? ra*1000 : COOL_429;
+        k.cool = Date.now() + w; release(k);
+        tag('429', 'clé …' + k.key.slice(-4) + ' → ' + Math.round(w/1000) + 's', 'warn');
+        await sleep(Math.min(w, 8000));
+        continue;
+      }
+      if(res.status === 400 || res.status === 404){
+        release(k);
+        throw { status: res.status, message: 'HTTP ' + res.status + ' — ' + txt.slice(0,140) };
+      }
+      if([500,502,503,504].includes(res.status)){
+        release(k); last = new Error('HTTP ' + res.status);
+        await sleep(2000 + a*1500); continue;
+      }
+      release(k); last = new Error('HTTP ' + res.status);
+      await sleep(1500 + a*1000);
+    }catch(e){
+      if(k) release(k);
+      if(e.message === 'Arrêt') throw e;
+      if(e.status === 400 || e.status === 401 || e.status === 403 || e.status === 404) throw e;
+      if(e.name === 'AbortError'){ last = new Error('Timeout'); continue; }
+      last = e;
+      await sleep(1500 + a*800);
+    }
+  }
+  throw last || new Error('Échec');
+}
+
+async function askText(sys, usr, max = 2200, temp = 0.75){
+  const body = {
+    model: MT,
+    messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }],
+    temperature: temp, max_tokens: max,
+    reasoning_effort: 'none', chat_template_kwargs: { enable_thinking: false }
+  };
+  const r = await call(API + '/chat/completions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }, 3);
+  const d = await r.json();
+  const c = d.choices && d.choices[0] && d.choices[0].message;
+  return (c && c.content) || (c && c.reasoning_content) || '';
+}
+
+async function askImage(prompt){
+  const body = { model: MI, prompt: String(prompt).slice(0, 1900), n: 1, size: '1K', ratio: '1:1' };
+  const r = await call(API + '/images/generations', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }, 3);
+  const d = await r.json();
+  const it = d.data && d.data[0];
+  if(!it) throw new Error('Pas d\'image');
+  if(it.url) return it.url;
+  if(it.b64_json) return 'data:image/png;base64,' + it.b64_json;
+  throw new Error('Format image');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   JSON PARSER TOLÉRANT
+   ═══════════════════════════════════════════════════════════════════ */
+function parseJson(t){
+  if(!t) return null;
+  let c = String(t).trim();
+  const fm = c.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if(fm) c = fm[1].trim();
+  const fb = c.indexOf('{'); if(fb < 0) return null;
+  c = c.slice(fb);
+  const lb = c.lastIndexOf('}'); if(lb > 0) c = c.slice(0, lb+1);
+  let out = '', inS = false, escF = false;
+  for(let i = 0; i < c.length; i++){
+    const ch = c[i];
+    if(escF){ out += ch; escF = false; continue; }
+    if(ch === '\\'){ out += ch; escF = true; continue; }
+    if(ch === '"'){ inS = !inS; out += ch; continue; }
+    if(inS){
+      if(ch === '\n'){ out += '\\n'; continue; }
+      if(ch === '\r'){ out += '\\r'; continue; }
+      if(ch === '\t'){ out += '\\t'; continue; }
+      if(ch.charCodeAt(0) < 32){ out += '\\u' + ch.charCodeAt(0).toString(16).padStart(4,'0'); continue; }
+    }
+    out += ch;
+  }
+  out = out.replace(/,\s*([}\]])/g, '$1');
+  try { return JSON.parse(out); } catch(e){}
+  let ob = 0, ok = 0, iS = false, eF = false;
+  for(let i = 0; i < out.length; i++){
+    const ch = out[i];
+    if(eF){ eF = false; continue; }
+    if(ch === '\\'){ eF = true; continue; }
+    if(ch === '"'){ iS = !iS; continue; }
+    if(iS) continue;
+    if(ch === '{') ob++; else if(ch === '}') ob--;
+    else if(ch === '[') ok++; else if(ch === ']') ok--;
+  }
+  let r = out;
+  if(iS) r += '"';
+  while(ok > 0){ r += ']'; ok--; }
+  while(ob > 0){ r += '}'; ob--; }
+  try { return JSON.parse(r); } catch(e){ return null; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOOTSTRAP — E=mc² et extraction de méthode
+   ═══════════════════════════════════════════════════════════════════ */
+async function bootstrap(){
+  say('Genesis·Decoder', 'Je démarre. Je vais d\'abord <strong>démontrer la méthode sur les 3 premières lignes</strong> de la Genèse (E=mc²), puis lire l\'Ancien Testament en boucle perpétuelle.', 'valid');
+  tag('BOOT', 'Reproduction E=mc²…', 'gold');
+
+  const sys = `Tu es un analyste scientifique adogmatique. Tu traites la Bible comme un système formel de variables.
+Méthode de référence (Genèse 1:1-3) :
+- v1 : Au commencement (t), Dieu créa (E), cieux (vide), terre (m). E=mc² impossible (c manquant).
+- v2 : Esprit qui se mouvait (+p). E=mc² toujours impossible.
+- v3 : lumière (+c). E²=(mc²)²+(pc)² possible. E=mc² si p=0.
+RÈGLES : source textuelle, pas d'anticipation, pas de sur-simplification, intention obligatoire, cohérence cumulée.
+JSON uniquement.`;
+
+  const usr = `Analyse Genèse 1:1-3 et EXTRAIS la méthode générale.
+Retourne :
+{
+  "etapes": [
+    {"v":1,"present":["E","m","vide","t"],"absent":["c","p"],"verdict":"E=mc² impossible","intention":"..."},
+    {"v":2,"present":["E","m","vide","t","p"],"absent":["c"],"verdict":"E=mc² impossible","intention":"..."},
+    {"v":3,"present":["E","m","vide","t","p","c"],"absent":[],"verdict":"E=mc² possible si p=0","intention":"..."}
+  ],
+  "regles": [{"id":"R6","name":"...","desc":"..."}],
+  "direction": "énergie → matière → champ → structures → vie → conscience → repos"
+}`;
+
+  try{
+    const raw = await askText(sys, usr, 2000, 0.3);
+    const j = parseJson(raw);
+    if(!j || !Array.isArray(j.etapes)) throw new Error('JSON invalide');
+    const v1 = j.etapes.find(x => x.v === 1) || {};
+    const v3 = j.etapes.find(x => x.v === 3) || {};
+    const okC = !(v1.present||[]).some(x => String(x).toLowerCase().includes('c')) && (v3.present||[]).some(x => String(x).toLowerCase().includes('c'));
+    if(!okC) throw new Error('Logique bootstrap incorrecte');
+
+    if(Array.isArray(j.regles)){
+      j.regles.forEach(r => {
+        if(r.id && r.name && !S.method.find(m => m.id === r.id)){
+          S.method.push({ id: r.id, name: r.name, desc: String(r.desc || '').slice(0, 300), w: 0.8 });
+        }
+      });
+    }
+    if(j.direction) S.cumul.direction = j.direction;
+    S.locked = true;
+    tag('BOOT', '✓ Méthode établie — ' + S.method.length + ' règles', 'lock');
+    say('Genesis·Decoder', '✓ Démonstration validée. Je passe à la lecture.', 'valid');
+    sayF('E² = (mc²)² + (pc)²', 'Cas particulier : E = mc² quand p = 0.');
+    return true;
+  }catch(e){
+    tag('BOOT', 'échec : ' + e.message, 'err');
+    say('Système', 'Bootstrap échoué, je réessaie dans 5 s.', null);
+    await sleep(5000);
+    return false;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LIVRES — l'IA nous donne la liste
+   ═══════════════════════════════════════════════════════════════════ */
+async function fetchBooks(){
+  say('Genesis·Decoder', 'Je demande à l\'IA la liste des livres de l\'Ancien Testament.', null);
+  const sys = 'Tu connais la Bible. JSON uniquement.';
+  const usr = `Donne la liste des 39 livres de l'Ancien Testament dans l'ordre canonique avec leur nombre de chapitres.
+Retourne : {"books":[{"name":"Genèse","chapters":50},...]}`;
+  const raw = await askText(sys, usr, 1500, 0.2);
+  const j = parseJson(raw);
+  if(!j || !Array.isArray(j.books) || j.books.length < 30) throw new Error('Liste livres invalide');
+  tag('BOOKS', j.books.length + ' livres reçus', 'lock');
+  return j.books.map(b => ({ name: String(b.name), chapters: cl(b.chapters, 1, 200) }));
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   VERSETS D'UN CHAPITRE — l'IA les fournit (avec cache IDB)
+   ═══════════════════════════════════════════════════════════════════ */
+async function fetchChapter(book, chapter){
+  const key = book + ' ' + chapter;
+  const cached = await dbGet('chapters', key).catch(() => null);
+  if(cached && cached.verses && cached.verses.length) return cached.verses;
+
+  const sys = 'Tu connais la Bible par cœur. Tu fournis le texte exact (traduction Louis Segond) sans commentaire. JSON uniquement.';
+  const usr = `Donne tous les versets de "${book}" chapitre ${chapter}.
+Retourne : {"verses":[{"v":1,"txt":"..."},{"v":2,"txt":"..."}]}`;
+  const raw = await askText(sys, usr, 3000, 0.2);
+  const j = parseJson(raw);
+  if(!j || !Array.isArray(j.verses) || !j.verses.length) throw new Error('Chapitre invalide');
+
+  const verses = j.verses.map(v => ({ v: cl(v.v, 1, 200), txt: String(v.txt || '').trim() })).filter(v => v.txt.length > 5);
+  await dbPut('chapters', { id: key, book, chapter, verses }).catch(() => {});
+  tag('CHAPTER', book + ' ' + chapter + ' — ' + verses.length + ' versets', 'info');
+  return verses;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LECTURE D'UN VERSET AVEC UN ANGLE
+   ═══════════════════════════════════════════════════════════════════ */
+async function readVerse(book, chapter, verse, lens){
+  const ref = book + ' ' + chapter + ':' + verse.v;
+
+  const sys = `Tu es un analyste scientifique adogmatique. Tu appliques la méthode validée sur Genèse 1:1-3.
+
+MÉTHODE (à respecter) :
+${S.method.map(r => '- ' + r.id + ' ' + r.name + ' : ' + r.desc).join('\n')}
+
+RÈGLE : un objet scientifique nouveau n'apparaît que si son mot-source est présent textuellement. Pas d'anticipation. Pas de sur-simplification.
+
+Chaque verset ouvre son propre domaine. Direction globale : énergie → matière → champ → structures → vie → conscience → repos.
+JSON uniquement.`;
+
+  const usr = `VERSET : « ${verse.txt} »
+RÉFÉRENCE : ${ref}
+CUMUL VARIABLES : ${JSON.stringify(S.cumul.present)}
+DOMAINES DÉJÀ OUVERTS : ${JSON.stringify(S.cumul.domains.slice(-20))}
+
+ANGLE (${lens.code}) — ${lens.lbl} : ${lens.q}
+
+Retourne ce JSON :
+{
+  "angle": "${lens.code}",
+  "reponse": "3-6 phrases",
+  "intention_texte": "quelle question le verset nous pousse à poser",
+  "domaine": "domaine scientifique",
+  "formule": "formule LaTeX ou vide",
+  "present": ["variables présentes après ce verset"],
+  "mystere": "mystère scientifique actuel associé",
+  "piste": "piste de recherche",
+  "decouverte": true|false,
+  "desc_decouverte": "si découverte, décris",
+  "rigueur": 0-10,
+  "risque": "faible|moyen|eleve",
+  "coherence": 0-10,
+  "sci": 0-10,
+  "txt_fid": 0-10,
+  "novelty": 0-10,
+  "intent_clarity": 0-10,
+  "reasoning": "2-4 phrases",
+  "image_prompt": "prompt visuel en anglais, 30-60 mots"
+}`;
+
+  const raw = await askText(sys, usr, 2400, 0.75);
+  const j = parseJson(raw);
+  if(!j) throw new Error('JSON invalide');
+
+  const r = {
+    book, chapter, v: verse.v,
+    verseLbl: ref, verseTxt: verse.txt,
+    lens: lens.code, lensLbl: lens.lbl, lensId: lens.id,
+    reponse: String(j.reponse || '').slice(0, 800),
+    intention_texte: String(j.intention_texte || '').slice(0, 400),
+    domaine: String(j.domaine || '').slice(0, 200),
+    formule: String(j.formule || '').slice(0, 300),
+    present: Array.isArray(j.present) ? j.present : [],
+    mystere: String(j.mystere || '').slice(0, 250),
+    piste: String(j.piste || '').slice(0, 250),
+    decouverte: !!j.decouverte,
+    desc_decouverte: String(j.desc_decouverte || '').slice(0, 500),
+    rigueur: cl(j.rigueur, 0, 10),
+    risque: String(j.risque || 'moyen').toLowerCase(),
+    coherence: cl(j.coherence, 0, 10),
+    sci: cl(j.sci, 0, 10),
+    txt_fid: cl(j.txt_fid, 0, 10),
+    novelty: cl(j.novelty, 0, 10),
+    intent_clarity: cl(j.intent_clarity, 0, 10),
+    reasoning: String(j.reasoning || '').slice(0, 600),
+    image_prompt: String(j.image_prompt || '').slice(0, 400),
+    time: Date.now()
+  };
+
+  const pen = r.risque === 'eleve' ? 0.7 : r.risque === 'moyen' ? 0.9 : 1;
+  r.method_score = +((r.rigueur*0.25 + r.coherence*0.20 + r.intent_clarity*0.25 + r.sci*0.15 + r.txt_fid*0.15) * pen).toFixed(2);
+  r.score = +((r.method_score*0.6 + r.novelty*0.25 + r.txt_fid*0.15)).toFixed(2);
+  return r;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DÉTECTION DE DÉCOUVERTE
+   ═══════════════════════════════════════════════════════════════════ */
+function isDiscovery(r){
+  return (r.method_score >= 8.5 && r.intent_clarity >= 8 && r.novelty >= 7) || (r.decouverte && r.method_score >= 7);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ÉVOLUTION DES ANGLES
+   ═══════════════════════════════════════════════════════════════════ */
+async function evolveLenses(){
+  if(!anyKey()) return;
+  tag('EVO', 'Analyse des performances + création d\'angles', 'evo');
+  say('Genesis·Decoder', 'Je vais créer de <strong>nouveaux angles</strong> en croisant les meilleurs.', null);
+
+  const top = S.lenses.slice().sort((a,b) => (b.p?.avg||0) - (a.p?.avg||0)).slice(0, 5);
+  const bot = S.lenses.slice().sort((a,b) => (a.p?.avg||0) - (b.p?.avg||0)).slice(0, 3);
+
+  const sys = 'JSON uniquement.';
+  const usr = `Angles actuels (${S.lenses.length}) :
+MEILLEURS : ${top.map(l => l.code + ' avg ' + (l.p?.avg||0)).join(' | ')}
+FAIBLES : ${bot.map(l => l.code + ' avg ' + (l.p?.avg||0)).join(' | ')}
+
+Propose 4 NOUVEAUX angles INÉDITS qui croisent les meilleurs ou explorent de nouveaux domaines scientifiques (topologie de l'information, biologie quantique, thermodynamique de la conscience, etc.).
+Retourne : {"lenses":[{"code":"XXX","lbl":"Nom","q":"question précise","reason":"pourquoi"}]}`;
+
+  try{
+    const raw = await askText(sys, usr, 1500, 0.9);
+    const j = parseJson(raw);
+    if(!j || !Array.isArray(j.lenses)) throw new Error('Format invalide');
+    let added = 0;
+    for(const nl of j.lenses){
+      if(!nl.code || !nl.lbl || !nl.q) continue;
+      const id = 'LE_' + Date.now() + '_' + added;
+      const l = { id, code: String(nl.code).slice(0,12), lbl: String(nl.lbl).slice(0,40), q: String(nl.q).slice(0,500), reason: String(nl.reason||'').slice(0,200), status: 'exp', p: { n:0, avg:0, best:0 }, born: Date.now() };
+      S.lenses.push(l); await dbPut('lenses', l).catch(()=>{});
+      tag('EVO', '+ ' + l.code + ' · ' + l.lbl, 'ai');
+      added++;
+    }
+    // Promotion / élagage
+    S.lenses.forEach(l => {
+      if(l.status === 'exp' && l.p.n >= 3){
+        if(l.p.avg >= 8) l.status = 'spec';
+        else if(l.p.avg < 5) l.status = 'pru';
+      }
+    });
+    say('Genesis·Decoder', '✓ ' + added + ' nouveaux angles. Total : <strong>' + S.lenses.length + '</strong>.', 'valid');
+    renderSelf();
+  }catch(e){
+    tag('EVO', 'échec : ' + e.message, 'err');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ÉVOLUTION DE LA MÉTHODE
+   ═══════════════════════════════════════════════════════════════════ */
+async function evolveMethod(){
+  if(!anyKey()) return;
+  tag('EVO', 'Affinage méthodologique', 'evo');
+  say('Genesis·Decoder', 'J\'affine ma <strong>méthodologie</strong>.', null);
+
+  const sys = 'JSON uniquement.';
+  const usr = `Méthode actuelle :
+${S.method.map(r => '- ' + r.id + ' ' + r.name + ' : ' + r.desc).join('\n')}
+
+Propose 2 nouvelles règles méthodologiques TESTABLES.
+Retourne : {"rules":[{"id":"R11","name":"...","desc":"..."}]}`;
+
+  try{
+    const raw = await askText(sys, usr, 800, 0.9);
+    const j = parseJson(raw);
+    if(!j || !Array.isArray(j.rules)) throw new Error('Format invalide');
+    let added = 0;
+    for(const nr of j.rules){
+      if(!nr.id || !nr.name || S.method.find(m => m.id === nr.id)) continue;
+      const r = { id: nr.id, name: nr.name, desc: String(nr.desc||'').slice(0,300), w: 0.8 };
+      S.method.push(r); await dbPut('method', r).catch(()=>{});
+      tag('EVO', '+ ' + r.id + ' ' + r.name, 'ai');
+      added++;
+    }
+    say('Genesis·Decoder', '✓ ' + added + ' nouvelles règles. Total : <strong>' + S.method.length + '</strong>.', 'valid');
+  }catch(e){
+    tag('EVO', 'échec : ' + e.message, 'err');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONVERGENCE
+   ═══════════════════════════════════════════════════════════════════ */
+function updateConv(){
+  const top = S.readings.map(r => r.method_score).sort((a,b) => b-a).slice(0, 10);
+  if(top.length < 3){ S.convergence = 0; renderConv(); return; }
+  const avg = top.reduce((a,b) => a+b, 0) / top.length;
+  S.convergence = +Math.min(1, Math.max(0, (avg - 6) / (9 - 6))).toFixed(3);
+  renderConv();
+}
+function renderConv(){
+  const b = $('pbar'); if(b) b.style.width = (S.convergence*100).toFixed(0) + '%';
+  const l = $('convL'); if(l) l.textContent = (S.convergence*100).toFixed(0) + ' %';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SÉLECTION DES ANGLES POUR UN VERSET
+   ═══════════════════════════════════════════════════════════════════ */
+function selectLenses(){
+  const sorted = S.lenses.slice().sort((a,b) => {
+    if(a.status === 'pru' && b.status !== 'pru') return 1;
+    if(b.status === 'pru' && a.status !== 'pru') return -1;
+    return (b.p?.avg||0) - (a.p?.avg||0);
+  });
+  return sorted.filter(l => l.status !== 'pru').slice(0, 6);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOUCLE PRINCIPALE — perpétuelle
+   ═══════════════════════════════════════════════════════════════════ */
+async function engine(){
+  S.running = true;
+  S.stopped = false;
+  updateCtl();
+  say('Genesis·Decoder', '🚀 Moteur lancé. Boucle perpétuelle sur tout l\'Ancien Testament.', 'valid');
+
+  while(!S.stopped){
+    try{
+      while(S.paused && !S.stopped) await sleep(500);
+      if(S.stopped) break;
+      if(!anyKey()){ say('Système', 'Aucune clé active. En attente…', null); await sleep(10000); continue; }
+
+      // Bootstrap une fois
+      if(!S.locked){
+        const ok = await bootstrap();
+        if(!ok){ await sleep(5000); continue; }
+      }
+
+      // Récupère la liste des livres si absente
+      if(!S.books.length){
+        try{ S.books = await fetchBooks(); }
+        catch(e){ tag('BOOKS', 'échec : ' + e.message, 'err'); await sleep(5000); continue; }
+        S.book = 0; S.chapter = 1;
+      }
+
+      // Position actuelle
+      const bk = S.books[S.book];
+      if(!bk){ S.book = 0; S.chapter = 1; continue; }
+
+      // Chapitre
+      let verses = [];
+      try{
+        verses = await fetchChapter(bk.name, S.chapter);
+      }catch(e){
+        tag('CHAPTER', bk.name + ' ' + S.chapter + ' échec : ' + e.message, 'err');
+        S.chapter++;
+        if(S.chapter > bk.chapters){ S.chapter = 1; S.book++; }
+        continue;
+      }
+
+      // Lit chaque verset avec plusieurs angles
+      const lenses = selectLenses();
+      for(const v of verses){
+        if(S.stopped) break;
+        while(S.paused && !S.stopped) await sleep(500);
+        if(S.stopped) break;
+
+        const ref = bk.name + ' ' + S.chapter + ':' + v.v;
+        say('Genesis·Decoder', '📖 <strong>' + ref + '</strong> — « ' + esc(v.txt.slice(0,140)) + (v.txt.length>140?'…':'') + ' »', null);
+
+        for(const lens of lenses){
+          if(S.stopped) break;
+          while(S.paused && !S.stopped) await sleep(500);
+          if(S.stopped) break;
+
+          try{
+            const r = await readVerse(bk.name, S.chapter, v, lens);
+            S.readings.push(r);
+            S.verseCount++;
+
+            // Performance
+            lens.p.n++;
+            lens.p.avg = +(((lens.p.avg * (lens.p.n - 1)) + r.score) / lens.p.n).toFixed(2);
+            lens.p.best = Math.max(lens.p.best, r.score);
+
+            // Cumul
+            if(r.present.length) S.cumul.present = Array.from(new Set([...S.cumul.present, ...r.present]));
+            if(r.domaine && !S.cumul.domains.includes(r.domaine)) S.cumul.domains.push(r.domaine);
+
+            await dbAdd('readings', r).catch(()=>{});
+
+            // Découverte
+            if(isDiscovery(r)){
+              S.discoveries.push(r);
+              await dbAdd('discoveries', r).catch(()=>{});
+              say('Genesis·Decoder', '💎 <strong>Découverte</strong> [' + r.lens + '] ' + esc(r.desc_decouverte || r.reponse.slice(0,180)), 'disc');
+              if(r.formule) sayF(r.formule, 'Formule associée');
+            }
+
+            // Narration courte
+            const cls = r.score >= 7.5 ? 'ok' : (r.score >= 5 ? 'warn' : '');
+            tag(lens.code, r.score.toFixed(1) + ' · méth ' + r.method_score.toFixed(1) + (r.formule ? ' · ' + r.formule.slice(0,50) : ''), cls);
+            if(r.intention_texte) say('  🎯 Intention', esc(r.intention_texte.slice(0, 160)), null);
+            if(r.domaine) say('  🔬 Domaine', esc(r.domaine), null);
+
+            // Image
+            if(r.score >= 8.5 && r.image_prompt) triggerImage(r).catch(()=>{});
+
+            // UI
+            renderBest(); renderDisc(); updateStats(); updateConv(); renderSelf();
+            updatePos(bk.name + ' ' + S.chapter + ':' + v.v);
+
+            // Évolution
+            if(S.readings.length % 20 === 0) await evolveLenses();
+            if(S.readings.length % 60 === 0) await evolveMethod();
+
+            await sleep(200);
+          }catch(e){
+            tag(lens.code, bk.name + ' ' + S.chapter + ':' + v.v + ' — ' + e.message, 'err');
+            if(e.message === 'Arrêt') break;
+            await sleep(1000);
+          }
+        }
+      }
+
+      // Avancer
+      S.chapter++;
+      if(S.chapter > bk.chapters){ S.chapter = 1; S.book++; }
+      if(S.book >= S.books.length){
+        S.book = 0;
+        S.cycle++;
+        tag('CYCLE', '✓ Cycle ' + S.cycle + ' terminé — redémarrage avec angles évolués', 'gold');
+        say('Genesis·Decoder', '🔄 <strong>Cycle ' + S.cycle + ' terminé.</strong> Je redémarre avec mes angles perfectionnés.', 'valid');
+      }
+    }catch(e){
+      tag('ENGINE', 'erreur : ' + e.message + ' — reprise dans 5 s', 'err');
+      await sleep(5000);
+    }
+  }
+
+  S.running = false;
+  updateCtl();
+  say('Système', 'Moteur arrêté.', null);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   IMAGE
+   ═══════════════════════════════════════════════════════════════════ */
+async function triggerImage(r){
+  try{
+    tag('IMG', r.lens + ' · ' + r.verseLbl, 'ai');
+    const url = await askImage(r.image_prompt);
+    const e = { url, verse: r.verseLbl, lens: r.lens, formule: r.formule, time: Date.now() };
+    S.images.push(e);
+    await dbAdd('images', e).catch(()=>{});
+    renderGal(); updateStats();
+    tag('IMG', '✓', 'ok');
+  }catch(e){ tag('IMG', 'échec : ' + e.message, 'err'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   UI
+   ═══════════════════════════════════════════════════════════════════ */
+function updateStats(){
+  $('sR').textContent = S.readings.length;
+  $('sD').textContent = S.discoveries.length;
+  $('sL').textContent = S.lenses.length;
+  $('sI').textContent = S.images.length;
+  $('sV').textContent = S.verseCount;
+}
+function updatePos(p){ $('posL').textContent = p; }
+function updateCtl(){
+  const pb = $('pauseBtn'), sb = $('stopBtn'), sb2 = $('startBtn');
+  if(pb) pb.style.display = S.running ? '' : 'none';
+  if(sb) sb.style.display = S.running ? '' : 'none';
+  if(sb2) sb2.disabled = S.running;
+  const hb = $('hb'), hbT = $('hbT');
+  if(hb){
+    hb.className = S.running ? (S.paused ? 'pause' : '') : 'stop';
+    hbT.textContent = S.running ? (S.paused ? 'Pause' : 'En cours · ' + S.keys.filter(k=>k.active).length + ' clés') : 'Inactif';
+  }
+}
+function renderBest(){
+  const v = $('bestView'); if(!v) return;
+  const top = S.readings.slice().sort((a,b) => b.score - a.score).slice(0, 50);
+  if(!top.length){ v.innerHTML = '<div class="hint">Aucune analyse encore.</div>'; return; }
+  v.innerHTML = top.map((r,i) => {
+    const cls = r.score >= 7.5 ? 'sh' : r.score >= 5 ? 'sm' : 'sl';
+    const disc = isDiscovery(r);
+    return '<div class="ritem' + (i<3?' best':'') + (disc?' disc':'') + '">'
+      + '<div class="h"><span class="lens">' + esc(r.lens) + '</span><span class="ref">' + esc(r.verseLbl) + '</span><span class="sc ' + cls + '">★ ' + r.score.toFixed(1) + '</span></div>'
+      + (r.intention_texte ? '<div class="w" style="color:#39d0d8">🎯 ' + esc(r.intention_texte.slice(0,200)) + '</div>' : '')
+      + (r.domaine ? '<div class="w" style="color:#4cc38a">🔬 ' + esc(r.domaine) + '</div>' : '')
+      + (r.formule ? '<div class="f">' + esc(r.formule) + '</div>' : '')
+      + (r.reponse ? '<div class="w">' + esc(r.reponse.slice(0,220)) + '</div>' : '')
+      + '<div class="m"><span>méth ' + r.method_score.toFixed(1) + '</span><span>intent ' + r.intent_clarity + '</span><span>nov ' + r.novelty + '</span><span>risque ' + r.risque + '</span></div>'
+      + (r.mystere ? '<div class="w">🔭 ' + esc(r.mystere.slice(0,140)) + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+function renderDisc(){
+  const v = $('discView'); if(!v) return;
+  if(!S.discoveries.length){ v.innerHTML = '<div class="hint">Aucune découverte encore.</div>'; return; }
+  v.innerHTML = S.discoveries.slice().reverse().map(r =>
+    '<div class="ritem disc">'
+    + '<div class="h"><span class="lens">' + esc(r.lens) + '</span><span class="ref">' + esc(r.verseLbl) + '</span><span class="sc sh">★ ' + r.score.toFixed(1) + '</span></div>'
+    + (r.formule ? '<div class="f">' + esc(r.formule) + '</div>' : '')
+    + (r.desc_decouverte ? '<div class="w" style="color:#ff64d0;font-weight:600">💎 ' + esc(r.desc_decouverte) + '</div>' : '')
+    + (r.mystere ? '<div class="w">🔭 ' + esc(r.mystere) + '</div>' : '')
+    + (r.piste ? '<div class="w">🧪 ' + esc(r.piste) + '</div>' : '')
+    + '</div>'
+  ).join('');
+}
+function renderGal(){
+  const g = $('gallery'); if(!g) return;
+  if(!S.images.length){ g.innerHTML = '<div class="hint" style="padding:20px;text-align:center;grid-column:1/-1">Les images apparaîtront ici.</div>'; return; }
+  g.innerHTML = S.images.slice().reverse().map(im =>
+    '<div class="g"><img src="' + esc(im.url) + '" loading="lazy" onclick="window.open(this.src)"><div class="c"><b>' + esc(im.verse||'') + '</b>' + esc(im.lens||'') + '</div></div>'
+  ).join('');
+}
+function renderSelf(){
+  const v = $('selfView'); if(!v) return;
+  const top = S.lenses.slice().sort((a,b) => (b.p?.avg||0) - (a.p?.avg||0));
+  v.innerHTML = '<h2>🧬 Angles (' + S.lenses.length + ')</h2>'
+    + top.slice(0, 25).map(l => {
+        const c = l.status === 'core' ? 'core' : l.status === 'spec' ? 'spec' : l.status === 'pru' ? 'pru' : 'exp';
+        return '<div class="lc ' + (l.status === 'spec' ? 'spec' : l.status === 'pru' ? 'pru' : l.status === 'exp' ? 'exp' : '') + '">'
+          + '<div class="h"><span class="code">' + esc(l.code) + '</span><span class="lbl">' + esc(l.lbl) + '</span>'
+          + '<span class="badge ' + (l.status === 'core' ? 'c' : l.status === 'spec' ? 's' : l.status === 'pru' ? 'p' : 'e') + '">' + l.status + '</span>'
+          + '<span class="perf">avg ' + (l.p?.avg||0) + ' · n=' + (l.p?.n||0) + '</span></div>'
+          + '<div class="q">' + esc(l.q.slice(0,150)) + '</div>'
+          + (l.reason ? '<div class="q" style="color:#c8a0ff">💡 ' + esc(l.reason) + '</div>' : '')
+          + '</div>';
+      }).join('')
+    + '<h2 style="margin-top:12px">📐 Règles (' + S.method.length + ')</h2>'
+    + S.method.map(r => '<div class="lc"><div class="h"><span class="code">' + esc(r.id) + '</span><span class="lbl">' + esc(r.name) + '</span></div><div class="q">' + esc(r.desc) + '</div></div>').join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TABS
+   ═══════════════════════════════════════════════════════════════════ */
+document.querySelectorAll('#tabs button').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('#tabs button').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    const map = { home: 'pHome', best: 'pBest', disc: 'pDisc', img: 'pImg', cons: 'pCons', self: 'pSelf' };
+    Object.values(map).forEach(id => { const e = $(id); if(e) e.classList.add('hide'); });
+    const target = map[t.dataset.t]; if(target) $(target).classList.remove('hide');
+    if(t.dataset.t === 'best') renderBest();
+    if(t.dataset.t === 'disc') renderDisc();
+    if(t.dataset.t === 'img') renderGal();
+    if(t.dataset.t === 'self') renderSelf();
+  };
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   ÉVÉNEMENTS
+   ═══════════════════════════════════════════════════════════════════ */
+$('startBtn').onclick = () => rebuildKeys();
+$('clearBtn').onclick = () => { $('keysIn').value=''; S.keys=[]; saveKeys([]); renderKeys(); $('keyStatus').textContent='Aucune clé'; };
+$('pauseBtn').onclick = () => { S.paused = !S.paused; $('pauseBtn').textContent = S.paused ? '▶ Reprendre' : '⏸ Pause'; updateCtl(); say('Système', S.paused ? '⏸ Pause' : '▶ Reprise', null); };
+$('stopBtn').onclick = () => { S.stopped = true; say('Système', '⏹ Arrêt demandé', null); };
+$('keysIn').addEventListener('blur', () => { if(!S.keys.length && $('keysIn').value.trim()) rebuildKeys(); });
+
+function startEngine(){
+  if(S.running) return;
+  engine().catch(e => { tag('ENGINE', 'fatal : ' + e.message, 'err'); S.running = false; updateCtl(); });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════════ */
+(async function init(){
+  // Restaure clés
+  const ks = loadKeys();
+  if(ks.length){
+    $('keysIn').value = ks.join('\n');
+    S.keys = ks.map(k => ({ key: k, cool: 0, last: 0, n: 0, busy: 0, errors: 0, active: true }));
+    $('keyStatus').textContent = ks.length + ' clé(s) restaurée(s)';
+    $('keyStatus').style.color = '#4cc38a';
+  }
+  renderKeys();
+
+  // Restaure angles + méthode
+  try{
+    const lens = await dbAll('lenses');
+    S.lenses = [...SEED_LENSES];
+    lens.forEach(l => { if(!S.lenses.find(x => x.id === l.id)) S.lenses.push(l); });
+    const meth = await dbAll('method');
+    S.method = [...SEED_METHOD];
+    meth.forEach(m => { if(!S.method.find(x => x.id === m.id)) S.method.push(m); });
+    const rs = await dbAll('readings');
+    if(rs.length){ S.readings = rs; tag('INIT', rs.length + ' analyses restaurées', 'ok'); }
+    const dc = await dbAll('discoveries');
+    if(dc.length){ S.discoveries = dc; tag('INIT', dc.length + ' découvertes restaurées', 'ok'); }
+    const im = await dbAll('images');
+    if(im.length){ S.images = im; tag('INIT', im.length + ' images restaurées', 'ok'); }
+  }catch(e){ S.lenses = [...SEED_LENSES]; S.method = [...SEED_METHOD]; }
+
+  renderBest(); renderDisc(); renderGal(); renderSelf(); updateStats(); updateConv(); updateCtl();
+
+  say('Genesis·Decoder', 'Prêt. Colle tes clés puis clique sur <strong>VALIDER ET DÉMARRER</strong>.', 'valid');
+  say('Genesis·Decoder', 'RPM : <strong>' + RPM + '</strong> par clé · ' + S.keys.length + ' clé(s) active(s).', null);
+
+  if(S.keys.length){
+    say('Genesis·Decoder', 'Clés détectées. Démarrage automatique dans 1 s.', 'valid');
+    setTimeout(() => startEngine(), 1000);
+  }
+})();
+
+setInterval(() => { renderKeys(); updateCtl(); }, 2000);
+</script>
+</body>
+</html>

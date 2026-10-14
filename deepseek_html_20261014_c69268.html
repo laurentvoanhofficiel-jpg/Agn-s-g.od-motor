@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Genesis·Decoder v9</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:14px/1.55 system-ui,-apple-system,sans-serif;background:#08080e;color:#d0d0dc;max-width:1200px;margin:0 auto;padding:10px}
+h1{font:800 20px system-ui;color:#e6b45a;letter-spacing:-.02em}
+h1 span{color:#39d0d8;font-size:11px;font-weight:400;margin-left:6px}
+h2{font:700 11px system-ui;color:#39d0d8;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.08em}
+.hint{font:11px ui-monospace;color:#555;margin-top:3px}
+.card{background:#111118;border:1px solid #222230;border-radius:8px;padding:12px;margin-bottom:10px}
+input,textarea,select{width:100%;padding:8px;background:#08080e;border:1px solid #222230;color:#d0d0dc;border-radius:5px;font:12px ui-monospace}
+input:focus,textarea:focus{outline:0;border-color:#e6b45a}
+textarea{min-height:60px;resize:vertical}
+button{padding:8px 14px;background:#e6b45a;color:#000;border:0;border-radius:5px;font:700 12px system-ui;cursor:pointer;transition:.15s}
+button:hover:not(:disabled){filter:brightness(1.1)}
+button:disabled{opacity:.35;cursor:not-allowed}
+button.sec{background:#222230;color:#d0d0dc}
+button.cyan{background:#39d0d8;color:#000}
+button.green{background:#4cc38a;color:#000}
+button.red{background:#c04040;color:#fff}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.row button{flex:1;min-width:80px}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:6px;margin-bottom:10px}
+.stat .s{background:#111118;border:1px solid #222230;border-radius:5px;padding:8px;text-align:center;transition:.3s}
+.stat .s.bump{background:#1a1a28;border-color:#e6b45a;transform:scale(1.03)}
+.stat .s b{display:block;font:800 22px ui-monospace;color:#e6b45a;transition:.3s}
+.stat .s.pink b{color:#ff64d0}.stat .s.cyan b{color:#39d0d8}.stat .s.green b{color:#4cc38a}
+.stat .s span{font:9px ui-monospace;color:#666;text-transform:uppercase;letter-spacing:.05em}
+.tabs{display:flex;gap:4px;overflow-x:auto;margin:10px 0 8px;padding-bottom:2px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{background:#111118;color:#888;border:1px solid #222230;border-radius:100px;font:700 12px system-ui;padding:7px 14px;white-space:nowrap;flex-shrink:0;transition:.15s}
+.tabs button:hover{color:#d0d0dc}
+.tabs button.on{background:#e6b45a;color:#000;border-color:#e6b45a}
+
+/* Narration */
+.live{display:grid;grid-template-columns:1fr 260px;gap:10px}
+@media(max-width:800px){.live{grid-template-columns:1fr}}
+#narration{background:#0c0c14;border:1px solid #1a1a28;border-radius:8px;padding:14px;height:600px;overflow-y:auto;scroll-behavior:smooth}
+#narration .n{padding:8px 0;border-bottom:1px solid #1a1a28;opacity:0;transform:translateY(6px);animation:in .35s forwards}
+#narration .n:last-child{border-bottom:0}
+@keyframes in{to{opacity:1;transform:translateY(0)}}
+#narration .n .t{font:10px ui-monospace;color:#444}
+#narration .n .s{color:#e6b45a;font:700 11px system-ui;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+#narration .n .x{margin-top:4px;color:#d0d0dc;line-height:1.6}
+#narration .n .x em{color:#39d0d8;font-style:normal}
+#narration .n .x strong{color:#e6b45a;font-weight:700}
+#narration .f{display:block;font:13px ui-monospace;color:#4cc38a;background:#0a1a0f;border-left:3px solid #4cc38a;padding:8px 12px;border-radius:5px;margin:6px 0;word-break:break-word;animation:glow 1s}
+@keyframes glow{from{box-shadow:0 0 0 4px rgba(76,195,138,.3)}to{box-shadow:0 0 0 0 rgba(76,195,138,0)}}
+#narration .disc{background:#1a0a1a;border-left:3px solid #ff64d0;padding:10px 14px;border-radius:5px;margin:8px 0;color:#ff64d0;font-weight:600;animation:pulse 1.2s}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,100,208,.6)}70%{box-shadow:0 0 0 12px rgba(255,100,208,0)}100%{box-shadow:0 0 0 0 rgba(255,100,208,0)}}
+#narration .valid{background:#0a1a0f;border-left:3px solid #4cc38a;padding:8px 12px;border-radius:5px;margin:6px 0;color:#4cc38a}
+#narration .verse-ref{color:#39d0d8;font:700 12px ui-monospace}
+#narration .verse-txt{color:#888;font-style:italic;margin:4px 0 6px 0;padding-left:10px;border-left:2px solid #222230}
+
+#side{display:flex;flex-direction:column;gap:10px}
+#side .box{background:#0c0c14;border:1px solid #1a1a28;border-radius:8px;padding:10px}
+#side .box h3{font:700 10px system-ui;color:#666;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+#side .pos{font:700 13px ui-monospace;color:#39d0d8}
+#side .pos-sub{font:11px ui-monospace;color:#666;margin-top:2px}
+#side .bar{height:4px;background:#1a1a28;border-radius:2px;overflow:hidden;margin-top:6px}
+#side .bar i{display:block;height:100%;background:linear-gradient(90deg,#39d0d8,#e6b45a);transition:width .5s}
+#side .keylist{max-height:220px;overflow-y:auto}
+#side .k{display:flex;align-items:center;gap:5px;padding:4px 0;font:10px ui-monospace;border-bottom:1px solid #1a1a28}
+#side .k:last-child{border:0}
+#side .k .id{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888}
+#side .k .st{font:8px ui-monospace;padding:1px 5px;border-radius:3px;font-weight:700;text-transform:uppercase}
+#side .k .st.ok{background:#0a2a1a;color:#4cc38a}
+#side .k .st.cool{background:#2a1a0a;color:#d8983f}
+#side .k .st.dead{background:#2a0a0a;color:#e05555}
+
+.ritem{padding:10px;background:#0c0c14;border:1px solid #1a1a28;border-radius:6px;margin-bottom:6px;font-size:12px}
+.ritem .h{display:flex;gap:5px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
+.ritem .lens{font:9px ui-monospace;padding:2px 6px;background:#3a2a5a;color:#c8a0ff;border-radius:3px;font-weight:700;text-transform:uppercase}
+.ritem .ref{font:10px ui-monospace;color:#888}
+.ritem .sc{font:700 11px ui-monospace;margin-left:auto;padding:2px 7px;border-radius:100px}
+.ritem .f{font:12px ui-monospace;color:#e6b45a;margin:5px 0;word-break:break-word}
+.ritem .intent{color:#39d0d8;font-size:11.5px;padding-left:8px;border-left:2px solid #39d0d8;margin:4px 0}
+.ritem .dom{color:#4cc38a;font-size:11.5px;padding-left:8px;border-left:2px solid #4cc38a;margin:4px 0}
+.ritem .w{color:#888;margin-top:4px;line-height:1.5}
+.ritem .m{display:flex;gap:3px;margin-top:6px;font:9px ui-monospace;color:#777;flex-wrap:wrap}
+.ritem .m span{background:#1a1a28;padding:2px 5px;border-radius:3px}
+.ritem.best{border-color:#e6b45a;background:#1a1408}
+.ritem.disc{border-color:#ff64d0;background:#1a0a1a}
+.sh{background:#4cc38a;color:#000}.sm{background:#d8983f;color:#000}.sl{background:#e05555;color:#fff}
+
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px}
+.gal .g{background:#0c0c14;border:1px solid #1a1a28;border-radius:6px;overflow:hidden;transition:.3s}
+.gal .g:hover{border-color:#e6b45a}
+.gal img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:pointer}
+.gal .c{padding:6px 8px;font:10px ui-monospace;color:#777;line-height:1.35}
+.gal .c b{color:#e6b45a;display:block;margin-bottom:2px}
+
+#console{background:#040408;border:1px solid #1a1a28;border-radius:6px;height:520px;overflow-y:auto;padding:8px;font:11px/1.5 ui-monospace}
+#console .e{padding:2px 0;border-bottom:1px solid #0a0a10;word-break:break-word}
+#console .e .t{color:#333;margin-right:6px}
+#console .e .g{color:#c8a0ff;margin-right:5px;font-weight:700}
+#console .ok{color:#4cc38a}#console .err{color:#e05555}#console .warn{color:#d8983f}
+#console .gold{color:#e6b45a}#console .lock{color:#39d0d8}#console .ai{color:#c8a0ff}
+#console .disc{color:#ff64d0;font-weight:700}#console .evo{color:#4cc38a;font-weight:700}
+
+.lc{padding:10px;background:#0c0c14;border:1px solid #1a1a28;border-left:3px solid #39d0d8;border-radius:5px;margin-bottom:6px;font-size:11.5px}
+.lc.spec{border-left-color:#4cc38a}
+.lc.exp{border-left-color:#d8983f}
+.lc.pru{border-left-color:#e05555;opacity:.5}
+.lc .h{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:5px}
+.lc .code{font:700 11px ui-monospace;color:#c8a0ff}
+.lc .lbl{color:#e6b45a;font-weight:700;font-size:12px}
+.lc .perf{margin-left:auto;font:10px ui-monospace;color:#888}
+.lc .q{color:#999;line-height:1.45;margin-top:4px}
+.badge{font:9px ui-monospace;padding:2px 6px;border-radius:100px;font-weight:700;text-transform:uppercase}
+.badge.core{background:#0a2a3a;color:#39d0d8}
+.badge.spec{background:#0a2a1a;color:#4cc38a}
+.badge.exp{background:#2a1a0a;color:#d8983f}
+.badge.pru{background:#2a0a0a;color:#e05555}
+
+#hb{position:fixed;bottom:12px;right:12px;background:rgba(12,12,20,.95);border:1px solid #222230;border-radius:100px;padding:6px 14px;font:11px ui-monospace;color:#4cc38a;display:flex;gap:8px;align-items:center;z-index:90;backdrop-filter:blur(8px);box-shadow:0 4px 20px rgba(0,0,0,.5)}
+#hb .d{width:8px;height:8px;border-radius:50%;background:#4cc38a;animation:pulse-dot 1.5s infinite}
+#hb.pause .d{background:#d8983f;animation:none}
+#hb.stop .d{background:#e05555;animation:none}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+
+#toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-120px);background:#e6b45a;color:#000;padding:10px 20px;border-radius:100px;font:700 13px system-ui;z-index:100;transition:.3s cubic-bezier(.2,.9,.3,1.1);max-width:90%;text-align:center}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#toast.err{background:#e05555;color:#fff}
+#toast.ok{background:#4cc38a;color:#000}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+
+<h1>Genesis·Decoder <span>v9 · moteur perpétuel</span></h1>
+<div class="hint">Méthode : question → variables → cumul → formule → direction · Analyse automatique et infinie de l'Ancien Testament</div>
+
+<div class="card">
+<h2>🔑 Clés API Agnès AI</h2>
+<textarea id="keysIn" placeholder="sk-...&#10;sk-..." spellcheck="false" rows="3"></textarea>
+<div class="row" style="margin-top:8px">
+<button class="green" id="startBtn">▶ DÉMARRER LE MOTEUR</button>
+<button class="sec" id="pauseBtn" style="display:none">⏸ Pause</button>
+<button class="red" id="stopBtn" style="display:none">⏹ Stop</button>
+<button class="sec" id="clearBtn" style="flex:0 0 auto;min-width:70px">Effacer</button>
+</div>
+<div class="hint" id="keyStatus">Colle tes clés puis clique DÉMARRER — tout est automatique ensuite.</div>
+</div>
+
+<div class="stat">
+<div class="s"><b id="sKeys">0</b><span>Clés</span></div>
+<div class="s cyan"><b id="sRead">0</b><span>Analyses</span></div>
+<div class="s pink"><b id="sDisc">0</b><span>Découvertes</span></div>
+<div class="s green"><b id="sLens">0</b><span>Angles</span></div>
+<div class="s"><b id="sImg">0</b><span>Images</span></div>
+<div class="s"><b id="sVerse">0</b><span>Versets</span></div>
+<div class="s cyan"><b id="sCycle">0</b><span>Cycle</span></div>
+</div>
+
+<div class="tabs" id="tabs">
+<button class="on" data-t="live">📡 En direct</button>
+<button data-t="best">★ Meilleures</button>
+<button data-t="disc">💎 Découvertes</button>
+<button data-t="img">🖼 Images</button>
+<button data-t="self">🧬 Auto-organisation</button>
+<button data-t="cons">⌨ Console</button>
+</div>
+
+<div id="pLive">
+<div class="live">
+<div id="narration">
+<div class="n"><div class="t">—</div><div class="s">Genesis·Decoder</div><div class="x">En attente. Colle tes clés API et clique sur <strong>DÉMARRER LE MOTEUR</strong>. Je vais reproduire la méthode E=mc² sur les 3 premières lignes de la Genèse, puis lire automatiquement tout l'Ancien Testament, en boucle, indéfiniment.</div></div>
+</div>
+<div id="side">
+<div class="box">
+<h3>Position</h3>
+<div class="pos" id="posBook">—</div>
+<div class="pos-sub" id="posVerse">En attente</div>
+<div class="bar"><i id="posBar" style="width:0%"></i></div>
+</div>
+<div class="box">
+<h3>Convergence</h3>
+<div class="pos" id="convVal">0 %</div>
+<div class="pos-sub" id="convTxt">en attente</div>
+<div class="bar"><i id="convBar" style="width:0%"></i></div>
+</div>
+<div class="box">
+<h3>Clés actives</h3>
+<div class="keylist" id="keyList"></div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="pBest" class="hide"><div id="bestView"></div></div>
+<div id="pDisc" class="hide"><div id="discView"></div></div>
+<div id="pImg" class="hide"><div class="gal" id="gallery"></div></div>
+<div id="pSelf" class="hide"><div id="selfView"></div></div>
+<div id="pCons" class="hide"><div id="console"></div></div>
+
+<div id="hb" class="stop"><span class="d"></span><span id="hbTxt">Inactif</span></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONFIG
+   ═══════════════════════════════════════════════════════════════════ */
+const API = 'https://apihub.agnes-ai.com/v1';
+const MT = 'agnes-2.5-flash';
+const MI = 'agnes-image-2.1-flash';
+const LS_K = 'gd9_k';
+const DB = 'gd9';
+const MAX_LOG = 500;
+const RPM = 10;                           // clés gratuites
+const MIN_INT = Math.ceil(60000/RPM);     // 6000 ms
+const COOL = 65000;
+const TIMEOUT = 60000;
+const MAX_QUEUE = 60;
+const EVOLVE_LENS_EVERY = 20;
+const EVOLVE_METHOD_EVERY = 60;
+const IMG_MIN_SCORE = 8.5;
+
+/* ═══════════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════════ */
+const S = {
+  keys: [],
+  running: false, paused: false, stopped: false,
+  lenses: [], method: [], readings: [], discoveries: [], images: [],
+  books: [], pos: { book: 0, chapter: 1 },
+  cumul: { present: ['E','m','vide','t','p','c'], domains: [], direction: '' },
+  cycle: 0, bootstrapped: false,
+  readCount: 0, verseCount: 0,
+  queue: [], inFlight: 0,
+  lastBump: {}
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   SEED LENSES + METHOD (l'IA les fera évoluer)
+   ═══════════════════════════════════════════════════════════════════ */
+const SEED_LENSES = [
+  {id:'L1', code:'QUESTION', lbl:'Question fondamentale', q:"Quelle est LA question scientifique que ce verset pose ? Que doit se demander un scientifique en lisant ce texte ?", status:'core', p:{n:0,avg:0,best:0}},
+  {id:'L2', code:'VARIABLES', lbl:'Variables textuelles', q:"Quels mots du verset correspondent à des objets scientifiques ? Quels sont les nouveaux par rapport au cumul ?", status:'core', p:{n:0,avg:0,best:0}},
+  {id:'L3', code:'CUMUL', lbl:'Cumul présents/absents', q:"Après ce verset, quelles variables sont PRÉSENTES ? Lesquelles sont encore ABSENTES ? Qu'est-ce que ça rend possible ou impossible ?", status:'core', p:{n:0,avg:0,best:0}},
+  {id:'L4', code:'FORMULE', lbl:'Formule émergente', q:"Quelle formule scientifique devient POSSIBLE avec les variables présentes ? Écris-la ou dis qu'aucune ne l'est encore.", status:'core', p:{n:0,avg:0,best:0}},
+  {id:'L5', code:'DIRECTION', lbl:'Direction du texte', q:"Où ce verset nous emmène-t-il dans la direction globale (énergie → matière → champ → structures → vie → conscience → repos) ?", status:'core', p:{n:0,avg:0,best:0}}
+];
+
+const SEED_METHOD = [
+  {id:'R1', name:'Source textuelle', desc:'Chaque variable doit venir d\'un mot présent textuellement.', w:1.0},
+  {id:'R2', name:'Pas d\'anticipation', desc:'Aucun objet avant son mot-source.', w:1.0},
+  {id:'R3', name:'Pas de sur-simplification', desc:'« lumière » ≠ lumière visible, c\'est la constante c.', w:1.0},
+  {id:'R4', name:'Question obligatoire', desc:'Chaque verset doit révéler la question qu\'il pose.', w:1.0},
+  {id:'R5', name:'Cumul cohérent', desc:'Le cumul des variables doit être respecté.', w:1.0}
+];
+
+/* ═══════════════════════════════════════════════════════════════════
+   UTILS
+   ═══════════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nowT = () => new Date().toLocaleTimeString('fr-FR',{hour12:false});
+const cl = (v,a,b) => Math.max(a, Math.min(b, Number(v)||0));
+
+let toastT;
+function toast(m,t){ const e=$('toast'); e.textContent=m; e.className='on '+(t||''); clearTimeout(toastT); toastT=setTimeout(()=>e.className='',2600); }
+
+function log(msg, cls, group){
+  const c = $('console'); if(!c) return;
+  const d = document.createElement('div');
+  d.className = 'e ' + (cls||'');
+  d.innerHTML = '<span class="t">'+nowT()+'</span>' + (group ? '<span class="g">['+esc(group)+']</span>' : '') + esc(msg);
+  c.appendChild(d);
+  while(c.children.length > MAX_LOG) c.removeChild(c.firstChild);
+  c.scrollTop = c.scrollHeight;
+}
+
+/* Narration — affichage riche et animé */
+function say(speaker, html, cls){
+  const n = $('narration'); if(!n) return;
+  const d = document.createElement('div');
+  d.className = 'n';
+  if(cls === 'disc'){ d.innerHTML = '<div class="disc">' + html + '</div>'; }
+  else if(cls === 'valid'){ d.innerHTML = '<div class="valid">' + html + '</div>'; }
+  else if(cls === 'formula'){ d.innerHTML = '<span class="f">' + html + '</span>'; }
+  else if(cls === 'verse'){ d.innerHTML = html; }
+  else { d.innerHTML = '<div class="t">'+nowT()+'</div><div class="s">'+esc(speaker)+'</div><div class="x">'+html+'</div>'; }
+  n.appendChild(d);
+  while(n.children.length > 300) n.removeChild(n.firstChild);
+  n.scrollTop = n.scrollHeight;
+}
+
+/* Animation de compteur */
+function bumpStat(id){
+  const e = $(id);
+  if(!e) return;
+  const card = e.closest('.s');
+  if(card){
+    card.classList.add('bump');
+    setTimeout(() => card.classList.remove('bump'), 300);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INDEXEDDB
+   ═══════════════════════════════════════════════════════════════════ */
+let _db = null;
+function db(){
+  return new Promise((res, rej) => {
+    if(_db) return res(_db);
+    if(!window.indexedDB) return rej(new Error('IDB indisponible'));
+    const rq = indexedDB.open(DB, 1);
+    rq.onupgradeneeded = e => {
+      const d = e.target.result;
+      ['readings','images','discoveries','chapters'].forEach(s => { if(!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: 'id', autoIncrement: true }); });
+      ['lenses','method','kv'].forEach(s => { if(!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: 'id' }); });
+    };
+    rq.onsuccess = e => { _db = e.target.result; res(_db); };
+    rq.onerror = () => rej(rq.error);
+  });
+}
+function dAdd(s, v){ return db().then(d => new Promise((res, rej) => { const tx = d.transaction(s,'readwrite'); const rq = tx.objectStore(s).add(v); rq.onsuccess = () => res(rq.result); tx.onerror = () => rej(tx.error); })); }
+function dPut(s, v, k){ return db().then(d => new Promise((res, rej) => { const tx = d.transaction(s,'readwrite'); if(k !== undefined) tx.objectStore(s).put(v, k); else tx.objectStore(s).put(v); tx.oncomplete = () => res(true); tx.onerror = () => rej(tx.error); })); }
+function dAll(s){ return db().then(d => new Promise((res, rej) => { const rq = d.transaction(s).objectStore(s).getAll(); rq.onsuccess = () => res(rq.result||[]); rq.onerror = () => rej(rq.error); })); }
+function dGet(s, k){ return db().then(d => new Promise((res, rej) => { const rq = d.transaction(s).objectStore(s).get(k); rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error); })); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   KEYS
+   ═══════════════════════════════════════════════════════════════════ */
+function loadKeys(){
+  try{ const r = localStorage.getItem(LS_K); return r ? JSON.parse(r).filter(k => typeof k === 'string' && k.startsWith('sk-')) : []; }catch(e){ return []; }
+}
+function saveKeys(k){ try{ localStorage.setItem(LS_K, JSON.stringify(k)); }catch(e){} }
+function rebuildKeys(){
+  const raw = ($('keysIn').value||'').split(/\r?\n/).map(x=>x.trim()).filter(x=>x.startsWith('sk-'));
+  const seen = new Set(); const valid = [];
+  raw.forEach(k => { if(!seen.has(k)){ seen.add(k); valid.push(k); } });
+  const old = {}; S.keys.forEach(k => old[k.key] = k);
+  S.keys = valid.map(k => old[k] || {key:k, cool:0, last:0, n:0, busy:0, errors:0, active:true});
+  saveKeys(valid);
+  renderKeys();
+  $('keyStatus').textContent = valid.length + ' clé(s) active(s) · ' + (valid.length * RPM) + ' requêtes/min totales';
+  $('keyStatus').style.color = valid.length ? '#4cc38a' : '#555';
+  updateStats();
+}
+function renderKeys(){
+  const el = $('keyList'); if(!el) return;
+  const now = Date.now(); let active = 0;
+  if(!S.keys.length){ el.innerHTML = '<div style="color:#555;font-size:10px;padding:4px">Aucune clé</div>'; $('sKeys').textContent = '0'; return; }
+  el.innerHTML = S.keys.map((k,i) => {
+    let cls = 'ok', tx = 'OK';
+    if(!k.active){ cls='dead'; tx='morte'; }
+    else if(k.cool > now){ cls='cool'; tx = Math.ceil((k.cool-now)/1000)+'s'; }
+    else active++;
+    return '<div class="k"><span class="id">#'+(i+1)+' '+esc(k.key.slice(0,8))+'…'+esc(k.key.slice(-3))+'</span><span style="color:#555">'+k.n+'</span><span class="st '+cls+'">'+tx+'</span></div>';
+  }).join('');
+  $('sKeys').textContent = active;
+  const hb = $('hbTxt');
+  if(S.running && hb) hb.textContent = (S.paused ? 'Pause' : 'En cours · '+active+' clés');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RATE LIMITER
+   ═══════════════════════════════════════════════════════════════════ */
+function anyKey(){ return S.keys.some(k => k.active); }
+function pickKey(){
+  const now = Date.now();
+  const ready = S.keys.filter(k => k.active && k.cool < now && now - k.last >= MIN_INT && k.busy < 1);
+  if(!ready.length) return null;
+  ready.sort((a,b) => (a.n - b.n) || (a.last - b.last));
+  return ready[0];
+}
+function acquire(){
+  return new Promise((res, rej) => {
+    const t0 = Date.now();
+    (function loop(){
+      if(S.stopped) return rej(new Error('Arrêt'));
+      const k = pickKey();
+      if(k){ k.busy++; k.last = Date.now(); k.n++; return res(k); }
+      if(!anyKey()) return rej(new Error('Aucune clé active'));
+      if(Date.now() - t0 > 300000) return rej(new Error('Timeout clés'));
+      setTimeout(loop, 250);
+    })();
+  });
+}
+function release(k){ if(k){ k.busy = Math.max(0, k.busy-1); } }
+
+/* ═══════════════════════════════════════════════════════════════════
+   API
+   ═══════════════════════════════════════════════════════════════════ */
+async function call(url, opts, tries = 4){
+  let last;
+  for(let a = 0; a < tries; a++){
+    if(S.stopped) throw new Error('Arrêt');
+    let k = null;
+    try{
+      k = await acquire();
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), TIMEOUT);
+      const headers = Object.assign({}, opts.headers||{}, {'Authorization':'Bearer ' + k.key});
+      const res = await fetch(url, Object.assign({}, opts, {headers, signal: ctl.signal}));
+      clearTimeout(t);
+      const ra = parseInt(res.headers.get('Retry-After')||'0',10)||0;
+      if(res.ok){ k.errors = 0; release(k); return res; }
+      let txt = '';
+      try{ txt = (await res.clone().text()).slice(0,300); }catch(e){}
+      if(res.status === 401 || res.status === 403){
+        k.errors++; if(k.errors >= 3) k.active = false;
+        release(k);
+        throw {status: res.status, message: 'HTTP ' + res.status};
+      }
+      if(res.status === 429){
+        const w = ra ? ra*1000 : COOL;
+        k.cool = Date.now() + w; release(k);
+        log('429 · clé …' + k.key.slice(-4) + ' → ' + Math.round(w/1000) + 's', 'warn', 'RATE');
+        await sleep(Math.min(w, 5000));
+        continue;
+      }
+      if(res.status === 400 || res.status === 404){
+        release(k);
+        throw {status: res.status, message: 'HTTP ' + res.status + ' — ' + txt.slice(0,140)};
+      }
+      if([500,502,503,504].includes(res.status)){
+        release(k); last = new Error('HTTP ' + res.status);
+        await sleep(2000 + a*1500); continue;
+      }
+      release(k); last = new Error('HTTP ' + res.status);
+      await sleep(1500 + a*1000);
+    }catch(e){
+      if(k) release(k);
+      if(e.message === 'Arrêt') throw e;
+      if(e.status === 400 || e.status === 401 || e.status === 403 || e.status === 404) throw e;
+      if(e.name === 'AbortError'){ last = new Error('Timeout'); continue; }
+      last = e;
+      await sleep(1500 + a*800);
+    }
+  }
+  throw last || new Error('Échec API');
+}
+
+async function askText(sys, usr, max = 2400, temp = 0.75){
+  const body = {
+    model: MT, messages: [{role:'system',content:sys},{role:'user',content:usr}],
+    temperature: temp, max_tokens: max, reasoning_effort:'none',
+    chat_template_kwargs: {enable_thinking: false}
+  };
+  const r = await call(API + '/chat/completions', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}, 3);
+  const d = await r.json();
+  const c = d.choices && d.choices[0] && d.choices[0].message;
+  return (c && c.content) || (c && c.reasoning_content) || '';
+}
+
+async function askImage(prompt){
+  const body = { model: MI, prompt: String(prompt).slice(0,1900), n:1, size:'1K', ratio:'1:1' };
+  const r = await call(API + '/images/generations', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}, 3);
+  const d = await r.json();
+  const it = d.data && d.data[0];
+  if(!it) throw new Error('Pas d\'image');
+  if(it.url) return it.url;
+  if(it.b64_json) return 'data:image/png;base64,' + it.b64_json;
+  throw new Error('Format image');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   JSON PARSER TOLÉRANT
+   ═══════════════════════════════════════════════════════════════════ */
+function parseJson(t){
+  if(!t) return null;
+  let c = String(t).trim();
+  const fm = c.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if(fm) c = fm[1].trim();
+  const fb = c.indexOf('{'); if(fb < 0) return null;
+  c = c.slice(fb);
+  const lb = c.lastIndexOf('}'); if(lb > 0) c = c.slice(0, lb+1);
+  let out = '', inS = false, escF = false;
+  for(let i = 0; i < c.length; i++){
+    const ch = c[i];
+    if(escF){ out += ch; escF = false; continue; }
+    if(ch === '\\'){ out += ch; escF = true; continue; }
+    if(ch === '"'){ inS = !inS; out += ch; continue; }
+    if(inS){
+      if(ch === '\n'){ out += '\\n'; continue; }
+      if(ch === '\r'){ out += '\\r'; continue; }
+      if(ch === '\t'){ out += '\\t'; continue; }
+      if(ch.charCodeAt(0) < 32){ out += '\\u' + ch.charCodeAt(0).toString(16).padStart(4,'0'); continue; }
+    }
+    out += ch;
+  }
+  out = out.replace(/,\s*([}\]])/g, '$1');
+  try{ return JSON.parse(out); }catch(e){}
+  let ob=0, ok=0, iS=false, eF=false;
+  for(let i=0;i<out.length;i++){
+    const ch=out[i];
+    if(eF){ eF=false; continue; }
+    if(ch==='\\'){ eF=true; continue; }
+    if(ch==='"'){ iS=!iS; continue; }
+    if(iS) continue;
+    if(ch==='{') ob++; else if(ch==='}') ob--;
+    else if(ch==='[') ok++; else if(ch===']') ok--;
+  }
+  let r = out;
+  if(iS) r += '"';
+  while(ok>0){ r+=']'; ok--; }
+  while(ob>0){ r+='}'; ob--; }
+  try{ return JSON.parse(r); }catch(e){ return null; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOOTSTRAP — LA MÉTHODE
+   ═══════════════════════════════════════════════════════════════════ */
+async function bootstrap(){
+  say('Genesis·Decoder', 'Je commence par établir la méthode sur les 3 premières lignes. La question initiale : <strong>si Dieu créa, il lui fallut de l\'énergie</strong>. Voyons ce que chaque ligne révèle.', 'verse');
+  log('Bootstrap — vérification de la méthode E=mc²', 'gold', 'BOOT');
+
+  const sys = `Tu es un analyste scientifique adogmatique. Tu traites la Bible comme un système formel de variables.
+Démonstration de référence (déjà validée) :
+- Gen 1:1 « Au commencement, Dieu créa les cieux et la terre. » → E (Dieu créa = opération), vide (cieux), m (terre), t (commencement). E=mc² IMPOSSIBLE car c manquant.
+- Gen 1:2 « La terre était informe et vide, et l'Esprit de Dieu se mouvait au-dessus des eaux. » → +p (Esprit se mouvait = seul verbe de déplacement). E=mc² toujours IMPOSSIBLE car c manquant.
+- Gen 1:3 « Dieu dit : Que la lumière soit ! Et la lumière fut. » → +c (lumière = vitesse limite). E²=(mc²)²+(pc)² POSSIBLE. E=mc² si p=0.
+RÈGLE : l'ordre du texte (masse → mouvement → lumière) reproduit l'ordre logique de la physique. Aucune variable n'apparaît avant son mot-source.
+JSON uniquement.`;
+
+  const usr = `Analyse Gen 1:1-3 et extrais la MÉTHODE.
+
+{
+  "etapes": [
+    {"v":1,"present":["E","m","vide","t"],"absent":["c","p"],"formule_impossible":"E=mc² (c manquant)","question":"Que faut-il pour créer ?"},
+    {"v":2,"present":["E","m","vide","t","p"],"absent":["c"],"formule_impossible":"E=mc² (c manquant)","question":"Qu'est-ce qui se meut ?"},
+    {"v":3,"present":["E","m","vide","t","p","c"],"absent":[],"formule_possible":"E²=(mc²)²+(pc)²","question":"Qu'est-ce que la lumière apporte ?"}
+  ],
+  "methode": [
+    {"id":"R1","name":"Source textuelle","desc":"..."},
+    {"id":"R2","name":"Pas d'anticipation","desc":"..."},
+    {"id":"R3","name":"Pas de sur-simplification","desc":"..."},
+    {"id":"R4","name":"Question obligatoire","desc":"..."},
+    {"id":"R5","name":"Cumul cohérent","desc":"..."}
+  ],
+  "direction":"énergie → matière → champ → structures → vie → conscience → repos",
+  "verifie": true
+}`;
+
+  const raw = await askText(sys, usr, 2200, 0.3);
+  const j = parseJson(raw);
+  if(!j || !Array.isArray(j.etapes)) throw new Error('Bootstrap JSON invalide');
+  const v1 = j.etapes.find(x => x.v === 1) || {};
+  const v3 = j.etapes.find(x => x.v === 3) || {};
+  const cAbsentV1 = !(v1.present||[]).some(x => /^c$/i.test(String(x)));
+  const cPresentV3 = (v3.present||[]).some(x => /^c$/i.test(String(x)));
+  if(!cAbsentV1 || !cPresentV3) throw new Error('Logique bootstrap incorrecte : c doit être absent au v1 et présent au v3');
+
+  if(Array.isArray(j.methode)){
+    j.methode.forEach(r => {
+      if(r.id && r.name && !S.method.find(m => m.id === r.id)){
+        S.method.push({ id: r.id, name: String(r.name), desc: String(r.desc||'').slice(0,300), w: 1.0 });
+      }
+    });
+  }
+  if(j.direction) S.cumul.direction = String(j.direction);
+  S.bootstrapped = true;
+
+  log('Bootstrap OK — ' + S.method.length + ' règles', 'lock', 'BOOT');
+  say('Genesis·Decoder', '<strong>✓ Méthode établie.</strong> Je connais maintenant la démarche : à chaque verset, identifier les variables, vérifier le cumul, voir quelle formule devient possible, et suivre la direction.', 'valid');
+  say('Genesis·Decoder', 'La formule <em>E² = (mc²)² + (pc)²</em> émerge naturellement de l\'ordre du texte. C\'est cette discipline que j\'applique maintenant à tout l\'Ancien Testament.', 'formula');
+  say('Genesis·Decoder', 'Je demande à l\'IA la liste des 39 livres de l\'Ancien Testament.', 'verse');
+
+  // Persister
+  await dPut('kv', { id: 'method', method: S.method, direction: S.cumul.direction }).catch(()=>{});
+  return true;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOOKS
+   ═══════════════════════════════════════════════════════════════════ */
+async function fetchBooks(){
+  const sys = 'Tu connais la Bible. JSON uniquement.';
+  const usr = `Liste des 39 livres de l'Ancien Testament dans l'ordre canonique avec nombre de chapitres.
+{"books":[{"name":"Genèse","chapters":50},...]}`;
+  const raw = await askText(sys, usr, 1500, 0.2);
+  const j = parseJson(raw);
+  if(!j || !Array.isArray(j.books) || j.books.length < 30) throw new Error('Liste livres invalide');
+  log(j.books.length + ' livres reçus', 'lock', 'BOOKS');
+  say('Genesis·Decoder', '✓ Liste reçue : <strong>' + j.books.length + ' livres.</strong> Je commence la lecture.', 'valid');
+  return j.books.map(b => ({ name: String(b.name), chapters: cl(b.chapters, 1, 200) }));
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CHAPTER (caché)
+   ═══════════════════════════════════════════════════════════════════ */
+async function fetchChapter(book, chapter){
+  const key = book + ' ' + chapter;
+  try{
+    const cached = await dGet('chapters', key);
+    if(cached && cached.verses && cached.verses.length) return cached.verses;
+  }catch(e){}
+
+  const sys = 'Tu connais la Bible par cœur. Texte exact (Louis Segond). JSON uniquement.';
+  const usr = `Tous les versets de "${book}" chapitre ${chapter}.
+{"verses":[{"v":1,"txt":"..."},{"v":2,"txt":"..."}]}`;
+  const raw = await askText(sys, usr, 3500, 0.2);
+  const j = parseJson(raw);
+  if(!j || !Array.isArray(j.verses) || !j.verses.length) throw new Error('Chapitre invalide');
+
+  const verses = j.verses.map(v => ({ v: cl(v.v, 1, 200), txt: String(v.txt||'').trim() })).filter(v => v.txt.length > 5);
+  try { await dPut('chapters', { id: key, book, chapter, verses }); }catch(e){}
+  return verses;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LECTURE D'UN VERSET AVEC UN ANGLE
+   ═══════════════════════════════════════════════════════════════════ */
+async function readVerse(book, chapter, verse, lens){
+  const ref = book + ' ' + chapter + ':' + verse.v;
+
+  const sys = `Tu es un analyste scientifique adogmatique. Méthode validée sur Genèse 1:1-3.
+
+RÈGLES :
+${S.method.map(r => '- ' + r.id + ' ' + r.name + ' : ' + r.desc).join('\n')}
+
+Discipline :
+1. Chaque variable vient d'un mot présent dans le texte.
+2. Aucune variable avant son mot-source.
+3. Pas de sur-simplification.
+4. Chaque verset révèle une question.
+5. Le cumul est respecté.
+Direction : ${S.cumul.direction || 'à suivre'}.
+JSON uniquement.`;
+
+  const usr = `VERSET (${ref}) : « ${verse.txt} »
+
+CUMUL VARIABLES PRÉSENTES : ${JSON.stringify(S.cumul.present)}
+DOMAINES DÉJÀ OUVERTS : ${JSON.stringify(S.cumul.domains.slice(-15))}
+
+ANGLE (${lens.code}) — ${lens.lbl} : ${lens.q}
+
+{
+  "angle": "${lens.code}",
+  "question": "quelle question ce verset pose-t-il ?",
+  "reponse": "3-6 phrases",
+  "intention": "intention du verset",
+  "domaine": "domaine scientifique ouvert",
+  "formule": "formule LaTeX ou chaîne vide",
+  "present": ["variables présentes après ce verset"],
+  "absent": ["variables encore absentes"],
+  "mystere": "mystère scientifique actuel associé",
+  "piste": "piste de recherche",
+  "decouverte": true|false,
+  "desc_decouverte": "si découverte, description autonome",
+  "rigueur": 0-10,
+  "risque": "faible|moyen|eleve",
+  "coherence": 0-10,
+  "sci": 0-10,
+  "txt_fid": 0-10,
+  "novelty": 0-10,
+  "question_clarity": 0-10,
+  "reasoning": "2-4 phrases",
+  "image_prompt": "prompt visuel en anglais, 30-60 mots"
+}`;
+
+  const raw = await askText(sys, usr, 2400, 0.75);
+  const j = parseJson(raw);
+  if(!j) throw new Error('JSON invalide');
+
+  const r = {
+    book, chapter, v: verse.v, ref,
+    verseTxt: verse.txt,
+    lens: lens.code, lensLbl: lens.lbl, lensId: lens.id,
+    question: String(j.question || '').slice(0, 400),
+    reponse: String(j.reponse || '').slice(0, 800),
+    intention: String(j.intention || '').slice(0, 400),
+    domaine: String(j.domaine || '').slice(0, 200),
+    formule: String(j.formule || '').slice(0, 300),
+    present: Array.isArray(j.present) ? j.present : [],
+    absent: Array.isArray(j.absent) ? j.absent : [],
+    mystere: String(j.mystere || '').slice(0, 250),
+    piste: String(j.piste || '').slice(0, 250),
+    decouverte: !!j.decouverte,
+    desc_decouverte: String(j.desc_decouverte || '').slice(0, 500),
+    rigueur: cl(j.rigueur, 0, 10),
+    risque: String(j.risque || 'moyen').toLowerCase(),
+    coherence: cl(j.coherence, 0, 10),
+    sci: cl(j.sci, 0, 10),
+    txt_fid: cl(j.txt_fid, 0, 10),
+    novelty: cl(j.novelty, 0, 10),
+    question_clarity: cl(j.question_clarity, 0, 10),
+    reasoning: String(j.reasoning || '').slice(0, 600),
+    image_prompt: String(j.image_prompt || '').slice(0, 400),
+    time: Date.now()
+  };
+
+  const pen = r.risque === 'eleve' ? 0.7 : r.risque === 'moyen' ? 0.9 : 1;
+  r.method_score = +((r.rigueur*0.20 + r.coherence*0.20 + r.question_clarity*0.25 + r.sci*0.20 + r.txt_fid*0.15) * pen).toFixed(2);
+  r.score = +((r.method_score*0.6 + r.novelty*0.25 + r.txt_fid*0.15)).toFixed(2);
+  return r;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DISCOVERY
+   ═══════════════════════════════════════════════════════════════════ */
+function isDiscovery(r){
+  return (r.method_score >= 8.5 && r.question_clarity >= 8 && r.novelty >= 7) ||
+         (r.decouverte && r.method_score >= 7);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TRAITEMENT D'UNE LECTURE
+   ═══════════════════════════════════════════════════════════════════ */
+function processReading(r){
+  S.readings.push(r);
+  S.readCount++;
+  bumpStat('sRead');
+  $('sRead').textContent = S.readings.length;
+
+  // Performance de l'angle
+  const lens = S.lenses.find(l => l.id === r.lensId);
+  if(lens){
+    lens.p.n++;
+    lens.p.avg = +(((lens.p.avg * (lens.p.n - 1)) + r.score) / lens.p.n).toFixed(2);
+    lens.p.best = Math.max(lens.p.best, r.score);
+  }
+
+  // Cumul
+  if(r.present.length) S.cumul.present = Array.from(new Set([...S.cumul.present, ...r.present]));
+  if(r.domaine && !S.cumul.domains.includes(r.domaine)) S.cumul.domains.push(r.domaine);
+
+  // Persister (fire and forget)
+  dAdd('readings', r).catch(()=>{});
+
+  // Découverte
+  if(isDiscovery(r)){
+    S.discoveries.push(r);
+    dAdd('discoveries', r).catch(()=>{});
+    $('sDisc').textContent = S.discoveries.length;
+    bumpStat('sDisc');
+    say('Genesis·Decoder', '💎 <strong>Découverte</strong> [' + r.lens + '] ' + esc(r.ref) + ' — ' + esc(r.desc_decouverte || r.reponse.slice(0, 200)), 'disc');
+    if(r.formule) say('', esc(r.formule), 'formula');
+    log('💎 ' + r.ref + ' [' + r.lens + '] — ' + (r.desc_decouverte || r.reponse.slice(0, 120)), 'disc', 'DISC');
+  }
+
+  // Affichage narration
+  const cls = r.score >= 7.5 ? 'ok' : (r.score >= 5 ? 'warn' : '');
+  log('★' + r.score.toFixed(1) + ' [méth ' + r.method_score.toFixed(1) + '] ' + r.ref + ' · ' + r.lens, cls, 'READ');
+  if(r.question) say('  ❓ Question', esc(r.question.slice(0, 180)));
+  if(r.formule) say('', esc(r.formule), 'formula');
+  if(r.domaine) log('🔬 ' + r.domaine, 'ai', 'DOM');
+
+  // Image
+  if(r.score >= IMG_MIN_SCORE && r.image_prompt) enqueue({ type: 'image', reading: r });
+
+  // Rendus UI périodiques
+  if(S.readCount % 3 === 0) renderBest();
+  if(S.readCount % 5 === 0) renderSelf();
+  updateStats();
+  updateConv();
+
+  // Évolution
+  if(S.readCount > 0 && S.readCount % EVOLVE_LENS_EVERY === 0) enqueue({ type: 'evolve_lens' });
+  if(S.readCount > 0 && S.readCount % EVOLVE_METHOD_EVERY === 0) enqueue({ type: 'evolve_method' });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   IMAGE
+   ═══════════════════════════════════════════════════════════════════ */
+async function triggerImage(r){
+  try{
+    log('IMG ' + r.lens + ' ' + r.ref, 'ai', 'IMG');
+    const url = await askImage(r.image_prompt);
+    const e = { url, verse: r.ref, lens: r.lens, formule: r.formule, time: Date.now() };
+    S.images.push(e);
+    dAdd('images', e).catch(()=>{});
+    $('sImg').textContent = S.images.length;
+    bumpStat('sImg');
+    renderGal();
+    log('IMG ✓', 'ok', 'IMG');
+  }catch(e){ log('IMG échec : ' + e.message, 'err', 'IMG'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ÉVOLUTION DES ANGLES
+   ═══════════════════════════════════════════════════════════════════ */
+async function evolveLenses(){
+  if(!anyKey()) return;
+  log('Évolution des angles', 'evo', 'EVO');
+  say('Genesis·Decoder', '🧬 J\'analyse les performances de mes angles et j\'en crée de nouveaux.', 'verse');
+
+  const top = S.lenses.slice().sort((a,b) => (b.p?.avg||0) - (a.p?.avg||0)).slice(0, 6);
+  const bot = S.lenses.slice().sort((a,b) => (a.p?.avg||0) - (b.p?.avg||0)).slice(0, 3);
+
+  const sys = 'JSON uniquement.';
+  const usr = `Angles actuels (${S.lenses.length}) :
+MEILLEURS : ${top.map(l => l.code + ' avg ' + (l.p?.avg||0)).join(' | ')}
+FAIBLES : ${bot.map(l => l.code + ' avg ' + (l.p?.avg||0)).join(' | ')}
+
+Crée 3 NOUVEAUX angles d'analyse INÉDITS qui croisent les meilleurs OU explorent des domaines non couverts (topologie, biologie quantique, thermodynamique de la conscience, information holographique, etc.). Chaque angle doit être une question précise applicable à n'importe quel verset.
+
+{"lenses":[{"code":"XXX","lbl":"Nom","q":"question précise","reason":"pourquoi cet angle est utile"}]}`;
+
+  try{
+    const raw = await askText(sys, usr, 1200, 0.9);
+    const j = parseJson(raw);
+    if(!j || !Array.isArray(j.lenses)) throw new Error('Format');
+    let added = 0;
+    for(const nl of j.lenses){
+      if(!nl.code || !nl.lbl || !nl.q) continue;
+      const id = 'LE_' + Date.now() + '_' + added;
+      const l = { id, code: String(nl.code).slice(0,14), lbl: String(nl.lbl).slice(0,40), q: String(nl.q).slice(0,500), reason: String(nl.reason||'').slice(0,200), status: 'exp', p: { n:0, avg:0, best:0 }, born: Date.now() };
+      S.lenses.push(l);
+      dPut('lenses', l).catch(()=>{});
+      log('+ ' + l.code + ' · ' + l.lbl, 'ai', 'EVO');
+      added++;
+    }
+    // Promotion / élagage
+    S.lenses.forEach(l => {
+      if(l.status === 'exp' && l.p.n >= 3){
+        if(l.p.avg >= 8) l.status = 'spec';
+        else if(l.p.avg < 5) l.status = 'pru';
+      }
+    });
+    say('Genesis·Decoder', '✓ <strong>' + added + ' nouveaux angles.</strong> Total : ' + S.lenses.length + ' angles.', 'valid');
+    $('sLens').textContent = S.lenses.length;
+    bumpStat('sLens');
+    renderSelf();
+  }catch(e){ log('EVO échec : ' + e.message, 'err', 'EVO'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ÉVOLUTION DE LA MÉTHODE
+   ═══════════════════════════════════════════════════════════════════ */
+async function evolveMethod(){
+  if(!anyKey()) return;
+  log('Évolution de la méthode', 'evo', 'EVO');
+  say('Genesis·Decoder', '📐 J\'affine ma méthodologie.', 'verse');
+
+  const sys = 'JSON uniquement.';
+  const usr = `Méthode actuelle :
+${S.method.map(r => '- ' + r.id + ' ' + r.name + ' : ' + r.desc).join('\n')}
+
+Propose 2 nouvelles règles méthodologiques TESTABLES pour améliorer la rigueur.
+
+{"rules":[{"id":"R11","name":"...","desc":"..."}]}`;
+
+  try{
+    const raw = await askText(sys, usr, 800, 0.9);
+    const j = parseJson(raw);
+    if(!j || !Array.isArray(j.rules)) throw new Error('Format');
+    let added = 0;
+    for(const nr of j.rules){
+      if(!nr.id || !nr.name || S.method.find(m => m.id === nr.id)) continue;
+      const r = { id: nr.id, name: String(nr.name), desc: String(nr.desc||'').slice(0,300), w: 0.8 };
+      S.method.push(r);
+      dPut('method', r).catch(()=>{});
+      log('+ ' + r.id + ' ' + r.name, 'ai', 'EVO');
+      added++;
+    }
+    say('Genesis·Decoder', '✓ <strong>' + added + ' nouvelles règles.</strong> Total : ' + S.method.length + ' règles.', 'valid');
+    renderSelf();
+  }catch(e){ log('EVO échec : ' + e.message, 'err', 'EVO'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONVERGENCE (mesure interne)
+   ═══════════════════════════════════════════════════════════════════ */
+function updateConv(){
+  const top = S.readings.map(r => r.method_score).sort((a,b) => b-a).slice(0, 10);
+  if(top.length < 3){ $('convVal').textContent = '0 %'; $('convTxt').textContent = 'collecte en cours'; $('convBar').style.width = '0%'; return; }
+  const avg = top.reduce((a,b) => a+b, 0) / top.length;
+  const conv = Math.min(1, Math.max(0, (avg - 6) / (9 - 6)));
+  $('convVal').textContent = (conv*100).toFixed(0) + ' %';
+  $('convTxt').textContent = 'méth. moyenne top10 : ' + avg.toFixed(2) + '/10';
+  $('convBar').style.width = (conv*100).toFixed(0) + '%';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SÉLECTION DES ANGLES
+   ═══════════════════════════════════════════════════════════════════ */
+function selectLenses(){
+  const sorted = S.lenses.slice().sort((a,b) => {
+    if(a.status === 'pru' && b.status !== 'pru') return 1;
+    if(b.status === 'pru' && a.status !== 'pru') return -1;
+    return (b.p?.avg||0) - (a.p?.avg||0);
+  });
+  return sorted.filter(l => l.status !== 'pru').slice(0, 5);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TASK QUEUE + WORKER POOL
+   ═══════════════════════════════════════════════════════════════════ */
+async function enqueue(task){
+  while(S.queue.length >= MAX_QUEUE && !S.stopped){
+    await sleep(200);
+  }
+  S.queue.push(task);
+}
+async function dequeue(){
+  while(!S.queue.length && !S.stopped){
+    await sleep(150);
+  }
+  return S.queue.shift();
+}
+
+async function executeTask(task){
+  try{
+    if(task.type === 'read'){
+      const r = await readVerse(task.book, task.chapter, task.verse, task.lens);
+      processReading(r);
+    } else if(task.type === 'image'){
+      await triggerImage(task.reading);
+    } else if(task.type === 'evolve_lens'){
+      await evolveLenses();
+    } else if(task.type === 'evolve_method'){
+      await evolveMethod();
+    }
+  }catch(e){
+    if(e.message !== 'Arrêt') log('Task ' + task.type + ' : ' + e.message, 'err', 'TASK');
+  }
+}
+
+async function workerLoop(){
+  while(!S.stopped){
+    if(S.paused){ await sleep(300); continue; }
+    if(!anyKey()){ await sleep(2000); continue; }
+    const task = await dequeue();
+    if(!task) continue;
+    S.inFlight++;
+    try{ await executeTask(task); }
+    finally{ S.inFlight--; }
+  }
+}
+
+function startWorkers(){
+  const n = Math.max(1, S.keys.filter(k => k.active).length);
+  for(let i = 0; i < n; i++) workerLoop();
+  log(n + ' workers démarrés', 'lock', 'POOL');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   COORDINATEUR — boucle perpétuelle
+   ═══════════════════════════════════════════════════════════════════ */
+async function coordinator(){
+  while(!S.stopped){
+    if(S.paused){ await sleep(500); continue; }
+    try{
+      // Bootstrap
+      if(!S.bootstrapped){
+        const ok = await bootstrap();
+        if(!ok){ await sleep(5000); continue; }
+      }
+      // Books
+      if(!S.books.length){
+        try{ S.books = await fetchBooks(); S.pos.book = 0; S.pos.chapter = 1; }
+        catch(e){ log('BOOKS échec : ' + e.message, 'err', 'BOOKS'); await sleep(5000); continue; }
+      }
+      // Position
+      const bk = S.books[S.pos.book];
+      if(!bk){ S.pos.book = 0; S.pos.chapter = 1; continue; }
+      // Barre de progression
+      const pct = Math.round(100 * (S.pos.chapter - 1) / Math.max(1, bk.chapters));
+      $('posBook').textContent = bk.name;
+      $('posVerse').textContent = 'Chapitre ' + S.pos.chapter + ' / ' + bk.chapters;
+      $('posBar').style.width = pct + '%';
+
+      // Chapitre
+      let verses = [];
+      try{
+        verses = await fetchChapter(bk.name, S.pos.chapter);
+      }catch(e){
+        log('CHAPITRE ' + bk.name + ' ' + S.pos.chapter + ' : ' + e.message, 'err', 'CHAP');
+        S.pos.chapter++;
+        if(S.pos.chapter > bk.chapters){ S.pos.chapter = 1; S.pos.book++; }
+        continue;
+      }
+
+      say('Genesis·Decoder', '📖 <strong>' + bk.name + ' ' + S.pos.chapter + '</strong> — ' + verses.length + ' versets', 'verse');
+
+      // Enqueue tous les (verset × angle) en parallèle
+      const lenses = selectLenses();
+      const tasks = [];
+      for(const v of verses){
+        for(const l of lenses) tasks.push({ type: 'read', book: bk.name, chapter: S.pos.chapter, verse: v, lens: l });
+      }
+      // Enqueue progressivement
+      for(const t of tasks){ if(S.stopped) break; await enqueue(t); }
+      S.verseCount += verses.length;
+      $('sVerse').textContent = S.verseCount;
+      bumpStat('sVerse');
+
+      // Avancer
+      S.pos.chapter++;
+      if(S.pos.chapter > bk.chapters){ S.pos.chapter = 1; S.pos.book++; }
+      if(S.pos.book >= S.books.length){
+        S.pos.book = 0;
+        S.cycle++;
+        $('sCycle').textContent = S.cycle;
+        bumpStat('sCycle');
+        log('✓ Cycle ' + S.cycle + ' terminé — redémarrage avec angles évolués', 'gold', 'CYCLE');
+        say('Genesis·Decoder', '🔄 <strong>Cycle ' + S.cycle + ' terminé.</strong> Je repars avec mes angles et ma méthode évolués. Chaque cycle est meilleur que le précédent.', 'valid');
+      }
+
+      // Pause courte pour laisser les workers respirer
+      await sleep(500);
+
+    }catch(e){
+      if(e.message === 'Arrêt') break;
+      log('Coord erreur : ' + e.message + ' — reprise 5s', 'err', 'COORD');
+      await sleep(5000);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ENGINE — démarrage
+   ═══════════════════════════════════════════════════════════════════ */
+function startEngine(){
+  if(S.running) return;
+  if(!S.keys.length){ toast('Colle au moins une clé','err'); return; }
+  S.running = true; S.paused = false; S.stopped = false;
+  updateCtl();
+  say('Genesis·Decoder', '🚀 <strong>Moteur lancé.</strong> Je vais lire l\'Ancien Testament en boucle perpétuelle, avec ' + S.keys.length + ' clés en parallèle (' + (S.keys.length * RPM) + ' req/min).', 'valid');
+  log('Engine démarré avec ' + S.keys.length + ' clés', 'lock', 'SYS');
+  startWorkers();
+  coordinator().catch(e => { log('Coord fatal : ' + e.message, 'err', 'SYS'); });
+}
+
+function stopEngine(){
+  S.stopped = true;
+  S.running = false;
+  updateCtl();
+  say('Système', 'Moteur arrêté.', 'verse');
+}
+
+function updateCtl(){
+  const pb = $('pauseBtn'), sb = $('stopBtn'), st = $('startBtn');
+  if(pb) pb.style.display = S.running ? '' : 'none';
+  if(sb) sb.style.display = S.running ? '' : 'none';
+  if(st) st.disabled = S.running;
+  const hb = $('hb'), hbT = $('hbTxt');
+  if(hb){
+    hb.className = S.running ? (S.paused ? 'pause' : '') : 'stop';
+    hbT.textContent = S.running ? (S.paused ? 'Pause' : 'En cours · ' + S.keys.filter(k=>k.active).length + ' clés') : 'Inactif';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   UI RENDERING
+   ═══════════════════════════════════════════════════════════════════ */
+function updateStats(){
+  $('sRead').textContent = S.readings.length;
+  $('sDisc').textContent = S.discoveries.length;
+  $('sLens').textContent = S.lenses.length;
+  $('sImg').textContent = S.images.length;
+  $('sVerse').textContent = S.verseCount;
+  $('sCycle').textContent = S.cycle;
+}
+
+function renderBest(){
+  const v = $('bestView'); if(!v) return;
+  const top = S.readings.slice().sort((a,b) => b.score - a.score).slice(0, 50);
+  if(!top.length){ v.innerHTML = '<div class="hint">Aucune analyse encore.</div>'; return; }
+  v.innerHTML = top.map((r,i) => {
+    const cls = r.score >= 7.5 ? 'sh' : r.score >= 5 ? 'sm' : 'sl';
+    const disc = isDiscovery(r);
+    return '<div class="ritem' + (i<3?' best':'') + (disc?' disc':'') + '">'
+      + '<div class="h"><span class="lens">' + esc(r.lens) + '</span><span class="ref">' + esc(r.ref) + '</span><span class="sc ' + cls + '">★ ' + r.score.toFixed(1) + '</span></div>'
+      + (r.question ? '<div class="intent">❓ ' + esc(r.question.slice(0,200)) + '</div>' : '')
+      + (r.domaine ? '<div class="dom">🔬 ' + esc(r.domaine) + '</div>' : '')
+      + (r.formule ? '<div class="f">' + esc(r.formule) + '</div>' : '')
+      + (r.reponse ? '<div class="w">' + esc(r.reponse.slice(0,220)) + '</div>' : '')
+      + '<div class="m"><span>méth ' + r.method_score.toFixed(1) + '</span><span>q ' + r.question_clarity + '</span><span>coh ' + r.coherence + '</span><span>sci ' + r.sci + '</span><span>nov ' + r.novelty + '</span></div>'
+      + (r.mystere ? '<div class="w">🔭 ' + esc(r.mystere.slice(0,140)) + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function renderDisc(){
+  const v = $('discView'); if(!v) return;
+  if(!S.discoveries.length){ v.innerHTML = '<div class="hint">Aucune découverte encore. Le moteur cherche.</div>'; return; }
+  v.innerHTML = S.discoveries.slice().reverse().map(r =>
+    '<div class="ritem disc">'
+    + '<div class="h"><span class="lens">' + esc(r.lens) + '</span><span class="ref">' + esc(r.ref) + '</span><span class="sc sh">★ ' + r.score.toFixed(1) + '</span></div>'
+    + (r.question ? '<div class="intent">❓ ' + esc(r.question) + '</div>' : '')
+    + (r.formule ? '<div class="f">' + esc(r.formule) + '</div>' : '')
+    + (r.desc_decouverte ? '<div class="w" style="color:#ff64d0;font-weight:600">💎 ' + esc(r.desc_decouverte) + '</div>' : '')
+    + (r.mystere ? '<div class="w">🔭 ' + esc(r.mystere) + '</div>' : '')
+    + (r.piste ? '<div class="w">🧪 ' + esc(r.piste) + '</div>' : '')
+    + '</div>'
+  ).join('');
+}
+
+function renderGal(){
+  const g = $('gallery'); if(!g) return;
+  if(!S.images.length){ g.innerHTML = '<div class="hint" style="padding:20px;text-align:center;grid-column:1/-1">Les images apparaîtront ici automatiquement quand le score dépasse ' + IMG_MIN_SCORE + '.</div>'; return; }
+  g.innerHTML = S.images.slice().reverse().map(im =>
+    '<div class="g"><img src="' + esc(im.url) + '" loading="lazy" onclick="window.open(this.src)"><div class="c"><b>' + esc(im.verse||'') + '</b>' + esc(im.lens||'') + '</div></div>'
+  ).join('');
+}
+
+function renderSelf(){
+  const v = $('selfView'); if(!v) return;
+  const sorted = S.lenses.slice().sort((a,b) => (b.p?.avg||0) - (a.p?.avg||0));
+  v.innerHTML = '<h2>🧬 Angles (' + S.lenses.length + ')</h2>'
+    + sorted.slice(0, 30).map(l => {
+        const cls = l.status === 'core' ? '' : l.status === 'spec' ? 'spec' : l.status === 'pru' ? 'pru' : 'exp';
+        return '<div class="lc ' + cls + '">'
+          + '<div class="h"><span class="code">' + esc(l.code) + '</span><span class="lbl">' + esc(l.lbl) + '</span>'
+          + '<span class="badge ' + l.status + '">' + l.status + '</span>'
+          + '<span class="perf">avg ' + (l.p?.avg||0) + ' · n=' + (l.p?.n||0) + (l.p?.best ? ' · best ' + l.p.best : '') + '</span></div>'
+          + '<div class="q">' + esc(l.q.slice(0,180)) + '</div>'
+          + (l.reason ? '<div class="q" style="color:#c8a0ff">💡 ' + esc(l.reason) + '</div>' : '')
+          + '</div>';
+      }).join('')
+    + '<h2 style="margin-top:14px">📐 Méthode (' + S.method.length + ')</h2>'
+    + S.method.map(r =>
+        '<div class="lc"><div class="h"><span class="code">' + esc(r.id) + '</span><span class="lbl">' + esc(r.name) + '</span></div><div class="q">' + esc(r.desc) + '</div></div>'
+      ).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TABS
+   ═══════════════════════════════════════════════════════════════════ */
+document.querySelectorAll('#tabs button').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('#tabs button').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    const map = { live:'pLive', best:'pBest', disc:'pDisc', img:'pImg', self:'pSelf', cons:'pCons' };
+    Object.values(map).forEach(id => { const e=$(id); if(e) e.classList.add('hide'); });
+    const target = map[t.dataset.t]; if(target) $(target).classList.remove('hide');
+    if(t.dataset.t === 'best') renderBest();
+    if(t.dataset.t === 'disc') renderDisc();
+    if(t.dataset.t === 'img') renderGal();
+    if(t.dataset.t === 'self') renderSelf();
+  };
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   ÉVÉNEMENTS
+   ═══════════════════════════════════════════════════════════════════ */
+$('startBtn').onclick = () => { rebuildKeys(); if(S.keys.length) startEngine(); };
+$('pauseBtn').onclick = () => {
+  S.paused = !S.paused;
+  $('pauseBtn').textContent = S.paused ? '▶ Reprendre' : '⏸ Pause';
+  updateCtl();
+  say('Système', S.paused ? '⏸ Pause' : '▶ Reprise', 'verse');
+};
+$('stopBtn').onclick = () => stopEngine();
+$('clearBtn').onclick = () => {
+  $('keysIn').value = '';
+  S.keys = [];
+  saveKeys([]);
+  renderKeys();
+  $('keyStatus').textContent = 'Aucune clé';
+  $('keyStatus').style.color = '#555';
+};
+$('keysIn').addEventListener('blur', () => { if(!S.keys.length && $('keysIn').value.trim()) rebuildKeys(); });
+
+/* ═══════════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════════ */
+(async function init(){
+  // Clés
+  const ks = loadKeys();
+  if(ks.length){
+    $('keysIn').value = ks.join('\n');
+    S.keys = ks.map(k => ({ key: k, cool: 0, last: 0, n: 0, busy: 0, errors: 0, active: true }));
+    $('keyStatus').textContent = ks.length + ' clé(s) restaurée(s) — ' + (ks.length * RPM) + ' req/min';
+    $('keyStatus').style.color = '#4cc38a';
+  }
+  renderKeys();
+
+  // Restaure lenses + method + données
+  try{
+    const lens = await dAll('lenses');
+    S.lenses = [...SEED_LENSES];
+    lens.forEach(l => { if(!S.lenses.find(x => x.id === l.id)) S.lenses.push(l); });
+    const meth = await dAll('method');
+    S.method = [...SEED_METHOD];
+    meth.forEach(m => { if(!S.method.find(x => x.id === m.id)) S.method.push(m); });
+    const kv = await dGet('kv', 'method').catch(() => null);
+    if(kv && kv.direction) S.cumul.direction = kv.direction;
+    const rs = await dAll('readings');
+    if(rs.length){ S.readings = rs; log(rs.length + ' analyses restaurées', 'ok', 'INIT'); }
+    const dc = await dAll('discoveries');
+    if(dc.length){ S.discoveries = dc; log(dc.length + ' découvertes restaurées', 'ok', 'INIT'); }
+    const im = await dAll('images');
+    if(im.length){ S.images = im; log(im.length + ' images restaurées', 'ok', 'INIT'); }
+  }catch(e){
+    S.lenses = [...SEED_LENSES];
+    S.method = [...SEED_METHOD];
+  }
+
+  renderBest(); renderDisc(); renderGal(); renderSelf();
+  updateStats(); updateConv(); updateCtl();
+
+  say('Genesis·Decoder', 'Prêt. Colle tes clés Agnès AI puis clique sur <strong>DÉMARRER LE MOTEUR</strong>.', 'valid');
+  say('Genesis·Decoder', 'Je vais : (1) établir la méthode sur les 3 premières lignes, (2) obtenir la liste des 39 livres, (3) lire chaque verset sous plusieurs angles, en boucle perpétuelle, avec toutes tes clés en parallèle.', 'verse');
+  if(S.keys.length) say('Genesis·Decoder', 'Clés détectées. Démarrage automatique dans 2 s.', 'valid');
+
+  if(S.keys.length) setTimeout(() => startEngine(), 2000);
+
+  // Refresh UI périodique
+  setInterval(() => { renderKeys(); updateConv(); }, 2000);
+})();
+</script>
+</body>
+</html>
