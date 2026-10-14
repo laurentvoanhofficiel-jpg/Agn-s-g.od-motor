@@ -535,3 +535,5 @@ MIT — Utilise, modifie, distribue librement.
 **Version** : v3.0
 **Dernière mise à jour** : 2026
 **Auteur** : [Laurent Vo Anh]
+---
+élaboré sur deepseek https://chat.deepseek.com/share/sem205djydahdgjlfv
