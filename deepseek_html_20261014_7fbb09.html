@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Genesis·Decoder v12</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:13px/1.5 system-ui,sans-serif;background:#0a0a12;color:#d0d0dc;max-width:1200px;margin:0 auto;padding:8px}
+h1{font:700 17px system-ui;color:#e6b45a;margin-bottom:6px}
+h1 span{font:11px ui-monospace;color:#39d0d8;font-weight:400;margin-left:6px}
+h2{font:700 10px system-ui;color:#39d0d8;text-transform:uppercase;letter-spacing:.06em;margin:10px 0 5px}
+.card{background:#111118;border:1px solid #222230;border-radius:6px;padding:10px;margin-bottom:8px}
+textarea,input{width:100%;padding:6px;background:#08080e;border:1px solid #222230;color:#d0d0dc;border-radius:4px;font:11px ui-monospace}
+textarea{min-height:50px;resize:vertical}
+textarea:focus,input:focus{outline:0;border-color:#e6b45a}
+button{padding:6px 12px;background:#e6b45a;color:#000;border:0;border-radius:4px;font:700 11px system-ui;cursor:pointer}
+button:hover:not(:disabled){filter:brightness(1.1)}
+button:disabled{opacity:.35;cursor:not-allowed}
+button.sec{background:#222230;color:#d0d0dc}
+button.green{background:#4cc38a;color:#000}
+button.cyan{background:#39d0d8;color:#000}
+button.red{background:#c04040;color:#fff}
+button.sm{padding:4px 9px;font-size:10px}
+.row{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.hint{font:10px ui-monospace;color:#666;margin-top:4px}
+.hint.ok{color:#4cc38a}.hint.err{color:#e05555}
+
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:5px;margin-bottom:8px}
+.stat .s{background:#111118;border:1px solid #222230;border-radius:4px;padding:6px;text-align:center}
+.stat .s b{display:block;font:800 18px ui-monospace;color:#e6b45a}
+.stat .s.pink b{color:#ff64d0}.stat .s.cyan b{color:#39d0d8}.stat .s.green b{color:#4cc38a}
+.stat .s span{font:9px ui-monospace;color:#666;text-transform:uppercase}
+
+.tabs{display:flex;gap:3px;overflow-x:auto;margin:8px 0;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{background:#111118;color:#888;border:1px solid #222230;border-radius:100px;font:700 11px system-ui;padding:5px 11px;white-space:nowrap;flex-shrink:0}
+.tabs button.on{background:#e6b45a;color:#000;border-color:#e6b45a}
+
+.live{display:grid;grid-template-columns:1fr 240px;gap:8px}
+@media(max-width:820px){.live{grid-template-columns:1fr}}
+#narration{background:#0c0c14;border:1px solid #1a1a28;border-radius:6px;padding:10px;height:600px;overflow-y:auto}
+#narration .n{padding:6px 0;border-bottom:1px solid #1a1a28;font-size:12.5px;line-height:1.5}
+#narration .n:last-child{border-bottom:0}
+#narration .n .t{font:9px ui-monospace;color:#444}
+#narration .n .s{color:#e6b45a;font:700 10px system-ui;text-transform:uppercase;letter-spacing:.04em}
+#narration .n .x{margin-top:3px}
+#narration .n .x em{color:#39d0d8;font-style:normal}
+#narration .n .x strong{color:#e6b45a}
+#narration .f{display:block;font:13px ui-monospace;color:#4cc38a;background:#0a1a0f;border-left:3px solid #4cc38a;padding:6px 10px;border-radius:4px;margin:4px 0;word-break:break-word}
+#narration .disc{background:#1a0a1a;border-left:3px solid #ff64d0;padding:8px 12px;border-radius:4px;margin:6px 0;color:#ff64d0;font-weight:600;font-size:12px}
+#narration .disc .inv{margin-top:5px;padding:6px 8px;background:#0a0a14;border-left:2px solid #39d0d8;color:#39d0d8;font-size:11px;font-weight:400;border-radius:3px}
+#narration .disc .inv b{color:#e6b45a;display:block;font-size:9px;text-transform:uppercase}
+#narration .valid{background:#0a1a0f;border-left:3px solid #4cc38a;padding:6px 10px;border-radius:4px;margin:4px 0;color:#4cc38a;font-size:12px}
+#narration .deep{background:#1a0a14;border-left:3px solid #ff64d0;padding:6px 10px;border-radius:4px;margin:6px 0;color:#ff64d0;font-size:12px}
+#narration .verse-ref{color:#39d0d8;font:700 11px ui-monospace}
+
+#side .box{background:#0c0c14;border:1px solid #1a1a28;border-radius:6px;padding:8px;margin-bottom:6px}
+#side .box h3{font:700 9px system-ui;color:#666;text-transform:uppercase;margin-bottom:5px}
+#side .pos{font:700 12px ui-monospace;color:#39d0d8}
+#side .pos-sub{font:10px ui-monospace;color:#666}
+#side .bar{height:3px;background:#1a1a28;border-radius:2px;overflow:hidden;margin-top:4px}
+#side .bar i{display:block;height:100%;background:linear-gradient(90deg,#39d0d8,#e6b45a);transition:width .4s}
+#side .keylist{max-height:200px;overflow-y:auto}
+#side .k{display:flex;gap:4px;padding:3px 0;font:9px ui-monospace;border-bottom:1px solid #1a1a28;align-items:center}
+#side .k .id{flex:1;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#side .k .st{font:8px ui-monospace;padding:1px 4px;border-radius:3px;font-weight:700}
+#side .k .st.ok{background:#0a2a1a;color:#4cc38a}
+#side .k .st.cool{background:#2a1a0a;color:#d8983f}
+#side .k .st.dead{background:#2a0a0a;color:#e05555}
+
+.ritem{padding:8px;background:#0c0c14;border:1px solid #1a1a28;border-radius:5px;margin-bottom:5px;font-size:11.5px}
+.ritem .h{display:flex;gap:4px;align-items:center;margin-bottom:4px;flex-wrap:wrap}
+.ritem .lens{font:9px ui-monospace;padding:1px 5px;background:#3a2a5a;color:#c8a0ff;border-radius:3px;font-weight:700;text-transform:uppercase}
+.ritem .ref{font:10px ui-monospace;color:#888}
+.ritem .sc{font:700 10px ui-monospace;margin-left:auto;padding:2px 6px;border-radius:100px}
+.ritem .f{font:13px ui-monospace;color:#e6b45a;margin:4px 0;word-break:break-word}
+.ritem .intent{color:#39d0d8;font-size:11px;padding-left:6px;border-left:2px solid #39d0d8;margin:3px 0}
+.ritem .dom{color:#4cc38a;font-size:11px;padding-left:6px;border-left:2px solid #4cc38a;margin:3px 0}
+.ritem .w{color:#888;margin-top:3px;line-height:1.4}
+.ritem .m{display:flex;gap:3px;margin-top:4px;font:9px ui-monospace;color:#777;flex-wrap:wrap}
+.ritem .m span{background:#1a1a28;padding:1px 4px;border-radius:3px}
+.ritem.best{border-color:#e6b45a;background:#1a1408}
+.ritem.disc{border-color:#ff64d0;background:#1a0a1a}
+.sh{background:#4cc38a;color:#000}.sm{background:#d8983f;color:#000}.sl{background:#e05555;color:#fff}
+
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:5px}
+.gal .g{background:#0c0c14;border:1px solid #1a1a28;border-radius:5px;overflow:hidden}
+.gal img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:pointer}
+.gal .c{padding:5px 6px;font:9px ui-monospace;color:#777}
+.gal .c b{color:#e6b45a;display:block;margin-bottom:2px}
+
+#console{background:#040408;border:1px solid #1a1a28;border-radius:5px;height:520px;overflow-y:auto;padding:6px;font:10.5px/1.45 ui-monospace}
+#console .e{padding:1px 0;border-bottom:1px solid #0a0a10;word-break:break-word}
+#console .e .t{color:#333;margin-right:4px}
+#console .e .g{color:#c8a0ff;margin-right:4px;font-weight:700}
+#console .ok{color:#4cc38a}#console .err{color:#e05555}#console .warn{color:#d8983f}
+#console .gold{color:#e6b45a}#console .lock{color:#39d0d8}#console .ai{color:#c8a0ff}
+#console .disc{color:#ff64d0;font-weight:700}#console .evo{color:#4cc38a;font-weight:700}
+
+.lc{padding:7px;background:#0c0c14;border:1px solid #1a1a28;border-left:3px solid #39d0d8;border-radius:4px;margin-bottom:5px;font-size:11px}
+.lc.spec{border-left-color:#4cc38a}.lc.exp{border-left-color:#d8983f}.lc.pru{border-left-color:#e05555;opacity:.5}
+.lc .h{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:3px}
+.lc .code{font:700 10px ui-monospace;color:#c8a0ff}
+.lc .lbl{color:#e6b45a;font-weight:700;font-size:11px}
+.lc .perf{margin-left:auto;font:9px ui-monospace;color:#888}
+.lc .q{color:#999;line-height:1.4;margin-top:3px}
+.badge{font:8px ui-monospace;padding:1px 5px;border-radius:100px;font-weight:700;text-transform:uppercase}
+.badge.core{background:#0a2a3a;color:#39d0d8}.badge.spec{background:#0a2a1a;color:#4cc38a}
+.badge.exp{background:#2a1a0a;color:#d8983f}.badge.pru{background:#2a0a0a;color:#e05555}
+.badge.deep{background:#2a0a2a;color:#ff64d0}
+
+#hb{position:fixed;bottom:10px;right:10px;background:rgba(12,12,20,.95);border:1px solid #222230;border-radius:100px;padding:5px 12px;font:10px ui-monospace;color:#4cc38a;display:flex;gap:6px;align-items:center;z-index:90}
+#hb .d{width:7px;height:7px;border-radius:50%;background:#4cc38a;animation:pd 1.5s infinite}
+#hb.pause .d{background:#d8983f;animation:none}#hb.stop .d{background:#e05555;animation:none}
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.4}}
+#toast{position:fixed;top:10px;left:50%;transform:translateX(-50%) translateY(-100px);background:#e6b45a;color:#000;padding:8px 16px;border-radius:100px;font:700 12px system-ui;z-index:100;transition:.3s;max-width:90%;text-align:center}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#toast.err{background:#e05555;color:#fff}#toast.ok{background:#4cc38a;color:#000}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+
+<h1>Genesis·Decoder <span>v12 · moteur perpétuel</span></h1>
+<div class="hint">Méthode : <b style="color:#39d0d8">Question → Variables → Cumul → Formule → Direction → Mystère → Invention</b> · formules Unicode · JSON blindé</div>
+
+<!-- ============ CLÉS API ============ -->
+<div class="card">
+  <h2>🔑 Clés API Agnès AI</h2>
+  <textarea id="keysIn" placeholder="Colle tes clés ici, une par ligne&#10;sk-xxxxxxxxxxxx&#10;sk-yyyyyyyyyyyy" spellcheck="false" rows="3"></textarea>
+  <div class="row" style="margin-top:8px">
+    <button class="green" id="saveKeysBtn">✓ Valider les clés</button>
+    <button class="sec sm" id="clearKeysBtn">Effacer</button>
+    <span class="hint" id="keyStatus" style="margin:0;flex:1;text-align:right">Aucune clé enregistrée</span>
+  </div>
+</div>
+
+<!-- ============ MOTEUR ============ -->
+<div class="card">
+  <div class="row" style="margin:0">
+    <button class="green" id="startBtn">▶ DÉMARRER</button>
+    <button class="sec" id="pauseBtn" style="display:none">⏸ Pause</button>
+    <button class="red" id="stopBtn" style="display:none">⏹ Stop</button>
+  </div>
+</div>
+
+<!-- ============ STATS ============ -->
+<div class="stat">
+  <div class="s"><b id="sKeys">0</b><span>Clés</span></div>
+  <div class="s cyan"><b id="sRead">0</b><span>Analyses</span></div>
+  <div class="s pink"><b id="sDisc">0</b><span>Découvertes</span></div>
+  <div class="s green"><b id="sLens">0</b><span>Angles</span></div>
+  <div class="s"><b id="sImg">0</b><span>Images</span></div>
+  <div class="s"><b id="sVerse">0</b><span>Versets</span></div>
+  <div class="s cyan"><b id="sCycle">0</b><span>Cycle</span></div>
+  <div class="s pink"><b id="sInv">0</b><span>Inventions</span></div>
+  <div class="s"><b id="sRepair">0</b><span>JSON réparés</span></div>
+</div>
+
+<!-- ============ TABS ============ -->
+<div class="tabs" id="tabs">
+  <button class="on" data-t="live">📡 Direct</button>
+  <button data-t="best">★ Top</button>
+  <button data-t="disc">💎 Découvertes</button>
+  <button data-t="inv">⚗ Inventions</button>
+  <button data-t="img">🖼 Images</button>
+  <button data-t="self">🧬 Angles</button>
+  <button data-t="cons">⌨ Console</button>
+</div>
+
+<!-- ============ LIVE ============ -->
+<div id="pLive">
+  <div class="live">
+    <div>
+      <div id="narration">
+        <div class="n"><div class="t">—</div><div class="s">Genesis·Decoder</div><div class="x">En attente. Colle tes clés puis clique <strong>Valider les clés</strong>, puis <strong>DÉMARRER</strong>.</div></div>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <button class="cyan sm" id="freezeBtn">❄️ Figer le défilement</button>
+        <button class="sec sm" id="clearNarrBtn">Effacer la narration</button>
+        <span class="hint" id="narrInfo" style="margin:0;margin-left:auto">— messages</span>
+      </div>
+    </div>
+    <div id="side">
+      <div class="box">
+        <h3>Position</h3>
+        <div class="pos" id="posBook">—</div>
+        <div class="pos-sub" id="posVerse">En attente</div>
+        <div class="bar"><i id="posBar" style="width:0%"></i></div>
+      </div>
+      <div class="box">
+        <h3>Convergence</h3>
+        <div class="pos" id="convVal">0 %</div>
+        <div class="pos-sub" id="convTxt">en attente</div>
+        <div class="bar"><i id="convBar" style="width:0%"></i></div>
+      </div>
+      <div class="box">
+        <h3>Clés actives</h3>
+        <div class="keylist" id="keyList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="pBest" class="hide"><div id="bestView"></div></div>
+<div id="pDisc" class="hide"><div id="discView"></div></div>
+<div id="pInv" class="hide"><div id="invView"></div></div>
+<div id="pImg" class="hide"><div class="gal" id="gallery"></div></div>
+<div id="pSelf" class="hide"><div id="selfView"></div></div>
+<div id="pCons" class="hide"><div id="console"></div></div>
+
+<div id="hb" class="stop"><span class="d"></span><span id="hbTxt">Inactif</span></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ═══════ CONFIG ═══════ */
+const CONFIG = {
+  API: 'https://apihub.agnes-ai.com/v1',
+  MODEL_TEXT: 'agnes-2.5-flash',
+  MODEL_IMG: 'agnes-image-2.1-flash',
+  LS_KEYS: 'gd12_keys',
+  DB_NAME: 'gd12',
+  DB_VERSION: 1,
+  MAX_LOG: 400,
+  MAX_NARRATION: 250,
+  MAX_QUEUE: 80,
+  RPM_PER_KEY: 10,
+  COOLDOWN_429_MS: 65000,
+  FETCH_TIMEOUT_MS: 60000,
+  EVOLVE_LENS_EVERY: 20,
+  EVOLVE_METHOD_EVERY: 60,
+  IMG_MIN_SCORE: 8.5,
+  DISCOVERY_MIN_METHOD: 8.5,
+  DISCOVERY_MIN_QUESTION: 8,
+  DISCOVERY_MIN_NOVELTY: 7,
+  DEEP_TRIGGERS: ['homme','femme','âme','esprit','souffle','image','ressemblance','conscience',
+    'pensée','connais','volonté','être vivant','langage','parole','nom','cœur',
+    'vie éternelle','arbre de vie','dieu dit','faisons']
+};
+
+/* ═══════ STATE ═══════ */
+const STATE = {
+  keys: [], running: false, paused: false, stopped: false, freeze: false,
+  lenses: [], method: [], readings: [], discoveries: [], inventions: [], images: [], books: [],
+  pos: { book: 0, chapter: 1 },
+  cumul: { present: ['E','m','vide','t','p','c'], absent: [], domains: [], direction: '' },
+  cycle: 0, bootstrapped: false, readCount: 0, verseCount: 0, jsonRepairs: 0,
+  queue: [], inFlight: 0
+};
+
+/* ═══════ LENTILLES ═══════ */
+const SEED_LENSES = [
+  { id:'L1', code:'QUESTION', lbl:'Question fondamentale',
+    q:"Quelle est LA question scientifique que ce verset pose ? Formule-la en une phrase précise.",
+    status:'core', p:{n:0,avg:0,best:0} },
+  { id:'L2', code:'VARIABLES', lbl:'Variables textuelles',
+    q:"Quels mots correspondent à des objets scientifiques ? NOUVEAUX mots par rapport au cumul. Chaque variable vient d'un mot présent textuellement.",
+    status:'core', p:{n:0,avg:0,best:0} },
+  { id:'L3', code:'CUMUL', lbl:'Cumul présents/absents',
+    q:"Après ce verset, quelles variables sont PRÉSENTES ? ABSENTES ? Qu'est-ce que ce cumul rend POSSIBLE ?",
+    status:'core', p:{n:0,avg:0,best:0} },
+  { id:'L4', code:'FORMULE', lbl:'Formule émergente',
+    q:"Quelle formule scientifique devient POSSIBLE ? Écris-la en notation UNICODE (², √, ·, ×, Φ, Δ, ∑, ∫). Pas de LaTeX, pas de backslash.",
+    status:'core', p:{n:0,avg:0,best:0} },
+  { id:'L5', code:'DIRECTION', lbl:'Direction de complexification',
+    q:"Où ce verset mène-t-il dans la direction (énergie → matière → champ → structures → vie → conscience → repos) ?",
+    status:'core', p:{n:0,avg:0,best:0} },
+  { id:'L6', code:'MYSTERE', lbl:'Mystère scientifique actuel',
+    q:"À quel grand mystère scientifique actuel ce verset fait-il écho ? (matière noire, gravité quantique, conscience, vide quantique, etc.)",
+    status:'core', p:{n:0,avg:0,best:0} },
+  { id:'L7', code:'INVENTION', lbl:'Piste d\'invention testable',
+    q:"Quelle INVENTION concrète découle de cette lecture ? Formule du dispositif (Unicode), principe, protocole expérimental testable.",
+    status:'core', p:{n:0,avg:0,best:0} }
+];
+
+const DEEP_LENSES = [
+  { id:'D1', code:'BIOL_INFO', lbl:'Information biologique',
+    q:"Analyse via l'ADN, code génétique, hérédité. Formule biologique en Unicode.",
+    status:'deep', p:{n:0,avg:0,best:0} },
+  { id:'D2', code:'INFO_INTEGREE', lbl:'Information intégrée',
+    q:"Analyse via IIT (Tononi), mesure Φ. Niveau d'intégration d'information décrit.",
+    status:'deep', p:{n:0,avg:0,best:0} },
+  { id:'D3', code:'CONSCIENCE', lbl:'Conscience phénoménale',
+    q:"Auto-modèle, récursivité, expérience subjective ? Lien avec Orch-OR, IIT, espace de travail global.",
+    status:'deep', p:{n:0,avg:0,best:0} },
+  { id:'D4', code:'LANGAGE', lbl:'Langage symbolique',
+    q:"Parole, nomination, référence ? Lien avec la récursion de Chomsky, émergence du langage.",
+    status:'deep', p:{n:0,avg:0,best:0} }
+];
+
+const SEED_METHOD = [
+  { id:'R1', name:'Source textuelle', desc:'Chaque variable vient d\'un mot présent textuellement.', w:1 },
+  { id:'R2', name:'Pas d\'anticipation', desc:'Aucun objet avant son mot-source.', w:1 },
+  { id:'R3', name:'Pas de sur-simplification', desc:'« lumière » ≠ lumière visible, c\'est la constante c.', w:1 },
+  { id:'R4', name:'Question obligatoire', desc:'Chaque verset révèle SA question.', w:1 },
+  { id:'R5', name:'Cumul cohérent', desc:'Présents/absents respectés et mis à jour.', w:1 },
+  { id:'R6', name:'Formules Unicode uniquement', desc:'Zéro backslash dans les formules.', w:1 }
+];
+
+/* ═══════ UTILS ═══════ */
+const U = {
+  $: id => document.getElementById(id),
+  sleep: ms => new Promise(r => setTimeout(r, ms)),
+  esc: s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+  now: () => new Date().toLocaleTimeString('fr-FR', {hour12:false}),
+  clamp: (v,a,b) => Math.max(a, Math.min(b, Number(v)||0)),
+  uid: () => Date.now().toString(36) + Math.random().toString(36).slice(2,7)
+};
+
+let _toastT;
+const toast = (msg, type) => {
+  const el = U.$('toast');
+  el.textContent = msg;
+  el.className = 'on ' + (type||'');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.className = '', 2600);
+};
+
+/* ═══════ REPAIR (JSON anti-casse) ═══════ */
+const Repair = {
+  escapeBackslashes(str) {
+    if (!str) return str;
+    let out = '', inStr = false, i = 0;
+    while (i < str.length) {
+      const ch = str[i];
+      if (!inStr) {
+        out += ch;
+        if (ch === '"') inStr = true;
+        i++; continue;
+      }
+      if (ch === '\\') {
+        const next = str[i+1];
+        if (next === '"' || next === '\\' || next === '/') { out += ch + next; i += 2; continue; }
+        if (next === 'u' && /^[0-9a-fA-F]{4}$/.test(str.slice(i+2, i+6))) { out += str.slice(i, i+6); i += 6; continue; }
+        out += '\\\\'; i++; continue;
+      }
+      const cc = ch.charCodeAt(0);
+      if (cc < 32) {
+        if (ch === '\n') { out += '\\n'; i++; continue; }
+        if (ch === '\r') { out += '\\r'; i++; continue; }
+        if (ch === '\t') { out += '\\t'; i++; continue; }
+        out += '\\u' + cc.toString(16).padStart(4,'0'); i++; continue;
+      }
+      if (ch === '"') { inStr = false; out += ch; i++; continue; }
+      out += ch; i++;
+    }
+    return out;
+  },
+
+  parseWithRepair(rawText) {
+    if (!rawText) return null;
+    let txt = String(rawText).trim();
+    const fence = txt.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fence) txt = fence[1].trim();
+    const fb = txt.indexOf('{');
+    if (fb < 0) return null;
+    txt = txt.slice(fb);
+    const lb = txt.lastIndexOf('}');
+    if (lb > 0) txt = txt.slice(0, lb + 1);
+
+    const cleaned = txt.replace(/,\s*([}\]])/g, '$1').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+    let attempt = Repair.escapeBackslashes(cleaned);
+    try { return JSON.parse(attempt); } catch {}
+    try { return JSON.parse(Repair.escapeBackslashes(cleaned)); } catch {}
+
+    let ob=0, ok=0, inS=false, escF=false;
+    for (let i=0; i<attempt.length; i++) {
+      const ch = attempt[i];
+      if (escF) { escF = false; continue; }
+      if (ch === '\\') { escF = true; continue; }
+      if (ch === '"') { inS = !inS; continue; }
+      if (inS) continue;
+      if (ch === '{') ob++; else if (ch === '}') ob--;
+      else if (ch === '[') ok++; else if (ch === ']') ok--;
+    }
+    let balanced = attempt;
+    if (inS) balanced += '"';
+    while (ok > 0) { balanced += ']'; ok--; }
+    while (ob > 0) { balanced += '}'; ob--; }
+    try { return JSON.parse(balanced); } catch {}
+
+    return Repair.extractByRegex(txt);
+  },
+
+  extractByRegex(txt) {
+    const pick = k => {
+      const re = new RegExp('"' + k + '"\\s*:\\s*"((?:\\\\.|[^"\\\\])*)"', 'i');
+      const m = txt.match(re);
+      return m ? m[1] : '';
+    };
+    const pickNum = k => {
+      const re = new RegExp('"' + k + '"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)', 'i');
+      const m = txt.match(re);
+      return m ? Number(m[1]) : 0;
+    };
+    const pickBool = k => {
+      const re = new RegExp('"' + k + '"\\s*:\\s*(true|false)', 'i');
+      const m = txt.match(re);
+      return m ? m[1] === 'true' : false;
+    };
+    const result = {
+      angle: pick('angle'), question: pick('question'), reponse: pick('reponse'),
+      intention: pick('intention'), domaine: pick('domaine'), formule: pick('formule'),
+      mystere: pick('mystere'), piste: pick('piste'), desc_decouverte: pick('desc_decouverte'),
+      reasoning: pick('reasoning'), image_prompt: pick('image_prompt'),
+      risque: pick('risque') || 'moyen', decouverte: pickBool('decouverte'),
+      rigueur: pickNum('rigueur'), coherence: pickNum('coherence'), sci: pickNum('sci'),
+      txt_fid: pickNum('txt_fid'), novelty: pickNum('novelty'), question_clarity: pickNum('question_clarity'),
+      present: [], absent: [], invention: null
+    };
+    const invM = txt.match(/"invention"\s*:\s*\{([\s\S]*?)\}/);
+    if (invM) {
+      const b = invM[1];
+      const inv = k => {
+        const re = new RegExp('"' + k + '"\\s*:\\s*"((?:\\\\.|[^"\\\\])*)"', 'i');
+        const m = b.match(re);
+        return m ? m[1] : '';
+      };
+      result.invention = { formule: inv('formule'), texte: inv('texte'), pourquoi: inv('pourquoi'), lien: inv('lien'), protocole: inv('protocole') };
+    }
+    const pM = txt.match(/"present"\s*:\s*\[([^\]]*)\]/);
+    if (pM) result.present = pM[1].split(',').map(x => x.trim().replace(/^"|"$/g,'')).filter(Boolean);
+    const aM = txt.match(/"absent"\s*:\s*\[([^\]]*)\]/);
+    if (aM) result.absent = aM[1].split(',').map(x => x.trim().replace(/^"|"$/g,'')).filter(Boolean);
+    if (result.question || result.formule || result.reponse) return result;
+    return null;
+  },
+
+  latexToUnicode(s) {
+    if (!s) return '';
+    let x = String(s);
+    x = x.replace(/\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, '($1)/($2)');
+    x = x.replace(/\\dfrac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, '($1)/($2)');
+    x = x.replace(/\\tfrac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, '($1)/($2)');
+    x = x.replace(/\\sqrt\s*\[([^\]]*)\]\s*\{([^{}]*)\}/g, '($2)^(1/$1)');
+    x = x.replace(/\\sqrt\s*\{([^{}]*)\}/g, '√($1)');
+    x = x.replace(/\\overline\s*\{([^{}]*)\}/g, '$1̅');
+    x = x.replace(/\\vec\s*\{([^{}]*)\}/g, '$1⃗');
+    x = x.replace(/\\hat\s*\{([^{}]*)\}/g, '$1̂');
+    x = x.replace(/\\bar\s*\{([^{}]*)\}/g, '$1̄');
+    x = x.replace(/\\text\s*\{([^{}]*)\}/g, '$1');
+    x = x.replace(/\\mathrm\s*\{([^{}]*)\}/g, '$1');
+    x = x.replace(/\\mathbf\s*\{([^{}]*)\}/g, '$1');
+    x = x.replace(/\\left\s*/g, '').replace(/\\right\s*/g, '');
+    const gk = {alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',varepsilon:'ε',zeta:'ζ',eta:'η',theta:'θ',iota:'ι',kappa:'κ',lambda:'λ',mu:'μ',nu:'ν',xi:'ξ',pi:'π',rho:'ρ',sigma:'σ',tau:'τ',upsilon:'υ',phi:'φ',varphi:'φ',chi:'χ',psi:'ψ',omega:'ω'};
+    const gK = {Gamma:'Γ',Delta:'Δ',Theta:'Θ',Lambda:'Λ',Xi:'Ξ',Pi:'Π',Sigma:'Σ',Phi:'Φ',Psi:'Ψ',Omega:'Ω'};
+    for (const k in gk) x = x.replace(new RegExp('\\\\' + k, 'g'), gk[k]);
+    for (const k in gK) x = x.replace(new RegExp('\\\\' + k, 'g'), gK[k]);
+    x = x.replace(/\\times/g,'×').replace(/\\cdot/g,'·').replace(/\\div/g,'÷')
+         .replace(/\\pm/g,'±').replace(/\\mp/g,'∓').replace(/\\ast/g,'*')
+         .replace(/\\circ/g,'∘').replace(/\\bullet/g,'•').replace(/\\oplus/g,'⊕').replace(/\\otimes/g,'⊗');
+    x = x.replace(/\\approx/g,'≈').replace(/\\neq/g,'≠').replace(/\\ne/g,'≠')
+         .replace(/\\leq/g,'≤').replace(/\\le/g,'≤').replace(/\\geq/g,'≥').replace(/\\ge/g,'≥')
+         .replace(/\\ll/g,'≪').replace(/\\gg/g,'≫').replace(/\\propto/g,'∝')
+         .replace(/\\sim/g,'∼').replace(/\\simeq/g,'≃').replace(/\\equiv/g,'≡');
+    x = x.replace(/\\in/g,'∈').replace(/\\notin/g,'∉').replace(/\\subset/g,'⊂').replace(/\\supset/g,'⊃')
+         .replace(/\\cup/g,'∪').replace(/\\cap/g,'∩').replace(/\\emptyset/g,'∅').replace(/\\varnothing/g,'∅');
+    x = x.replace(/\\sum/g,'∑').replace(/\\prod/g,'∏').replace(/\\int/g,'∫').replace(/\\oint/g,'∮')
+         .replace(/\\iint/g,'∬').replace(/\\iiint/g,'∭').replace(/\\partial/g,'∂').replace(/\\nabla/g,'∇')
+         .replace(/\\infty/g,'∞');
+    x = x.replace(/\\rightarrow|\\to/g,'→').replace(/\\leftarrow|\\gets/g,'←').replace(/\\leftrightarrow/g,'↔')
+         .replace(/\\Rightarrow/g,'⇒').replace(/\\Leftarrow/g,'⇐').replace(/\\Leftrightarrow/g,'⇔')
+         .replace(/\\uparrow/g,'↑').replace(/\\downarrow/g,'↓');
+    x = x.replace(/\\hbar/g,'ℏ').replace(/\\ell/g,'ℓ');
+    x = x.replace(/\^\{([^{}]*)\}/g, (_, m) => Repair.toSuper(m));
+    x = x.replace(/_\{([^{}]*)\}/g, (_, m) => Repair.toSub(m));
+    x = x.replace(/\^(\d)/g, (_, d) => Repair.toSuper(d));
+    x = x.replace(/_(\d)/g, (_, d) => Repair.toSub(d));
+    x = x.replace(/\\[a-zA-Z]+/g, '').replace(/[{}]/g, '').replace(/\s{2,}/g, ' ').trim();
+    return x;
+  },
+
+  toSuper(s) {
+    const m = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻','=':'⁼','(':'⁽',')':'⁾','n':'ⁿ','i':'ⁱ','a':'ᵃ','b':'ᵇ','c':'ᶜ','d':'ᵈ','e':'ᵉ','f':'ᶠ','g':'ᵍ','h':'ʰ','j':'ʲ','k':'ᵏ','l':'ˡ','m':'ᵐ','o':'ᵒ','p':'ᵖ','r':'ʳ','s':'ˢ','t':'ᵗ','u':'ᵘ','v':'ᵛ','w':'ʷ','x':'ˣ','y':'ʸ','z':'ᶻ'};
+    return String(s).split('').map(c => m[c] || c).join('');
+  },
+  toSub(s) {
+    const m = {'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉','+':'₊','-':'₋','=':'₌','(':'₍',')':'₎','a':'ₐ','e':'ₑ','h':'ₕ','i':'ᵢ','j':'ⱼ','k':'ₖ','l':'ₗ','m':'ₘ','n':'ₙ','o':'ₒ','p':'ₚ','r':'ᵣ','s':'ₛ','t':'ₜ','u':'ᵤ','v':'ᵥ','x':'ₓ'};
+    return String(s).split('').map(c => m[c] || c).join('');
+  },
+
+  sanitize(obj) {
+    if (!obj || typeof obj !== 'object') return obj;
+    const fixStr = v => {
+      if (typeof v !== 'string') return v;
+      let s = Repair.latexToUnicode(v);
+      s = s.replace(/\\\\/g, '\\').replace(/\\/g, '');
+      return s;
+    };
+    const out = Array.isArray(obj) ? [] : {};
+    for (const k of Object.keys(obj)) {
+      const v = obj[k];
+      if (typeof v === 'string') out[k] = fixStr(v);
+      else if (Array.isArray(v)) out[k] = v.map(x => typeof x === 'string' ? fixStr(x) : x);
+      else if (v && typeof v === 'object') out[k] = Repair.sanitize(v);
+      else out[k] = v;
+    }
+    return out;
+  }
+};
+
+/* ═══════ PARSER ═══════ */
+const Parser = {
+  json(text) {
+    const obj = Repair.parseWithRepair(text);
+    if (!obj) return null;
+    const cleaned = Repair.sanitize(obj);
+    const rawStr = String(text || '');
+    if (/\\[a-zA-Z]/.test(rawStr) || /\\(frac|sqrt|cdot|times|Phi|Delta|sum|int|alpha|beta|gamma|pi|mu|lambda|omega)/.test(rawStr)) {
+      STATE.jsonRepairs++;
+      UI.setText('sRepair', String(STATE.jsonRepairs));
+    }
+    return cleaned;
+  }
+};
+
+/* ═══════ UI ═══════ */
+const UI = {
+  log(msg, cls, group) {
+    const c = U.$('console'); if (!c) return;
+    const d = document.createElement('div');
+    d.className = 'e ' + (cls || '');
+    d.innerHTML = '<span class="t">' + U.now() + '</span>' + (group ? '<span class="g">[' + U.esc(group) + ']</span>' : '') + U.esc(msg);
+    c.appendChild(d);
+    while (c.children.length > CONFIG.MAX_LOG) c.removeChild(c.firstChild);
+    c.scrollTop = c.scrollHeight;
+  },
+  say(speaker, html, cls) {
+    const n = U.$('narration'); if (!n) return;
+    const d = document.createElement('div');
+    d.className = 'n';
+    if (cls === 'disc') d.innerHTML = '<div class="disc">' + html + '</div>';
+    else if (cls === 'valid') d.innerHTML = '<div class="valid">' + html + '</div>';
+    else if (cls === 'deep') d.innerHTML = '<div class="deep">' + html + '</div>';
+    else if (cls === 'formula') d.innerHTML = '<span class="f">' + html + '</span>';
+    else if (cls === 'verse') d.innerHTML = html;
+    else d.innerHTML = '<div class="t">' + U.now() + '</div><div class="s">' + U.esc(speaker) + '</div><div class="x">' + html + '</div>';
+    n.appendChild(d);
+    while (n.children.length > CONFIG.MAX_NARRATION) n.removeChild(n.firstChild);
+    if (!STATE.freeze) n.scrollTop = n.scrollHeight;
+    updateNarrInfo();
+  },
+  bump(id) {
+    const el = U.$(id); if (!el) return;
+    const card = el.closest('.s');
+    if (card) { card.style.transform = 'scale(1.05)'; setTimeout(() => card.style.transform = '', 250); }
+  },
+  setText(id, txt) { const el = U.$(id); if (el) el.textContent = txt; }
+};
+
+function updateNarrInfo() {
+  const n = U.$('narration'); if (!n) return;
+  const info = U.$('narrInfo');
+  if (info) info.textContent = n.children.length + ' messages' + (STATE.freeze ? ' · ❄️ figé' : '');
+}
+
+/* ═══════ DB ═══════ */
+const DB = (() => {
+  let _db = null;
+  const open = () => new Promise((res, rej) => {
+    if (_db) return res(_db);
+    if (!window.indexedDB) return rej(new Error('IndexedDB indisponible'));
+    const rq = indexedDB.open(CONFIG.DB_NAME, CONFIG.DB_VERSION);
+    rq.onupgradeneeded = e => {
+      const d = e.target.result;
+      ['readings','images','discoveries','inventions','chapters'].forEach(s => {
+        if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath:'id', autoIncrement:true });
+      });
+      ['lenses','method','kv'].forEach(s => {
+        if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath:'id' });
+      });
+    };
+    rq.onsuccess = e => { _db = e.target.result; res(_db); };
+    rq.onerror = () => rej(rq.error);
+  });
+  const add = (s,v) => open().then(d => new Promise((res,rej) => {
+    const tx = d.transaction(s,'readwrite');
+    const rq = tx.objectStore(s).add(v);
+    rq.onsuccess = () => res(rq.result);
+    tx.onerror = () => rej(tx.error);
+  }));
+  const put = (s,v,k) => open().then(d => new Promise((res,rej) => {
+    const tx = d.transaction(s,'readwrite');
+    if (k !== undefined) tx.objectStore(s).put(v,k); else tx.objectStore(s).put(v);
+    tx.oncomplete = () => res(true);
+    tx.onerror = () => rej(tx.error);
+  }));
+  const all = s => open().then(d => new Promise((res,rej) => {
+    const rq = d.transaction(s).objectStore(s).getAll();
+    rq.onsuccess = () => res(rq.result || []);
+    rq.onerror = () => rej(rq.error);
+  }));
+  const get = (s,k) => open().then(d => new Promise((res,rej) => {
+    const rq = d.transaction(s).objectStore(s).get(k);
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  }));
+  return { open, add, put, all, get };
+})();
+
+/* ═══════ KEYS ═══════ */
+const Keys = {
+  load() {
+    try {
+      const r = localStorage.getItem(CONFIG.LS_KEYS);
+      return r ? JSON.parse(r).filter(k => typeof k === 'string' && k.startsWith('sk-')) : [];
+    } catch { return []; }
+  },
+  save(keys) { try { localStorage.setItem(CONFIG.LS_KEYS, JSON.stringify(keys)); } catch {} },
+
+  /* Valide le textarea → STATE.keys + localStorage + rendu */
+  validate() {
+    const raw = (U.$('keysIn').value || '').split(/\r?\n/).map(x => x.trim()).filter(x => x.startsWith('sk-'));
+    const seen = new Set();
+    const valid = [];
+    raw.forEach(k => { if (!seen.has(k)) { seen.add(k); valid.push(k); } });
+
+    if (!valid.length) {
+      U.$('keyStatus').textContent = '✗ Aucune clé valide (doivent commencer par sk-)';
+      U.$('keyStatus').className = 'hint err';
+      toast('Aucune clé valide (format sk-...)', 'err');
+      return false;
+    }
+
+    const old = {}; STATE.keys.forEach(k => old[k.key] = k);
+    STATE.keys = valid.map(k => old[k] || { key:k, cool:0, last:0, n:0, busy:0, errors:0, active:true });
+    Keys.save(valid);
+    Keys.render();
+
+    U.$('keyStatus').textContent = '✓ ' + valid.length + ' clé(s) sauvegardée(s) · ' + (valid.length * CONFIG.RPM_PER_KEY) + ' req/min';
+    U.$('keyStatus').className = 'hint ok';
+    toast('✓ ' + valid.length + ' clé(s) sauvegardée(s)', 'ok');
+    UI.log(valid.length + ' clé(s) validée(s) et sauvegardée(s)', 'ok', 'KEYS');
+    return true;
+  },
+
+  render() {
+    const el = U.$('keyList'); if (!el) return;
+    const now = Date.now(); let active = 0;
+    if (!STATE.keys.length) {
+      el.innerHTML = '<div style="color:#555;font-size:10px;padding:4px">Aucune clé</div>';
+      UI.setText('sKeys','0');
+      return;
+    }
+    el.innerHTML = STATE.keys.map((k,i) => {
+      let cls = 'ok', tx = 'OK';
+      if (!k.active) { cls = 'dead'; tx = 'morte'; }
+      else if (k.cool > now) { cls = 'cool'; tx = Math.ceil((k.cool-now)/1000) + 's'; }
+      else active++;
+      return '<div class="k"><span class="id">#' + (i+1) + ' …' + U.esc(k.key.slice(-6)) + '</span>' +
+             '<span style="color:#555">' + k.n + '</span><span class="st ' + cls + '">' + tx + '</span></div>';
+    }).join('');
+    UI.setText('sKeys', String(active));
+  },
+
+  anyActive() { return STATE.keys.some(k => k.active); },
+
+  pick() {
+    const now = Date.now();
+    const minInt = Math.ceil(60000 / CONFIG.RPM_PER_KEY);
+    const ready = STATE.keys.filter(k => k.active && k.cool < now && now - k.last >= minInt && k.busy < 1);
+    if (!ready.length) return null;
+    ready.sort((a,b) => (a.n - b.n) || (a.last - b.last));
+    return ready[0];
+  },
+
+  acquire() {
+    return new Promise((res,rej) => {
+      const t0 = Date.now();
+      (function loop() {
+        if (STATE.stopped) return rej(new Error('Arrêt'));
+        const k = Keys.pick();
+        if (k) { k.busy++; k.last = Date.now(); k.n++; return res(k); }
+        if (!Keys.anyActive()) return rej(new Error('Aucune clé active'));
+        if (Date.now() - t0 > 300000) return rej(new Error('Timeout clés'));
+        setTimeout(loop, 250);
+      })();
+    });
+  },
+  release(k) { if (k) k.busy = Math.max(0, k.busy - 1); }
+};
+
+/* ═══════ API ═══════ */
+const API = {
+  async call(url, opts, tries = 4) {
+    let last;
+    for (let a = 0; a < tries; a++) {
+      if (STATE.stopped) throw new Error('Arrêt');
+      let k = null;
+      try {
+        k = await Keys.acquire();
+        const ctl = new AbortController();
+        const t = setTimeout(() => ctl.abort(), CONFIG.FETCH_TIMEOUT_MS);
+        const headers = Object.assign({}, opts.headers || {}, { 'Authorization':'Bearer ' + k.key });
+        const res = await fetch(url, Object.assign({}, opts, { headers, signal: ctl.signal }));
+        clearTimeout(t);
+        const ra = parseInt(res.headers.get('Retry-After') || '0', 10) || 0;
+        if (res.ok) { k.errors = 0; Keys.release(k); return res; }
+        let txt = '';
+        try { txt = (await res.clone().text()).slice(0, 300); } catch {}
+        if (res.status === 401 || res.status === 403) {
+          k.errors++; if (k.errors >= 3) k.active = false;
+          Keys.release(k);
+          throw { status: res.status, message: 'HTTP ' + res.status };
+        }
+        if (res.status === 429) {
+          const w = ra ? ra*1000 : CONFIG.COOLDOWN_429_MS;
+          k.cool = Date.now() + w; Keys.release(k);
+          UI.log('429 · clé …' + k.key.slice(-4) + ' → ' + Math.round(w/1000) + 's', 'warn', 'RATE');
+          await U.sleep(Math.min(w, 5000));
+          continue;
+        }
+        if (res.status === 400 || res.status === 404) {
+          Keys.release(k);
+          throw { status: res.status, message: 'HTTP ' + res.status + ' — ' + txt.slice(0,140) };
+        }
+        if ([500,502,503,504].includes(res.status)) {
+          Keys.release(k); last = new Error('HTTP ' + res.status);
+          await U.sleep(2000 + a*1500); continue;
+        }
+        Keys.release(k); last = new Error('HTTP ' + res.status);
+        await U.sleep(1500 + a*1000);
+      } catch (e) {
+        if (k) Keys.release(k);
+        if (e.message === 'Arrêt') throw e;
+        if (e.status === 400 || e.status === 401 || e.status === 403 || e.status === 404) throw e;
+        if (e.name === 'AbortError') { last = new Error('Timeout'); continue; }
+        last = e;
+        await U.sleep(1500 + a*800);
+      }
+    }
+    throw last || new Error('Échec API');
+  },
+
+  async text(sys, usr, max = 2400, temp = 0.75) {
+    const body = {
+      model: CONFIG.MODEL_TEXT,
+      messages: [{ role:'system', content:sys }, { role:'user', content:usr }],
+      temperature: temp, max_tokens: max,
+      reasoning_effort: 'none',
+      chat_template_kwargs: { enable_thinking: false }
+    };
+    const r = await API.call(CONFIG.API + '/chat/completions', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    }, 3);
+    const d = await r.json();
+    const c = d.choices && d.choices[0] && d.choices[0].message;
+    return (c && c.content) || (c && c.reasoning_content) || '';
+  },
+
+  async image(prompt) {
+    const body = { model: CONFIG.MODEL_IMG, prompt: String(prompt).slice(0,1900), n:1, size:'1K', ratio:'1:1' };
+    const r = await API.call(CONFIG.API + '/images/generations', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    }, 3);
+    const d = await r.json();
+    const it = d.data && d.data[0];
+    if (!it) throw new Error('Pas d\'image');
+    if (it.url) return it.url;
+    if (it.b64_json) return 'data:image/png;base64,' + it.b64_json;
+    throw new Error('Format image inconnu');
+  }
+};
+
+/* ═══════ PROMPTS ═══════ */
+const UNICODE_RULE = `
+
+⚠️ FORMAT DES FORMULES — RÈGLE ABSOLUE ⚠️
+JAMAIS de backslash (\\) dans une valeur JSON. Utilise UNIQUEMENT Unicode :
+• Multiplication : · ou × | Division : ÷ ou /
+• Racine : √(...) | Exposants : ² ³ ⁴ ⁿ (ou ^2) | Indices : ₀ ₁ ₂ ₙ ᵢ ⱼ
+• Grecques : α β γ δ ε ζ η θ ι κ λ μ ν ξ π ρ σ τ υ φ χ ψ ω | Γ Δ Θ Λ Ξ Π Σ Φ Ψ Ω
+• Opérateurs : ∑ ∫ ∬ ∏ ∂ ∇ → ← ↔ ⇒ ⇔ ± ∓
+• Relations : ≈ ≠ ≤ ≥ ≪ ≫ ∝ ∞ ≡ ∼ ∈ ∉ ⊂ ⊃ ∪ ∩ ∅
+• Divers : ℏ ℓ °
+
+EXEMPLES CORRECTS :
+✅ "E² = (m·c²)² + (p·c)²"
+✅ "E = m·c²"
+✅ "Δx · Δp ≥ ℏ/2"
+✅ "S = k·ln(Ω)"
+✅ "√(1 − v²/c²)"
+
+INTERDIT :
+❌ \\sqrt{...}  ❌ \\frac{...}{...}  ❌ \\Delta  ❌ \\cdot  ❌ \\sum
+`;
+
+const Prompts = {
+  bootstrap: {
+    system: `Tu es un analyste scientifique adogmatique. Tu traites la Bible comme un système formel de variables scientifiques ordonnées.
+${UNICODE_RULE}
+
+DÉMONSTRATION (validée, non négociable) :
+- Gen 1:1 « Au commencement, Dieu créa les cieux et la terre. » → E, vide, m, t. E = m·c² IMPOSSIBLE (c absent).
+- Gen 1:2 « La terre était informe et vide, et l'Esprit de Dieu se mouvait au-dessus des eaux. » → +p. E = m·c² toujours IMPOSSIBLE.
+- Gen 1:3 « Dieu dit : Que la lumière soit ! Et la lumière fut. » → +c. E² = (m·c²)² + (p·c)² POSSIBLE.
+
+RÈGLES À EXTRAIRE :
+R1. Source textuelle | R2. Pas d'anticipation | R3. Pas de sur-simplification
+R4. Question obligatoire | R5. Cumul cohérent | R6. Formules Unicode uniquement.
+
+JSON uniquement.`,
+    user: `Analyse Gen 1:1-3 et extrais la MÉTHODE.
+{
+  "etapes":[
+    {"v":1,"present":["E","m","vide","t"],"absent":["c","p"],"formule_impossible":"E = m·c² (c manquant)","question":"Que faut-il pour créer ?"},
+    {"v":2,"present":["E","m","vide","t","p"],"absent":["c"],"formule_impossible":"E = m·c² (c manquant)","question":"Qu'est-ce qui se meut dans le vide ?"},
+    {"v":3,"present":["E","m","vide","t","p","c"],"absent":[],"formule_possible":"E² = (m·c²)² + (p·c)²","question":"Qu'apporte la lumière ?"}
+  ],
+  "methode":[
+    {"id":"R1","name":"Source textuelle","desc":"..."},
+    {"id":"R2","name":"Pas d'anticipation","desc":"..."},
+    {"id":"R3","name":"Pas de sur-simplification","desc":"..."},
+    {"id":"R4","name":"Question obligatoire","desc":"..."},
+    {"id":"R5","name":"Cumul cohérent","desc":"..."},
+    {"id":"R6","name":"Formules Unicode uniquement","desc":"Aucun backslash."}
+  ],
+  "direction":"énergie → matière → champ → structures → vie → conscience → repos",
+  "verifie":true
+}`
+  },
+
+  books: {
+    system: 'Tu connais la Bible. JSON uniquement, aucun backslash.',
+    user: `Liste des 39 livres de l'Ancien Testament dans l'ordre canonique avec nombre de chapitres.
+{"books":[{"name":"Genèse","chapters":50},...]}`
+  },
+
+  chapter: (book, chapter) => ({
+    system: 'Tu connais la Bible par cœur. Texte exact (Louis Segond). JSON uniquement.',
+    user: `Tous les versets de "${book}" chapitre ${chapter}.
+{"verses":[{"v":1,"txt":"..."},{"v":2,"txt":"..."}]}`
+  }),
+
+  verse: (verse, ref, lens, cumul, deep) => {
+    const rules = STATE.method.map(r => '- ' + r.id + ' ' + r.name + ' : ' + r.desc).join('\n');
+    const deepBlock = deep ? `\n\nMODE PROFOND — ce verset introduit un être complexe.\nAnalyse additionnelle : information biologique vs information intégrée (IIT, Φ) vs conscience phénoménale. Lien avec IIT, Orch-OR, espace de travail global. Hypothèse testable.` : '';
+
+    return {
+      system: `Analyste scientifique adogmatique. Méthode validée sur Genèse 1:1-3.
+${UNICODE_RULE}
+
+RÈGLES :
+${rules}
+
+AUCUN BACKSLASH dans les formules. JSON uniquement.`,
+
+      user: `VERSET (${ref}) : « ${verse.txt} »
+
+CUMUL PRÉSENT : ${JSON.stringify(cumul.present)}
+CUMUL ABSENT : ${JSON.stringify(cumul.absent || [])}
+DOMAINES : ${JSON.stringify(cumul.domains.slice(-15))}
+
+ANGLE (${lens.code}) — ${lens.lbl} :
+${lens.q}
+${deepBlock}
+
+RAPPEL : formules en Unicode uniquement (², √, ·, ×, Φ, Δ, ∑, ∫). Zéro backslash.
+
+{
+  "angle":"${lens.code}",
+  "question":"la question fondamentale",
+  "reponse":"réponse 3-6 phrases",
+  "intention":"intention du verset",
+  "domaine":"domaine scientifique ouvert",
+  "formule":"formule Unicode (ex: E² = (m·c²)² + (p·c)²) ou vide",
+  "present":["variables présentes"],
+  "absent":["variables absentes"],
+  "mystere":"grand mystère scientifique actuel",
+  "piste":"piste de recherche",
+  "invention":{"formule":"formule Unicode du dispositif","texte":"description","pourquoi":"pourquoi","lien":"lien recherche actuelle","protocole":"protocole testable"},
+  "decouverte":true,
+  "desc_decouverte":"description autonome",
+  "rigueur":8,"risque":"faible","coherence":8,"sci":8,"txt_fid":9,"novelty":7,"question_clarity":9,
+  "reasoning":"2-4 phrases",
+  "image_prompt":"prompt visuel en anglais, 30-60 mots, sans texte ni lettres"
+}`
+    };
+  },
+
+  evolveLenses: (top, bot, count) => ({
+    system: 'JSON uniquement, aucun backslash.',
+    user: `Angles actuels (${count}) :
+TOP : ${top.map(l => l.code + ' avg ' + (l.p?.avg||0)).join(' | ')}
+FAIBLES : ${bot.map(l => l.code + ' avg ' + (l.p?.avg||0)).join(' | ')}
+
+Crée 3 NOUVEAUX angles d'analyse INÉDITS.
+
+{"lenses":[{"code":"XXX","lbl":"Nom","q":"question précise","reason":"utilité"}]}`
+  }),
+
+  evolveMethod: (method) => ({
+    system: 'JSON uniquement, aucun backslash.',
+    user: `Méthode actuelle :
+${method.map(r => '- ' + r.id + ' ' + r.name + ' : ' + r.desc).join('\n')}
+
+Propose 2 nouvelles règles TESTABLES.
+
+{"rules":[{"id":"R11","name":"...","desc":"..."}]}`
+  })
+};
+
+/* ═══════ ANALYZER ═══════ */
+const Analyzer = {
+  async bootstrap() {
+    UI.say('Genesis·Decoder', 'Démonstration de référence : <strong>Genèse 1:1-3 → E = m·c²</strong>. Question : <em>si Dieu créa, il fallut de l\'énergie</em>.', 'verse');
+    UI.log('Bootstrap — reproduction de la méthode E = m·c²', 'gold', 'BOOT');
+
+    const raw = await API.text(Prompts.bootstrap.system, Prompts.bootstrap.user, 2200, 0.3);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.etapes)) throw new Error('Bootstrap JSON invalide');
+
+    const v1 = j.etapes.find(x => x.v === 1) || {};
+    const v3 = j.etapes.find(x => x.v === 3) || {};
+    const cAbsentV1 = !(v1.present || []).some(x => /^c$/i.test(String(x)));
+    const cPresentV3 = (v3.present || []).some(x => /^c$/i.test(String(x)));
+    if (!cAbsentV1 || !cPresentV3) throw new Error('Logique bootstrap incorrecte : c doit être absent au v1 et présent au v3');
+
+    if (Array.isArray(j.methode)) {
+      j.methode.forEach(r => {
+        if (r.id && r.name && !STATE.method.find(m => m.id === r.id)) {
+          STATE.method.push({ id:r.id, name:String(r.name), desc:String(r.desc||'').slice(0,300), w:1 });
+        }
+      });
+    }
+    if (j.direction) STATE.cumul.direction = String(j.direction);
+    STATE.bootstrapped = true;
+
+    UI.log('Bootstrap OK — ' + STATE.method.length + ' règles', 'lock', 'BOOT');
+    UI.say('Genesis·Decoder', '<strong>✓ Méthode établie.</strong> Identification des variables → vérification du cumul → formule possible → direction.', 'valid');
+    UI.say('', 'E² = (m·c²)² + (p·c)²', 'formula');
+    UI.say('Genesis·Decoder', 'Discipline appliquée à tout l\'Ancien Testament. Liste des 39 livres demandée.', 'verse');
+
+    await DB.put('kv', { id:'method', method:STATE.method, direction:STATE.cumul.direction }).catch(() => {});
+    return true;
+  },
+
+  async fetchBooks() {
+    const raw = await API.text(Prompts.books.system, Prompts.books.user, 1500, 0.2);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.books) || j.books.length < 30) throw new Error('Liste livres invalide');
+    UI.log(j.books.length + ' livres reçus', 'lock', 'BOOKS');
+    UI.say('Genesis·Decoder', '✓ Liste reçue : <strong>' + j.books.length + ' livres.</strong>', 'valid');
+    return j.books.map(b => ({ name:String(b.name), chapters: U.clamp(b.chapters, 1, 200) }));
+  },
+
+  async fetchChapter(book, chapter) {
+    const key = book + ' ' + chapter;
+    try {
+      const cached = await DB.get('chapters', key);
+      if (cached && cached.verses && cached.verses.length) return cached.verses;
+    } catch {}
+    const p = Prompts.chapter(book, chapter);
+    const raw = await API.text(p.system, p.user, 3500, 0.2);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.verses) || !j.verses.length) throw new Error('Chapitre invalide');
+    const verses = j.verses.map(v => ({ v: U.clamp(v.v, 1, 200), txt: String(v.txt || '').trim() })).filter(v => v.txt.length > 5);
+    try { await DB.put('chapters', { id:key, book, chapter, verses }); } catch {}
+    return verses;
+  },
+
+  isDeepVerse(verse) {
+    const txt = (verse.txt || '').toLowerCase();
+    return CONFIG.DEEP_TRIGGERS.some(t => txt.includes(t.toLowerCase()));
+  },
+
+  async readVerse(book, chapter, verse, lens) {
+    const ref = book + ' ' + chapter + ':' + verse.v;
+    const deep = Analyzer.isDeepVerse(verse);
+    const p = Prompts.verse(verse, ref, lens, STATE.cumul, deep);
+    const raw = await API.text(p.system, p.user, 2600, 0.75);
+    const j = Parser.json(raw);
+    if (!j) throw new Error('JSON invalide');
+
+    const r = {
+      book, chapter, v:verse.v, ref, verseTxt:verse.txt, deep,
+      lens:lens.code, lensLbl:lens.lbl, lensId:lens.id,
+      question: String(j.question || '').slice(0,400),
+      reponse: String(j.reponse || '').slice(0,800),
+      intention: String(j.intention || '').slice(0,400),
+      domaine: String(j.domaine || '').slice(0,200),
+      formule: String(j.formule || '').slice(0,300),
+      present: Array.isArray(j.present) ? j.present : [],
+      absent: Array.isArray(j.absent) ? j.absent : [],
+      mystere: String(j.mystere || '').slice(0,250),
+      piste: String(j.piste || '').slice(0,250),
+      invention: j.invention ? {
+        formule: String(j.invention.formule || '').slice(0,300),
+        texte: String(j.invention.texte || '').slice(0,500),
+        pourquoi: String(j.invention.pourquoi || '').slice(0,400),
+        lien: String(j.invention.lien || '').slice(0,300),
+        protocole: String(j.invention.protocole || '').slice(0,400)
+      } : null,
+      decouverte: !!j.decouverte,
+      desc_decouverte: String(j.desc_decouverte || '').slice(0,500),
+      rigueur: U.clamp(j.rigueur, 0, 10),
+      risque: String(j.risque || 'moyen').toLowerCase(),
+      coherence: U.clamp(j.coherence, 0, 10),
+      sci: U.clamp(j.sci, 0, 10),
+      txt_fid: U.clamp(j.txt_fid, 0, 10),
+      novelty: U.clamp(j.novelty, 0, 10),
+      question_clarity: U.clamp(j.question_clarity, 0, 10),
+      reasoning: String(j.reasoning || '').slice(0,600),
+      image_prompt: String(j.image_prompt || '').slice(0,400),
+      time: Date.now()
+    };
+
+    const pen = r.risque === 'eleve' ? 0.7 : r.risque === 'moyen' ? 0.9 : 1;
+    r.method_score = +((r.rigueur*0.20 + r.coherence*0.20 + r.question_clarity*0.25 + r.sci*0.20 + r.txt_fid*0.15) * pen).toFixed(2);
+    r.score = +((r.method_score*0.6 + r.novelty*0.25 + r.txt_fid*0.15)).toFixed(2);
+    return r;
+  },
+
+  isDiscovery(r) {
+    return (r.method_score >= CONFIG.DISCOVERY_MIN_METHOD && r.question_clarity >= CONFIG.DISCOVERY_MIN_QUESTION && r.novelty >= CONFIG.DISCOVERY_MIN_NOVELTY) || (r.decouverte && r.method_score >= 7);
+  },
+
+  async process(r) {
+    STATE.readings.push(r);
+    STATE.readCount++;
+    UI.setText('sRead', String(STATE.readings.length));
+
+    const lens = STATE.lenses.find(l => l.id === r.lensId);
+    if (lens) {
+      lens.p.n++;
+      lens.p.avg = +(((lens.p.avg * (lens.p.n - 1)) + r.score) / lens.p.n).toFixed(2);
+      lens.p.best = Math.max(lens.p.best, r.score);
+    }
+
+    if (r.present.length) STATE.cumul.present = Array.from(new Set([...STATE.cumul.present, ...r.present]));
+    if (r.absent.length) STATE.cumul.absent = Array.from(new Set(r.absent));
+    if (r.domaine && !STATE.cumul.domains.includes(r.domaine)) STATE.cumul.domains.push(r.domaine);
+
+    DB.add('readings', r).catch(() => {});
+
+    if (Analyzer.isDiscovery(r)) {
+      STATE.discoveries.push(r);
+      DB.add('discoveries', r).catch(() => {});
+      UI.setText('sDisc', String(STATE.discoveries.length));
+
+      let discHtml = '💎 <strong>Découverte</strong> [' + r.lens + '] ' + U.esc(r.ref) + '<br>' + U.esc(r.desc_decouverte || r.reponse.slice(0,200));
+      if (r.invention && (r.invention.texte || r.invention.formule)) {
+        STATE.inventions.push({ ...r.invention, ref:r.ref, lens:r.lens, time:Date.now() });
+        DB.add('inventions', { ...r.invention, ref:r.ref, lens:r.lens, time:Date.now() }).catch(() => {});
+        UI.setText('sInv', String(STATE.inventions.length));
+        discHtml += '<div class="inv">' +
+          (r.invention.formule ? '<b>Formule</b>' + U.esc(r.invention.formule) + '<br>' : '') +
+          (r.invention.texte ? '<b>Invention</b>' + U.esc(r.invention.texte) + '<br>' : '') +
+          (r.invention.protocole ? '<b>Protocole</b>' + U.esc(r.invention.protocole) : '') + '</div>';
+      }
+      UI.say('Genesis·Decoder', discHtml, 'disc');
+      if (r.formule) UI.say('', U.esc(r.formule), 'formula');
+      UI.log('💎 ' + r.ref + ' [' + r.lens + '] — ' + (r.desc_decouverte || r.reponse.slice(0,120)), 'disc', 'DISC');
+    }
+
+    const cls = r.score >= 7.5 ? 'ok' : (r.score >= 5 ? 'warn' : '');
+    UI.log('★' + r.score.toFixed(1) + ' [méth ' + r.method_score.toFixed(1) + '] ' + r.ref + ' · ' + r.lens, cls, 'READ');
+    if (r.question) UI.say('❓ ' + r.lens + ' · ' + r.ref, U.esc(r.question.slice(0,180)));
+    if (r.formule) UI.say('', U.esc(r.formule), 'formula');
+
+    if (r.score >= CONFIG.IMG_MIN_SCORE && r.image_prompt) Queue.push({ type:'image', reading:r });
+    if (STATE.readCount % 3 === 0) Renderer.best();
+    if (STATE.readCount % 5 === 0) Renderer.self();
+    UI.setText('sVerse', String(STATE.verseCount));
+    Renderer.conv();
+
+    if (STATE.readCount > 0 && STATE.readCount % CONFIG.EVOLVE_LENS_EVERY === 0) Queue.push({ type:'evolve_lens' });
+    if (STATE.readCount > 0 && STATE.readCount % CONFIG.EVOLVE_METHOD_EVERY === 0) Queue.push({ type:'evolve_method' });
+  }
+};
+
+/* ═══════ EVOLVER ═══════ */
+const Evolver = {
+  async lenses() {
+    if (!Keys.anyActive()) return;
+    UI.log('Évolution des angles', 'evo', 'EVO');
+    const top = STATE.lenses.slice().sort((a,b) => (b.p?.avg||0) - (a.p?.avg||0)).slice(0, 6);
+    const bot = STATE.lenses.slice().sort((a,b) => (a.p?.avg||0) - (b.p?.avg||0)).slice(0, 3);
+    const p = Prompts.evolveLenses(top, bot, STATE.lenses.length);
+    const raw = await API.text(p.system, p.user, 1200, 0.9);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.lenses)) throw new Error('Format');
+
+    let added = 0;
+    for (const nl of j.lenses) {
+      if (!nl.code || !nl.lbl || !nl.q) continue;
+      const id = 'LE_' + U.uid();
+      const l = { id, code:String(nl.code).slice(0,14), lbl:String(nl.lbl).slice(0,40), q:String(nl.q).slice(0,500), reason:String(nl.reason||'').slice(0,200), status:'exp', p:{n:0,avg:0,best:0}, born:Date.now() };
+      STATE.lenses.push(l);
+      DB.put('lenses', l).catch(() => {});
+      UI.log('+ ' + l.code + ' · ' + l.lbl, 'ai', 'EVO');
+      added++;
+    }
+    STATE.lenses.forEach(l => {
+      if (l.status === 'exp' && l.p.n >= 3) {
+        if (l.p.avg >= 8) l.status = 'spec';
+        else if (l.p.avg < 5) l.status = 'pru';
+      }
+    });
+    UI.log('+' + added + ' angles · total ' + STATE.lenses.length, 'evo', 'EVO');
+    UI.setText('sLens', String(STATE.lenses.length));
+    Renderer.self();
+  },
+
+  async method() {
+    if (!Keys.anyActive()) return;
+    UI.log('Évolution de la méthode', 'evo', 'EVO');
+    const p = Prompts.evolveMethod(STATE.method);
+    const raw = await API.text(p.system, p.user, 800, 0.9);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.rules)) throw new Error('Format');
+    let added = 0;
+    for (const nr of j.rules) {
+      if (!nr.id || !nr.name || STATE.method.find(m => m.id === nr.id)) continue;
+      const r = { id:nr.id, name:String(nr.name), desc:String(nr.desc||'').slice(0,300), w:0.8 };
+      STATE.method.push(r);
+      DB.put('method', r).catch(() => {});
+      UI.log('+ ' + r.id + ' ' + r.name, 'ai', 'EVO');
+      added++;
+    }
+    UI.log('+' + added + ' règles · total ' + STATE.method.length, 'evo', 'EVO');
+    Renderer.self();
+  },
+
+  async image(reading) {
+    try {
+      const anchored = `Biblical scientific illustration for "${reading.verseTxt.slice(0,180)}" (${reading.ref}). Concept: ${reading.lensLbl}. ` +
+        (reading.domaine ? `Domain: ${reading.domaine}. ` : '') +
+        `Brief: ${reading.image_prompt}. Abstract, conceptual, scientific, no text, no letters, no words, no signature.`;
+      UI.log('IMG ' + reading.lens + ' ' + reading.ref, 'ai', 'IMG');
+      const url = await API.image(anchored);
+      const e = { url, verse:reading.ref, verseTxt:reading.verseTxt, lens:reading.lens, lensLbl:reading.lensLbl, formule:reading.formule, prompt:anchored, time:Date.now() };
+      STATE.images.push(e);
+      DB.add('images', e).catch(() => {});
+      UI.setText('sImg', String(STATE.images.length));
+      Renderer.gallery();
+      UI.log('IMG ✓ ' + reading.ref, 'ok', 'IMG');
+    } catch (e) { UI.log('IMG échec : ' + e.message, 'err', 'IMG'); }
+  }
+};
+
+/* ═══════ QUEUE ═══════ */
+const Queue = {
+  async push(task) {
+    while (STATE.queue.length >= CONFIG.MAX_QUEUE && !STATE.stopped) await U.sleep(200);
+    STATE.queue.push(task);
+  },
+  async pop() {
+    while (!STATE.queue.length && !STATE.stopped) await U.sleep(150);
+    return STATE.queue.shift();
+  }
+};
+
+function selectLenses(deep) {
+  const base = STATE.lenses.filter(l => l.status !== 'pru' && l.status !== 'deep');
+  const deepL = STATE.lenses.filter(l => l.status === 'deep');
+  const all = deep ? base.concat(deepL) : base;
+  return all.sort((a,b) => (b.p?.avg||0) - (a.p?.avg||0)).slice(0, deep ? 9 : 6);
+}
+
+/* ═══════ WORKERS ═══════ */
+async function workerLoop() {
+  while (!STATE.stopped) {
+    if (STATE.paused) { await U.sleep(300); continue; }
+    if (!Keys.anyActive()) { await U.sleep(2000); continue; }
+    const task = await Queue.pop();
+    if (!task) continue;
+    STATE.inFlight++;
+    try {
+      if (task.type === 'read') {
+        const r = await Analyzer.readVerse(task.book, task.chapter, task.verse, task.lens);
+        await Analyzer.process(r);
+      } else if (task.type === 'image') await Evolver.image(task.reading);
+      else if (task.type === 'evolve_lens') await Evolver.lenses();
+      else if (task.type === 'evolve_method') await Evolver.method();
+    } catch (e) {
+      if (e.message !== 'Arrêt') UI.log('Task ' + task.type + ' : ' + e.message, 'err', 'TASK');
+    } finally { STATE.inFlight--; }
+  }
+}
+
+function startWorkers() {
+  const n = Math.max(1, STATE.keys.filter(k => k.active).length);
+  for (let i = 0; i < n; i++) workerLoop();
+  UI.log(n + ' workers démarrés', 'lock', 'POOL');
+}
+
+/* ═══════ COORDINATOR ═══════ */
+async function coordinator() {
+  while (!STATE.stopped) {
+    if (STATE.paused) { await U.sleep(500); continue; }
+    try {
+      if (!STATE.bootstrapped) {
+        const ok = await Analyzer.bootstrap();
+        if (!ok) { await U.sleep(5000); continue; }
+      }
+      if (!STATE.books.length) {
+        try {
+          STATE.books = await Analyzer.fetchBooks();
+          STATE.pos.book = 0; STATE.pos.chapter = 1;
+        } catch (e) {
+          UI.log('BOOKS échec : ' + e.message, 'err', 'BOOKS');
+          await U.sleep(5000); continue;
+        }
+      }
+      const bk = STATE.books[STATE.pos.book];
+      if (!bk) { STATE.pos.book = 0; STATE.pos.chapter = 1; continue; }
+
+      UI.setText('posBook', bk.name);
+      UI.setText('posVerse', 'Chapitre ' + STATE.pos.chapter + ' / ' + bk.chapters);
+      const pct = Math.round(100 * (STATE.pos.chapter - 1) / Math.max(1, bk.chapters));
+      const pb = U.$('posBar'); if (pb) pb.style.width = pct + '%';
+
+      let verses = [];
+      try {
+        verses = await Analyzer.fetchChapter(bk.name, STATE.pos.chapter);
+      } catch (e) {
+        UI.log('CHAPITRE ' + bk.name + ' ' + STATE.pos.chapter + ' : ' + e.message, 'err', 'CHAP');
+        STATE.pos.chapter++;
+        if (STATE.pos.chapter > bk.chapters) { STATE.pos.chapter = 1; STATE.pos.book++; }
+        continue;
+      }
+
+      UI.say('Genesis·Decoder', '<span class="verse-ref">📖 ' + bk.name + ' ' + STATE.pos.chapter + '</span> — ' + verses.length + ' versets', 'verse');
+
+      for (const v of verses) {
+        const deep = Analyzer.isDeepVerse(v);
+        const lenses = selectLenses(deep);
+        if (deep) UI.log('🧠 ' + bk.name + ' ' + STATE.pos.chapter + ':' + v.v + ' — mode profond', 'ai', 'DEEP');
+        for (const l of lenses) {
+          if (STATE.stopped) break;
+          await Queue.push({ type:'read', book:bk.name, chapter:STATE.pos.chapter, verse:v, lens:l });
+        }
+      }
+      STATE.verseCount += verses.length;
+      UI.setText('sVerse', String(STATE.verseCount));
+
+      STATE.pos.chapter++;
+      if (STATE.pos.chapter > bk.chapters) { STATE.pos.chapter = 1; STATE.pos.book++; }
+      if (STATE.pos.book >= STATE.books.length) {
+        STATE.pos.book = 0;
+        STATE.cycle++;
+        UI.setText('sCycle', String(STATE.cycle));
+        UI.log('✓ Cycle ' + STATE.cycle + ' terminé — redémarrage', 'gold', 'CYCLE');
+      }
+      await U.sleep(500);
+    } catch (e) {
+      if (e.message === 'Arrêt') break;
+      UI.log('Coord erreur : ' + e.message + ' — reprise 5 s', 'err', 'COORD');
+      await U.sleep(5000);
+    }
+  }
+}
+
+/* ═══════ RENDERER ═══════ */
+const Renderer = {
+  best() {
+    const v = U.$('bestView'); if (!v) return;
+    const top = STATE.readings.slice().sort((a,b) => b.score - a.score).slice(0, 50);
+    if (!top.length) { v.innerHTML = '<div class="hint">Aucune analyse encore.</div>'; return; }
+    v.innerHTML = top.map((r,i) => {
+      const cls = r.score >= 7.5 ? 'sh' : r.score >= 5 ? 'sm' : 'sl';
+      const disc = Analyzer.isDiscovery(r);
+      return '<div class="ritem' + (i < 3 ? ' best' : '') + (disc ? ' disc' : '') + '">' +
+        '<div class="h"><span class="lens">' + U.esc(r.lens) + '</span><span class="ref">' + U.esc(r.ref) + '</span><span class="sc ' + cls + '">★ ' + r.score.toFixed(1) + '</span></div>' +
+        (r.question ? '<div class="intent">❓ ' + U.esc(r.question.slice(0,200)) + '</div>' : '') +
+        (r.domaine ? '<div class="dom">🔬 ' + U.esc(r.domaine) + '</div>' : '') +
+        (r.formule ? '<div class="f">' + U.esc(r.formule) + '</div>' : '') +
+        (r.reponse ? '<div class="w">' + U.esc(r.reponse.slice(0,220)) + '</div>' : '') +
+        '<div class="m"><span>méth ' + r.method_score.toFixed(1) + '</span><span>q ' + r.question_clarity + '</span><span>nov ' + r.novelty + '</span></div>' +
+        '</div>';
+    }).join('');
+  },
+
+  disc() {
+    const v = U.$('discView'); if (!v) return;
+    if (!STATE.discoveries.length) { v.innerHTML = '<div class="hint">Aucune découverte encore.</div>'; return; }
+    v.innerHTML = STATE.discoveries.slice().reverse().map(r =>
+      '<div class="ritem disc">' +
+      '<div class="h"><span class="lens">' + U.esc(r.lens) + '</span><span class="ref">' + U.esc(r.ref) + '</span><span class="sc sh">★ ' + r.score.toFixed(1) + '</span></div>' +
+      (r.question ? '<div class="intent">❓ ' + U.esc(r.question) + '</div>' : '') +
+      (r.formule ? '<div class="f">' + U.esc(r.formule) + '</div>' : '') +
+      (r.desc_decouverte ? '<div class="w" style="color:#ff64d0;font-weight:600">💎 ' + U.esc(r.desc_decouverte) + '</div>' : '') +
+      (r.mystere ? '<div class="w">🔭 ' + U.esc(r.mystere) + '</div>' : '') +
+      (r.piste ? '<div class="w">🧪 ' + U.esc(r.piste) + '</div>' : '') +
+      '</div>'
+    ).join('');
+  },
+
+  inv() {
+    const v = U.$('invView'); if (!v) return;
+    if (!STATE.inventions.length) { v.innerHTML = '<div class="hint">Aucune invention extraite encore.</div>'; return; }
+    v.innerHTML = STATE.inventions.slice().reverse().map(inv =>
+      '<div class="ritem disc">' +
+      '<div class="h"><span class="lens">' + U.esc(inv.lens) + '</span><span class="ref">' + U.esc(inv.ref) + '</span></div>' +
+      (inv.formule ? '<div class="f">' + U.esc(inv.formule) + '</div>' : '') +
+      (inv.texte ? '<div class="w" style="color:#ff64d0;font-weight:600">⚗ ' + U.esc(inv.texte) + '</div>' : '') +
+      (inv.pourquoi ? '<div class="w">🎯 ' + U.esc(inv.pourquoi) + '</div>' : '') +
+      (inv.lien ? '<div class="w">🔗 ' + U.esc(inv.lien) + '</div>' : '') +
+      (inv.protocole ? '<div class="w">🧪 ' + U.esc(inv.protocole) + '</div>' : '') +
+      '</div>'
+    ).join('');
+  },
+
+  gallery() {
+    const g = U.$('gallery'); if (!g) return;
+    if (!STATE.images.length) {
+      g.innerHTML = '<div class="hint" style="padding:20px;text-align:center;grid-column:1/-1">Les images apparaîtront quand le score > ' + CONFIG.IMG_MIN_SCORE + '.</div>';
+      return;
+    }
+    g.innerHTML = STATE.images.slice().reverse().map(im =>
+      '<div class="g"><img src="' + U.esc(im.url) + '" loading="lazy" onclick="window.open(this.src)" onerror="this.style.opacity=.3">' +
+      '<div class="c"><b>' + U.esc(im.verse || '') + '</b>' + U.esc(im.lens || '') + '</div></div>'
+    ).join('');
+  },
+
+  self() {
+    const v = U.$('selfView'); if (!v) return;
+    const sorted = STATE.lenses.slice().sort((a,b) => (b.p?.avg||0) - (a.p?.avg||0));
+    v.innerHTML = '<h2>🧬 Angles (' + STATE.lenses.length + ')</h2>' +
+      sorted.slice(0, 30).map(l => {
+        const cls = l.status === 'core' ? '' : l.status === 'spec' ? 'spec' : l.status === 'pru' ? 'pru' : 'exp';
+        return '<div class="lc ' + cls + '">' +
+          '<div class="h"><span class="code">' + U.esc(l.code) + '</span><span class="lbl">' + U.esc(l.lbl) + '</span>' +
+          '<span class="badge ' + l.status + '">' + l.status + '</span>' +
+          '<span class="perf">avg ' + (l.p?.avg||0) + ' · n=' + (l.p?.n||0) + '</span></div>' +
+          '<div class="q">' + U.esc(l.q.slice(0,180)) + '</div></div>';
+      }).join('') +
+      '<h2 style="margin-top:12px">📐 Méthode (' + STATE.method.length + ')</h2>' +
+      STATE.method.map(r =>
+        '<div class="lc"><div class="h"><span class="code">' + U.esc(r.id) + '</span><span class="lbl">' + U.esc(r.name) + '</span></div>' +
+        '<div class="q">' + U.esc(r.desc) + '</div></div>'
+      ).join('');
+  },
+
+  conv() {
+    const top = STATE.readings.map(r => r.method_score).sort((a,b) => b-a).slice(0, 10);
+    if (top.length < 3) {
+      UI.setText('convVal','0 %'); UI.setText('convTxt','collecte en cours');
+      const b = U.$('convBar'); if (b) b.style.width = '0%';
+      return;
+    }
+    const avg = top.reduce((a,b) => a+b, 0) / top.length;
+    const conv = Math.min(1, Math.max(0, (avg - 6) / 3));
+    UI.setText('convVal', (conv*100).toFixed(0) + ' %');
+    UI.setText('convTxt', 'méth. top10 : ' + avg.toFixed(2) + '/10');
+    const b = U.$('convBar'); if (b) b.style.width = (conv*100).toFixed(0) + '%';
+  }
+};
+
+/* ═══════ ENGINE ═══════ */
+function startEngine() {
+  if (STATE.running) return;
+  if (!STATE.keys.length) { toast('Valide d\'abord tes clés', 'err'); return; }
+  STATE.running = true; STATE.paused = false; STATE.stopped = false;
+  updateCtl();
+  UI.say('Genesis·Decoder', '🚀 <strong>Moteur lancé.</strong> ' + STATE.keys.length + ' clés · ' + (STATE.keys.length * CONFIG.RPM_PER_KEY) + ' req/min.', 'valid');
+  UI.log('Engine démarré avec ' + STATE.keys.length + ' clés', 'lock', 'SYS');
+  startWorkers();
+  coordinator().catch(e => UI.log('Coord fatal : ' + e.message, 'err', 'SYS'));
+}
+
+function stopEngine() {
+  STATE.stopped = true; STATE.running = false;
+  updateCtl();
+  UI.say('Système', 'Moteur arrêté.', 'verse');
+}
+
+function updateCtl() {
+  const pb = U.$('pauseBtn'), sb = U.$('stopBtn'), st = U.$('startBtn');
+  if (pb) pb.style.display = STATE.running ? '' : 'none';
+  if (sb) sb.style.display = STATE.running ? '' : 'none';
+  if (st) st.disabled = STATE.running;
+  const hb = U.$('hb'), hbT = U.$('hbTxt');
+  if (hb) {
+    hb.className = STATE.running ? (STATE.paused ? 'pause' : '') : 'stop';
+    hbT.textContent = STATE.running ? (STATE.paused ? 'Pause' : 'En cours · ' + STATE.keys.filter(k => k.active).length + ' clés') : 'Inactif';
+  }
+}
+
+/* ═══════ TABS ═══════ */
+document.querySelectorAll('#tabs button').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('#tabs button').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    const map = { live:'pLive', best:'pBest', disc:'pDisc', inv:'pInv', img:'pImg', self:'pSelf', cons:'pCons' };
+    Object.values(map).forEach(id => { const e = U.$(id); if (e) e.classList.add('hide'); });
+    const target = map[t.dataset.t]; if (target) U.$(target).classList.remove('hide');
+    if (t.dataset.t === 'best') Renderer.best();
+    if (t.dataset.t === 'disc') Renderer.disc();
+    if (t.dataset.t === 'inv') Renderer.inv();
+    if (t.dataset.t === 'img') Renderer.gallery();
+    if (t.dataset.t === 'self') Renderer.self();
+  };
+});
+
+/* ═══════ ÉVÉNEMENTS ═══════ */
+U.$('saveKeysBtn').onclick = () => {
+  const ok = Keys.validate();
+  if (ok) {
+    // Auto-démarrage : léger délai pour voir le toast
+    if (!STATE.running) setTimeout(() => startEngine(), 400);
+  }
+};
+
+U.$('clearKeysBtn').onclick = () => {
+  U.$('keysIn').value = '';
+  STATE.keys = [];
+  Keys.save([]);
+  Keys.render();
+  U.$('keyStatus').textContent = 'Aucune clé enregistrée';
+  U.$('keyStatus').className = 'hint';
+  UI.log('Clés effacées', 'warn', 'KEYS');
+};
+
+U.$('startBtn').onclick = () => {
+  // Si textarea non vide mais STATE.keys vide → sauvegarde automatique
+  if (!STATE.keys.length && U.$('keysIn').value.trim()) {
+    if (!Keys.validate()) return;
+  }
+  startEngine();
+};
+
+U.$('pauseBtn').onclick = () => {
+  STATE.paused = !STATE.paused;
+  U.$('pauseBtn').textContent = STATE.paused ? '▶ Reprendre' : '⏸ Pause';
+  updateCtl();
+  UI.say('Système', STATE.paused ? '⏸ Pause' : '▶ Reprise', 'verse');
+};
+
+U.$('stopBtn').onclick = () => stopEngine();
+
+U.$('freezeBtn').onclick = () => {
+  STATE.freeze = !STATE.freeze;
+  U.$('freezeBtn').textContent = STATE.freeze ? '▶ Reprendre le défilement' : '❄️ Figer le défilement';
+  const n = U.$('narration'); if (n) n.classList.toggle('frozen', STATE.freeze);
+  updateNarrInfo();
+};
+
+U.$('clearNarrBtn').onclick = () => {
+  const n = U.$('narration'); if (n) n.innerHTML = '';
+  updateNarrInfo();
+};
+
+/* ═══════ INIT ═══════ */
+(async function init() {
+  const ks = Keys.load();
+  if (ks.length) {
+    U.$('keysIn').value = ks.join('\n');
+    STATE.keys = ks.map(k => ({ key:k, cool:0, last:0, n:0, busy:0, errors:0, active:true }));
+    U.$('keyStatus').textContent = '✓ ' + ks.length + ' clé(s) restaurée(s) · ' + (ks.length * CONFIG.RPM_PER_KEY) + ' req/min';
+    U.$('keyStatus').className = 'hint ok';
+  }
+  Keys.render();
+
+  try {
+    const lens = await DB.all('lenses');
+    STATE.lenses = [...SEED_LENSES, ...DEEP_LENSES];
+    lens.forEach(l => { if (!STATE.lenses.find(x => x.id === l.id)) STATE.lenses.push(l); });
+
+    const meth = await DB.all('method');
+    STATE.method = [...SEED_METHOD];
+    meth.forEach(m => { if (!STATE.method.find(x => x.id === m.id)) STATE.method.push(m); });
+
+    const kv = await DB.get('kv', 'method').catch(() => null);
+    if (kv && kv.direction) STATE.cumul.direction = kv.direction;
+
+    const rs = await DB.all('readings');
+    if (rs.length) { STATE.readings = rs; UI.log(rs.length + ' analyses restaurées', 'ok', 'INIT'); }
+    const dc = await DB.all('discoveries');
+    if (dc.length) { STATE.discoveries = dc; UI.log(dc.length + ' découvertes restaurées', 'ok', 'INIT'); }
+    const iv = await DB.all('inventions');
+    if (iv.length) { STATE.inventions = iv; UI.log(iv.length + ' inventions restaurées', 'ok', 'INIT'); }
+    const im = await DB.all('images');
+    if (im.length) { STATE.images = im; UI.log(im.length + ' images restaurées', 'ok', 'INIT'); }
+  } catch (e) {
+    STATE.lenses = [...SEED_LENSES, ...DEEP_LENSES];
+    STATE.method = [...SEED_METHOD];
+  }
+
+  Renderer.best();
+  Renderer.disc();
+  Renderer.inv();
+  Renderer.gallery();
+  Renderer.self();
+  Renderer.conv();
+
+  UI.setText('sRead', String(STATE.readings.length));
+  UI.setText('sDisc', String(STATE.discoveries.length));
+  UI.setText('sInv', String(STATE.inventions.length));
+  UI.setText('sLens', String(STATE.lenses.length));
+  UI.setText('sImg', String(STATE.images.length));
+  UI.setText('sRepair', String(STATE.jsonRepairs));
+
+  updateCtl();
+  updateNarrInfo();
+
+  UI.say('Genesis·Decoder', 'Prêt. <strong>1)</strong> Colle tes clés → <strong>2)</strong> clique <strong>✓ Valider les clés</strong> → <strong>3)</strong> le moteur démarre automatiquement.', 'valid');
+
+  setInterval(() => { Keys.render(); Renderer.conv(); }, 2000);
+})();
+</script>
+</body>
+</html>
