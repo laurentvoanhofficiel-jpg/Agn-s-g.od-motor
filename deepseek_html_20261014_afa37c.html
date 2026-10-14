@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Genesis·Decoder v10</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:14px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#08080e;color:#d0d0dc;max-width:1240px;margin:0 auto;padding:10px}
+h1{font:800 20px system-ui;color:#e6b45a;letter-spacing:-.02em}
+h1 span{color:#39d0d8;font-size:11px;font-weight:400;margin-left:6px}
+h2{font:700 11px system-ui;color:#39d0d8;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.08em}
+.hint{font:11px ui-monospace;color:#555;margin-top:3px}
+.card{background:#111118;border:1px solid #222230;border-radius:8px;padding:12px;margin-bottom:10px}
+input,textarea,select{width:100%;padding:8px;background:#08080e;border:1px solid #222230;color:#d0d0dc;border-radius:5px;font:12px ui-monospace}
+input:focus,textarea:focus{outline:0;border-color:#e6b45a}
+textarea{min-height:60px;resize:vertical}
+button{padding:8px 14px;background:#e6b45a;color:#000;border:0;border-radius:5px;font:700 12px system-ui;cursor:pointer;transition:.15s}
+button:hover:not(:disabled){filter:brightness(1.1)}
+button:disabled{opacity:.35;cursor:not-allowed}
+button.sec{background:#222230;color:#d0d0dc}
+button.cyan{background:#39d0d8;color:#000}
+button.green{background:#4cc38a;color:#000}
+button.red{background:#c04040;color:#fff}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.row button{flex:1;min-width:80px}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STATS
+   ═══════════════════════════════════════════════════════════════════ */
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:6px;margin-bottom:10px}
+.stat .s{background:#111118;border:1px solid #222230;border-radius:5px;padding:8px;text-align:center;transition:.3s}
+.stat .s.bump{background:#1a1a28;border-color:#e6b45a;transform:scale(1.04)}
+.stat .s b{display:block;font:800 22px ui-monospace;color:#e6b45a;transition:.3s}
+.stat .s.pink b{color:#ff64d0}.stat .s.cyan b{color:#39d0d8}.stat .s.green b{color:#4cc38a}
+.stat .s span{font:9px ui-monospace;color:#666;text-transform:uppercase;letter-spacing:.05em}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TABS
+   ═══════════════════════════════════════════════════════════════════ */
+.tabs{display:flex;gap:4px;overflow-x:auto;margin:10px 0 8px;padding-bottom:2px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{background:#111118;color:#888;border:1px solid #222230;border-radius:100px;font:700 12px system-ui;padding:7px 14px;white-space:nowrap;flex-shrink:0;transition:.15s}
+.tabs button:hover{color:#d0d0dc}
+.tabs button.on{background:#e6b45a;color:#000;border-color:#e6b45a}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LIVE LAYOUT
+   ═══════════════════════════════════════════════════════════════════ */
+.live{display:grid;grid-template-columns:1fr 260px;gap:10px}
+@media(max-width:800px){.live{grid-template-columns:1fr}}
+#narration{background:#0c0c14;border:1px solid #1a1a28;border-radius:8px;padding:14px;height:640px;overflow-y:auto;scroll-behavior:smooth}
+#narration .n{padding:8px 0;border-bottom:1px solid #1a1a28;opacity:0;transform:translateY(6px);animation:in .35s forwards}
+#narration .n:last-child{border-bottom:0}
+@keyframes in{to{opacity:1;transform:translateY(0)}}
+#narration .n .t{font:10px ui-monospace;color:#444}
+#narration .n .s{color:#e6b45a;font:700 11px system-ui;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+#narration .n .x{margin-top:4px;color:#d0d0dc;line-height:1.6}
+#narration .n .x em{color:#39d0d8;font-style:normal}
+#narration .n .x strong{color:#e6b45a;font-weight:700}
+#narration .n .x code{font:11px ui-monospace;background:#1a1a28;padding:1px 5px;border-radius:3px;color:#4cc38a}
+#narration .f{display:block;font:13px ui-monospace;color:#4cc38a;background:#0a1a0f;border-left:3px solid #4cc38a;padding:8px 12px;border-radius:5px;margin:6px 0;word-break:break-word;animation:glow 1s}
+@keyframes glow{from{box-shadow:0 0 0 4px rgba(76,195,138,.3)}to{box-shadow:0 0 0 0 rgba(76,195,138,0)}}
+#narration .disc{background:#1a0a1a;border-left:3px solid #ff64d0;padding:12px 16px;border-radius:5px;margin:8px 0;color:#ff64d0;font-weight:600;animation:pulse 1.2s}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,100,208,.6)}70%{box-shadow:0 0 0 12px rgba(255,100,208,0)}100%{box-shadow:0 0 0 0 rgba(255,100,208,0)}}
+#narration .disc .inv{margin-top:6px;padding:8px 10px;background:#0a0a14;border-left:2px solid #39d0d8;color:#39d0d8;font-size:12px;font-weight:400;border-radius:3px}
+#narration .disc .inv b{color:#e6b45a;display:block;margin-bottom:3px;font-size:10px;text-transform:uppercase}
+#narration .valid{background:#0a1a0f;border-left:3px solid #4cc38a;padding:8px 12px;border-radius:5px;margin:6px 0;color:#4cc38a}
+#narration .deep{background:#1a0a14;border-left:3px solid #ff64d0;padding:10px 14px;border-radius:5px;margin:8px 0;color:#ff64d0;font-weight:600}
+#narration .verse-ref{color:#39d0d8;font:700 12px ui-monospace}
+#narration .verse-txt{color:#888;font-style:italic;margin:4px 0 6px 0;padding-left:10px;border-left:2px solid #222230}
+
+#side{display:flex;flex-direction:column;gap:10px}
+#side .box{background:#0c0c14;border:1px solid #1a1a28;border-radius:8px;padding:10px}
+#side .box h3{font:700 10px system-ui;color:#666;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+#side .pos{font:700 13px ui-monospace;color:#39d0d8}
+#side .pos-sub{font:11px ui-monospace;color:#666;margin-top:2px}
+#side .bar{height:4px;background:#1a1a28;border-radius:2px;overflow:hidden;margin-top:6px}
+#side .bar i{display:block;height:100%;background:linear-gradient(90deg,#39d0d8,#e6b45a);transition:width .5s}
+#side .keylist{max-height:240px;overflow-y:auto}
+#side .k{display:flex;align-items:center;gap:5px;padding:4px 0;font:10px ui-monospace;border-bottom:1px solid #1a1a28}
+#side .k:last-child{border:0}
+#side .k .id{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888}
+#side .k .st{font:8px ui-monospace;padding:1px 5px;border-radius:3px;font-weight:700;text-transform:uppercase}
+#side .k .st.ok{background:#0a2a1a;color:#4cc38a}
+#side .k .st.cool{background:#2a1a0a;color:#d8983f}
+#side .k .st.dead{background:#2a0a0a;color:#e05555}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ITEMS (best, discoveries, etc.)
+   ═══════════════════════════════════════════════════════════════════ */
+.ritem{padding:10px;background:#0c0c14;border:1px solid #1a1a28;border-radius:6px;margin-bottom:6px;font-size:12px}
+.ritem .h{display:flex;gap:5px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
+.ritem .lens{font:9px ui-monospace;padding:2px 6px;background:#3a2a5a;color:#c8a0ff;border-radius:3px;font-weight:700;text-transform:uppercase}
+.ritem .ref{font:10px ui-monospace;color:#888}
+.ritem .sc{font:700 11px ui-monospace;margin-left:auto;padding:2px 7px;border-radius:100px}
+.ritem .f{font:12px ui-monospace;color:#e6b45a;margin:5px 0;word-break:break-word}
+.ritem .intent{color:#39d0d8;font-size:11.5px;padding-left:8px;border-left:2px solid #39d0d8;margin:4px 0}
+.ritem .dom{color:#4cc38a;font-size:11.5px;padding-left:8px;border-left:2px solid #4cc38a;margin:4px 0}
+.ritem .w{color:#888;margin-top:4px;line-height:1.5}
+.ritem .inv{margin-top:6px;padding:8px 10px;background:#0a0a14;border-left:2px solid #39d0d8;border-radius:3px}
+.ritem .inv b{color:#39d0d8;font-size:10px;text-transform:uppercase;display:block;margin-bottom:3px}
+.ritem .m{display:flex;gap:3px;margin-top:6px;font:9px ui-monospace;color:#777;flex-wrap:wrap}
+.ritem .m span{background:#1a1a28;padding:2px 5px;border-radius:3px}
+.ritem.best{border-color:#e6b45a;background:#1a1408}
+.ritem.disc{border-color:#ff64d0;background:#1a0a1a}
+.sh{background:#4cc38a;color:#000}.sm{background:#d8983f;color:#000}.sl{background:#e05555;color:#fff}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GALLERY
+   ═══════════════════════════════════════════════════════════════════ */
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px}
+.gal .g{background:#0c0c14;border:1px solid #1a1a28;border-radius:6px;overflow:hidden;transition:.3s}
+.gal .g:hover{border-color:#e6b45a}
+.gal img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:pointer}
+.gal .c{padding:6px 8px;font:10px ui-monospace;color:#777;line-height:1.35}
+.gal .c b{color:#e6b45a;display:block;margin-bottom:2px}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONSOLE
+   ═══════════════════════════════════════════════════════════════════ */
+#console{background:#040408;border:1px solid #1a1a28;border-radius:6px;height:560px;overflow-y:auto;padding:8px;font:11px/1.5 ui-monospace}
+#console .e{padding:2px 0;border-bottom:1px solid #0a0a10;word-break:break-word}
+#console .e .t{color:#333;margin-right:6px}
+#console .e .g{color:#c8a0ff;margin-right:5px;font-weight:700}
+#console .ok{color:#4cc38a}#console .err{color:#e05555}#console .warn{color:#d8983f}
+#console .gold{color:#e6b45a}#console .lock{color:#39d0d8}#console .ai{color:#c8a0ff}
+#console .disc{color:#ff64d0;font-weight:700}#console .evo{color:#4cc38a;font-weight:700}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LENSES
+   ═══════════════════════════════════════════════════════════════════ */
+.lc{padding:10px;background:#0c0c14;border:1px solid #1a1a28;border-left:3px solid #39d0d8;border-radius:5px;margin-bottom:6px;font-size:11.5px}
+.lc.spec{border-left-color:#4cc38a}
+.lc.exp{border-left-color:#d8983f}
+.lc.pru{border-left-color:#e05555;opacity:.5}
+.lc .h{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:5px}
+.lc .code{font:700 11px ui-monospace;color:#c8a0ff}
+.lc .lbl{color:#e6b45a;font-weight:700;font-size:12px}
+.lc .perf{margin-left:auto;font:10px ui-monospace;color:#888}
+.lc .q{color:#999;line-height:1.45;margin-top:4px}
+.badge{font:9px ui-monospace;padding:2px 6px;border-radius:100px;font-weight:700;text-transform:uppercase}
+.badge.core{background:#0a2a3a;color:#39d0d8}
+.badge.spec{background:#0a2a1a;color:#4cc38a}
+.badge.exp{background:#2a1a0a;color:#d8983f}
+.badge.pru{background:#2a0a0a;color:#e05555}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FIXED UI
+   ═══════════════════════════════════════════════════════════════════ */
+#hb{position:fixed;bottom:12px;right:12px;background:rgba(12,12,20,.95);border:1px solid #222230;border-radius:100px;padding:6px 14px;font:11px ui-monospace;color:#4cc38a;display:flex;gap:8px;align-items:center;z-index:90;backdrop-filter:blur(8px);box-shadow:0 4px 20px rgba(0,0,0,.5)}
+#hb .d{width:8px;height:8px;border-radius:50%;background:#4cc38a;animation:pulse-dot 1.5s infinite}
+#hb.pause .d{background:#d8983f;animation:none}
+#hb.stop .d{background:#e05555;animation:none}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+#toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-120px);background:#e6b45a;color:#000;padding:10px 20px;border-radius:100px;font:700 13px system-ui;z-index:100;transition:.3s cubic-bezier(.2,.9,.3,1.1);max-width:90%;text-align:center}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#toast.err{background:#e05555;color:#fff}
+#toast.ok{background:#4cc38a;color:#000}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+
+<h1>Genesis·Decoder <span>v10 · moteur perpétuel · analyse scientifique profonde</span></h1>
+<div class="hint">Méthode : <b style="color:#39d0d8">Question → Variables → Cumul → Formule → Direction → Mystère → Invention</b> · boucle infinie · invention extraction automatique</div>
+
+<div class="card">
+<h2>🔑 Clés API Agnès AI</h2>
+<textarea id="keysIn" placeholder="sk-...&#10;sk-..." spellcheck="false" rows="3"></textarea>
+<div class="row" style="margin-top:8px">
+<button class="green" id="startBtn">▶ DÉMARRER LE MOTEUR</button>
+<button class="sec" id="pauseBtn" style="display:none">⏸ Pause</button>
+<button class="red" id="stopBtn" style="display:none">⏹ Stop</button>
+<button class="sec" id="clearBtn" style="flex:0 0 auto;min-width:70px">Effacer</button>
+</div>
+<div class="hint" id="keyStatus">Colle tes clés puis clique DÉMARRER — tout est automatique ensuite.</div>
+</div>
+
+<div class="stat">
+<div class="s"><b id="sKeys">0</b><span>Clés</span></div>
+<div class="s cyan"><b id="sRead">0</b><span>Analyses</span></div>
+<div class="s pink"><b id="sDisc">0</b><span>Découvertes</span></div>
+<div class="s green"><b id="sLens">0</b><span>Angles</span></div>
+<div class="s"><b id="sImg">0</b><span>Images</span></div>
+<div class="s"><b id="sVerse">0</b><span>Versets</span></div>
+<div class="s cyan"><b id="sCycle">0</b><span>Cycle</span></div>
+<div class="s pink"><b id="sInv">0</b><span>Inventions</span></div>
+</div>
+
+<div class="tabs" id="tabs">
+<button class="on" data-t="live">📡 En direct</button>
+<button data-t="best">★ Meilleures</button>
+<button data-t="disc">💎 Découvertes</button>
+<button data-t="inv">⚗ Inventions</button>
+<button data-t="img">🖼 Images</button>
+<button data-t="self">🧬 Auto-organisation</button>
+<button data-t="cons">⌨ Console</button>
+</div>
+
+<div id="pLive">
+<div class="live">
+<div id="narration">
+<div class="n"><div class="t">—</div><div class="s">Genesis·Decoder</div><div class="x">En attente. Colle tes clés API et clique sur <strong>DÉMARRER LE MOTEUR</strong>. Je vais : (1) établir la méthode sur Genèse 1:1-3, (2) lire automatiquement tout l'Ancien Testament sous 7 angles, (3) détecter les découvertes et extraire les inventions testables.</div></div>
+</div>
+<div id="side">
+<div class="box">
+<h3>Position</h3>
+<div class="pos" id="posBook">—</div>
+<div class="pos-sub" id="posVerse">En attente</div>
+<div class="bar"><i id="posBar" style="width:0%"></i></div>
+</div>
+<div class="box">
+<h3>Convergence</h3>
+<div class="pos" id="convVal">0 %</div>
+<div class="pos-sub" id="convTxt">en attente</div>
+<div class="bar"><i id="convBar" style="width:0%"></i></div>
+</div>
+<div class="box">
+<h3>Clés actives</h3>
+<div class="keylist" id="keyList"></div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="pBest" class="hide"><div id="bestView"></div></div>
+<div id="pDisc" class="hide"><div id="discView"></div></div>
+<div id="pInv" class="hide"><div id="invView"></div></div>
+<div id="pImg" class="hide"><div class="gal" id="gallery"></div></div>
+<div id="pSelf" class="hide"><div id="selfView"></div></div>
+<div id="pCons" class="hide"><div id="console"></div></div>
+
+<div id="hb" class="stop"><span class="d"></span><span id="hbTxt">Inactif</span></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ═════════════════════════════════════════════════════════════════════
+   ⚙️  CONFIG
+   ═════════════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  API: 'https://apihub.agnes-ai.com/v1',
+  MODEL_TEXT: 'agnes-2.5-flash',
+  MODEL_IMG: 'agnes-image-2.1-flash',
+  LS_KEYS: 'gd10_keys',
+  DB_NAME: 'gd10',
+  DB_VERSION: 1,
+  MAX_LOG: 500,
+  MAX_NARRATION: 300,
+  MAX_QUEUE: 80,
+  RPM_PER_KEY: 10,                       // clés gratuites Agnès AI
+  COOLDOWN_429_MS: 65000,
+  FETCH_TIMEOUT_MS: 60000,
+  EVOLVE_LENS_EVERY: 20,
+  EVOLVE_METHOD_EVERY: 60,
+  IMG_MIN_SCORE: 8.5,
+  DISCOVERY_MIN_METHOD: 8.5,
+  DISCOVERY_MIN_QUESTION: 8,
+  DISCOVERY_MIN_NOVELTY: 7,
+  // Mots déclencheurs du mode profond (êtres complexes, conscience)
+  DEEP_TRIGGERS: [
+    'homme','femme','âme','esprit','souffle','image','ressemblance','conscience',
+    'pensée','connais','volonté','être vivant','langage','parole','nom','cœur',
+    'vie éternelle','arbre de vie','connaissance du bien','dieu dit','faisons'
+  ]
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🧠  STATE
+   ═════════════════════════════════════════════════════════════════════ */
+const STATE = {
+  keys: [],
+  running: false,
+  paused: false,
+  stopped: false,
+  lenses: [],
+  method: [],
+  readings: [],
+  discoveries: [],
+  inventions: [],
+  images: [],
+  books: [],
+  pos: { book: 0, chapter: 1 },
+  cumul: { present: ['E','m','vide','t','p','c'], domains: [], direction: '' },
+  cycle: 0,
+  bootstrapped: false,
+  readCount: 0,
+  verseCount: 0,
+  queue: [],
+  inFlight: 0
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🔬  LENTILLES DE BASE (7 angles, méthode stricte)
+   ═════════════════════════════════════════════════════════════════════ */
+const SEED_LENSES = [
+  { id:'L1', code:'QUESTION', lbl:'Question fondamentale',
+    q:"Quelle est LA question scientifique que ce verset pose ? Que doit se demander un scientifique qui lit ce texte adogmatiquement ? Formule la question en une phrase précise.",
+    status:'core', p:{n:0,avg:0,best:0} },
+
+  { id:'L2', code:'VARIABLES', lbl:'Variables textuelles',
+    q:"Quels mots du verset correspondent à des objets scientifiques ? Identifie les NOUVEAUX mots par rapport au cumul des versets précédents. Chaque variable doit venir d'un mot présent textuellement.",
+    status:'core', p:{n:0,avg:0,best:0} },
+
+  { id:'L3', code:'CUMUL', lbl:'Cumul présents/absents',
+    q:"Après ce verset, quelles variables sont PRÉSENTES ? Lesquelles sont encore ABSENTES ? Qu'est-ce que ce cumul rend POSSIBLE ou IMPOSSIBLE ?",
+    status:'core', p:{n:0,avg:0,best:0} },
+
+  { id:'L4', code:'FORMULE', lbl:'Formule émergente',
+    q:"Quelle formule scientifique devient POSSIBLE avec les variables présentes ? Écris-la en LaTeX simple. Si aucune formule n'est encore possible, explique pourquoi précisément.",
+    status:'core', p:{n:0,avg:0,best:0} },
+
+  { id:'L5', code:'DIRECTION', lbl:'Direction de complexification',
+    q:"Où ce verset nous emmène-t-il dans la direction globale du texte (énergie → matière → champ → structures → vie → conscience → repos) ? Quelle nouvelle étape de complexification est franchie ?",
+    status:'core', p:{n:0,avg:0,best:0} },
+
+  { id:'L6', code:'MYSTERE', lbl:'Mystère scientifique actuel',
+    q:"À quel grand mystère scientifique ACTUEL ce verset fait-il écho ? (matière noire, énergie noire, gravité quantique, unification, conscience, origine de la vie, flèche du temps, asymétrie matière-antimatière, information quantique, vide quantique, trous noirs, expansion accélérée, etc.)",
+    status:'core', p:{n:0,avg:0,best:0} },
+
+  { id:'L7', code:'INVENTION', lbl:'Piste d\'invention testable',
+    q:"Quelle INVENTION ou quel PROTOCOLE EXPÉRIMENTAL concret découle de cette lecture ? Sois précis : formule du dispositif, principe physique mis en jeu, et pourquoi c'est cohérent avec la recherche scientifique actuelle.",
+    status:'core', p:{n:0,avg:0,best:0} }
+];
+
+/* ═════════════════════════════════════════════════════════════════════
+   🔬  LENTILLES PROFONDES (êtres complexes, conscience)
+   ═════════════════════════════════════════════════════════════════════ */
+const DEEP_LENSES = [
+  { id:'D1', code:'BIOL_INFO', lbl:'Information biologique',
+    q:"Analyse ce verset du point de vue de l'information biologique : ADN, code génétique, hérédité, complexité informationnelle de la cellule. Quelle formule biologique devient possible ?",
+    status:'deep', p:{n:0,avg:0,best:0} },
+
+  { id:'D2', code:'INFO_INTEGREE', lbl:'Information intégrée',
+    q:"Analyse ce verset du point de vue de l'information intégrée (IIT de Tononi). Mesure Φ (phi) : quel niveau d'intégration d'information le verset décrit-il ? Lien avec la conscience phénoménale.",
+    status:'deep', p:{n:0,avg:0,best:0} },
+
+  { id:'D3', code:'CONSCIENCE', lbl:'Conscience phénoménale',
+    q:"Analyse ce verset du point de vue de la conscience phénoménale. Y a-t-il auto-modèle, récursivité, expérience subjective ? Lien avec Orch-OR (Penrose-Hameroff), IIT, ou théorie de l'espace de travail global.",
+    status:'deep', p:{n:0,avg:0,best:0} },
+
+  { id:'D4', code:'LANGAGE', lbl:'Langage symbolique',
+    q:"Analyse ce verset du point de vue du langage symbolique et de la récursivité. Y a-t-il parole, nomination, référence ? Lien avec la théorie de la récursion de Chomsky, ou l'émergence du langage symbolique.",
+    status:'deep', p:{n:0,avg:0,best:0} }
+];
+
+/* ═════════════════════════════════════════════════════════════════════
+   📐  MÉTHODE DE BASE
+   ═════════════════════════════════════════════════════════════════════ */
+const SEED_METHOD = [
+  { id:'R1', name:'Source textuelle', desc:'Chaque variable doit venir d\'un mot présent textuellement dans le verset ou un verset précédent.', w:1.0 },
+  { id:'R2', name:'Pas d\'anticipation', desc:'Aucun objet scientifique avant son mot-source textuel.', w:1.0 },
+  { id:'R3', name:'Pas de sur-simplification', desc:'« lumière » ≠ lumière visible, c\'est la constante c. Chaque mot doit être lu dans son registre scientifique.', w:1.0 },
+  { id:'R4', name:'Question obligatoire', desc:'Chaque verset doit révéler la question qu\'il pose au scientifique.', w:1.0 },
+  { id:'R5', name:'Cumul cohérent', desc:'Le cumul des variables présentes/absentes doit être respecté et mis à jour.', w:1.0 }
+];
+
+/* ═════════════════════════════════════════════════════════════════════
+   🛠  UTILS
+   ═════════════════════════════════════════════════════════════════════ */
+const U = {
+  $: id => document.getElementById(id),
+  sleep: ms => new Promise(r => setTimeout(r, ms)),
+  esc: s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+  now: () => new Date().toLocaleTimeString('fr-FR', { hour12: false }),
+  clamp: (v, a, b) => Math.max(a, Math.min(b, Number(v) || 0)),
+  uid: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
+};
+
+let _toastT;
+const toast = (msg, type) => {
+  const el = U.$('toast');
+  el.textContent = msg;
+  el.className = 'on ' + (type || '');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.className = '', 2600);
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   📺  LOG + NARRATION
+   ═════════════════════════════════════════════════════════════════════ */
+const UI = {
+  log(msg, cls, group) {
+    const c = U.$('console'); if (!c) return;
+    const d = document.createElement('div');
+    d.className = 'e ' + (cls || '');
+    d.innerHTML = '<span class="t">' + U.now() + '</span>' + (group ? '<span class="g">[' + U.esc(group) + ']</span>' : '') + U.esc(msg);
+    c.appendChild(d);
+    while (c.children.length > CONFIG.MAX_LOG) c.removeChild(c.firstChild);
+    c.scrollTop = c.scrollHeight;
+  },
+
+  say(speaker, html, cls) {
+    const n = U.$('narration'); if (!n) return;
+    const d = document.createElement('div');
+    d.className = 'n';
+    if (cls === 'disc') d.innerHTML = '<div class="disc">' + html + '</div>';
+    else if (cls === 'valid') d.innerHTML = '<div class="valid">' + html + '</div>';
+    else if (cls === 'deep') d.innerHTML = '<div class="deep">' + html + '</div>';
+    else if (cls === 'formula') d.innerHTML = '<span class="f">' + html + '</span>';
+    else if (cls === 'verse') d.innerHTML = html;
+    else d.innerHTML = '<div class="t">' + U.now() + '</div><div class="s">' + U.esc(speaker) + '</div><div class="x">' + html + '</div>';
+    n.appendChild(d);
+    while (n.children.length > CONFIG.MAX_NARRATION) n.removeChild(n.firstChild);
+    n.scrollTop = n.scrollHeight;
+  },
+
+  bump(id) {
+    const el = U.$(id); if (!el) return;
+    const card = el.closest('.s');
+    if (card) { card.classList.add('bump'); setTimeout(() => card.classList.remove('bump'), 300); }
+  },
+
+  setText(id, txt) { const el = U.$(id); if (el) el.textContent = txt; }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   💾  PERSISTENCE
+   ═════════════════════════════════════════════════════════════════════ */
+const DB = (() => {
+  let _db = null;
+  const open = () => new Promise((res, rej) => {
+    if (_db) return res(_db);
+    if (!window.indexedDB) return rej(new Error('IndexedDB indisponible'));
+    const rq = indexedDB.open(CONFIG.DB_NAME, CONFIG.DB_VERSION);
+    rq.onupgradeneeded = e => {
+      const d = e.target.result;
+      ['readings','images','discoveries','inventions','chapters'].forEach(s => {
+        if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath:'id', autoIncrement:true });
+      });
+      ['lenses','deep_lenses','method','kv'].forEach(s => {
+        if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath:'id' });
+      });
+    };
+    rq.onsuccess = e => { _db = e.target.result; res(_db); };
+    rq.onerror = () => rej(rq.error);
+  });
+  const add = (s, v) => open().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(s, 'readwrite');
+    const rq = tx.objectStore(s).add(v);
+    rq.onsuccess = () => res(rq.result);
+    tx.onerror = () => rej(tx.error);
+  }));
+  const put = (s, v, k) => open().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(s, 'readwrite');
+    if (k !== undefined) tx.objectStore(s).put(v, k); else tx.objectStore(s).put(v);
+    tx.oncomplete = () => res(true);
+    tx.onerror = () => rej(tx.error);
+  }));
+  const all = s => open().then(d => new Promise((res, rej) => {
+    const rq = d.transaction(s).objectStore(s).getAll();
+    rq.onsuccess = () => res(rq.result || []);
+    rq.onerror = () => rej(rq.error);
+  }));
+  const get = (s, k) => open().then(d => new Promise((res, rej) => {
+    const rq = d.transaction(s).objectStore(s).get(k);
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  }));
+  return { open, add, put, all, get };
+})();
+
+/* ═════════════════════════════════════════════════════════════════════
+   🔑  KEYS
+   ═════════════════════════════════════════════════════════════════════ */
+const Keys = {
+  load() {
+    try {
+      const r = localStorage.getItem(CONFIG.LS_KEYS);
+      return r ? JSON.parse(r).filter(k => typeof k === 'string' && k.startsWith('sk-')) : [];
+    } catch { return []; }
+  },
+  save(keys) { try { localStorage.setItem(CONFIG.LS_KEYS, JSON.stringify(keys)); } catch {} },
+  rebuildFromInput() {
+    const raw = (U.$('keysIn').value || '').split(/\r?\n/).map(x => x.trim()).filter(x => x.startsWith('sk-'));
+    const seen = new Set(); const valid = [];
+    raw.forEach(k => { if (!seen.has(k)) { seen.add(k); valid.push(k); } });
+    const old = {}; STATE.keys.forEach(k => old[k.key] = k);
+    STATE.keys = valid.map(k => old[k] || { key: k, cool: 0, last: 0, n: 0, busy: 0, errors: 0, active: true });
+    Keys.save(valid);
+    Keys.render();
+    const totalRpm = valid.length * CONFIG.RPM_PER_KEY;
+    UI.setText('keyStatus', valid.length + ' clé(s) active(s) · ' + totalRpm + ' req/min cumulées');
+    const el = U.$('keyStatus'); if (el) el.style.color = valid.length ? '#4cc38a' : '#555';
+  },
+  render() {
+    const el = U.$('keyList'); if (!el) return;
+    const now = Date.now(); let active = 0;
+    if (!STATE.keys.length) {
+      el.innerHTML = '<div style="color:#555;font-size:10px;padding:4px">Aucune clé</div>';
+      UI.setText('sKeys', '0'); return;
+    }
+    el.innerHTML = STATE.keys.map((k, i) => {
+      let cls = 'ok', tx = 'OK';
+      if (!k.active) { cls = 'dead'; tx = 'morte'; }
+      else if (k.cool > now) { cls = 'cool'; tx = Math.ceil((k.cool - now) / 1000) + 's'; }
+      else active++;
+      return '<div class="k"><span class="id">#' + (i + 1) + ' ' + U.esc(k.key.slice(0, 8)) + '…' + U.esc(k.key.slice(-3)) + '</span>' +
+             '<span style="color:#555">' + k.n + '</span><span class="st ' + cls + '">' + tx + '</span></div>';
+    }).join('');
+    UI.setText('sKeys', String(active));
+    const hb = U.$('hbTxt');
+    if (STATE.running && hb) hb.textContent = STATE.paused ? 'Pause' : 'En cours · ' + active + ' clés';
+  },
+  anyActive() { return STATE.keys.some(k => k.active); },
+  pick() {
+    const now = Date.now();
+    const minInt = Math.ceil(60000 / CONFIG.RPM_PER_KEY);
+    const ready = STATE.keys.filter(k => k.active && k.cool < now && now - k.last >= minInt && k.busy < 1);
+    if (!ready.length) return null;
+    ready.sort((a, b) => (a.n - b.n) || (a.last - b.last));
+    return ready[0];
+  },
+  acquire() {
+    return new Promise((res, rej) => {
+      const t0 = Date.now();
+      (function loop() {
+        if (STATE.stopped) return rej(new Error('Arrêt'));
+        const k = Keys.pick();
+        if (k) { k.busy++; k.last = Date.now(); k.n++; return res(k); }
+        if (!Keys.anyActive()) return rej(new Error('Aucune clé active'));
+        if (Date.now() - t0 > 300000) return rej(new Error('Timeout clés'));
+        setTimeout(loop, 250);
+      })();
+    });
+  },
+  release(k) { if (k) k.busy = Math.max(0, k.busy - 1); }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🌐  API
+   ═════════════════════════════════════════════════════════════════════ */
+const API = {
+  async call(url, opts, tries = 4) {
+    let last;
+    for (let a = 0; a < tries; a++) {
+      if (STATE.stopped) throw new Error('Arrêt');
+      let k = null;
+      try {
+        k = await Keys.acquire();
+        const ctl = new AbortController();
+        const t = setTimeout(() => ctl.abort(), CONFIG.FETCH_TIMEOUT_MS);
+        const headers = Object.assign({}, opts.headers || {}, { 'Authorization': 'Bearer ' + k.key });
+        const res = await fetch(url, Object.assign({}, opts, { headers, signal: ctl.signal }));
+        clearTimeout(t);
+        const ra = parseInt(res.headers.get('Retry-After') || '0', 10) || 0;
+        if (res.ok) { k.errors = 0; Keys.release(k); return res; }
+        let txt = '';
+        try { txt = (await res.clone().text()).slice(0, 300); } catch {}
+        if (res.status === 401 || res.status === 403) {
+          k.errors++; if (k.errors >= 3) k.active = false;
+          Keys.release(k);
+          throw { status: res.status, message: 'HTTP ' + res.status };
+        }
+        if (res.status === 429) {
+          const w = ra ? ra * 1000 : CONFIG.COOLDOWN_429_MS;
+          k.cool = Date.now() + w; Keys.release(k);
+          UI.log('429 · clé …' + k.key.slice(-4) + ' → ' + Math.round(w / 1000) + 's', 'warn', 'RATE');
+          await U.sleep(Math.min(w, 5000));
+          continue;
+        }
+        if (res.status === 400 || res.status === 404) {
+          Keys.release(k);
+          throw { status: res.status, message: 'HTTP ' + res.status + ' — ' + txt.slice(0, 140) };
+        }
+        if ([500,502,503,504].includes(res.status)) {
+          Keys.release(k); last = new Error('HTTP ' + res.status);
+          await U.sleep(2000 + a * 1500); continue;
+        }
+        Keys.release(k); last = new Error('HTTP ' + res.status);
+        await U.sleep(1500 + a * 1000);
+      } catch (e) {
+        if (k) Keys.release(k);
+        if (e.message === 'Arrêt') throw e;
+        if (e.status === 400 || e.status === 401 || e.status === 403 || e.status === 404) throw e;
+        if (e.name === 'AbortError') { last = new Error('Timeout'); continue; }
+        last = e;
+        await U.sleep(1500 + a * 800);
+      }
+    }
+    throw last || new Error('Échec API');
+  },
+
+  async text(sys, usr, max = 2400, temp = 0.75) {
+    const body = {
+      model: CONFIG.MODEL_TEXT,
+      messages: [{ role:'system', content:sys }, { role:'user', content:usr }],
+      temperature: temp, max_tokens: max,
+      reasoning_effort: 'none',
+      chat_template_kwargs: { enable_thinking: false }
+    };
+    const r = await API.call(CONFIG.API + '/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    }, 3);
+    const d = await r.json();
+    const c = d.choices && d.choices[0] && d.choices[0].message;
+    return (c && c.content) || (c && c.reasoning_content) || '';
+  },
+
+  async image(prompt) {
+    const body = { model: CONFIG.MODEL_IMG, prompt: String(prompt).slice(0, 1900), n: 1, size: '1K', ratio: '1:1' };
+    const r = await API.call(CONFIG.API + '/images/generations', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    }, 3);
+    const d = await r.json();
+    const it = d.data && d.data[0];
+    if (!it) throw new Error('Pas d\'image');
+    if (it.url) return it.url;
+    if (it.b64_json) return 'data:image/png;base64,' + it.b64_json;
+    throw new Error('Format image inconnu');
+  }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🧩  JSON PARSER TOLÉRANT
+   ═════════════════════════════════════════════════════════════════════ */
+const Parser = {
+  json(text) {
+    if (!text) return null;
+    let c = String(text).trim();
+    const fm = c.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fm) c = fm[1].trim();
+    const fb = c.indexOf('{'); if (fb < 0) return null;
+    c = c.slice(fb);
+    const lb = c.lastIndexOf('}'); if (lb > 0) c = c.slice(0, lb + 1);
+    // Échappe les caractères de contrôle dans les chaînes
+    let out = '', inS = false, escF = false;
+    for (let i = 0; i < c.length; i++) {
+      const ch = c[i];
+      if (escF) { out += ch; escF = false; continue; }
+      if (ch === '\\') { out += ch; escF = true; continue; }
+      if (ch === '"') { inS = !inS; out += ch; continue; }
+      if (inS) {
+        if (ch === '\n') { out += '\\n'; continue; }
+        if (ch === '\r') { out += '\\r'; continue; }
+        if (ch === '\t') { out += '\\t'; continue; }
+        if (ch.charCodeAt(0) < 32) { out += '\\u' + ch.charCodeAt(0).toString(16).padStart(4, '0'); continue; }
+      }
+      out += ch;
+    }
+    out = out.replace(/,\s*([}\]])/g, '$1');
+    try { return JSON.parse(out); } catch {}
+    // Équilibrage
+    let ob = 0, ok = 0, iS = false, eF = false;
+    for (let i = 0; i < out.length; i++) {
+      const ch = out[i];
+      if (eF) { eF = false; continue; }
+      if (ch === '\\') { eF = true; continue; }
+      if (ch === '"') { iS = !iS; continue; }
+      if (iS) continue;
+      if (ch === '{') ob++; else if (ch === '}') ob--;
+      else if (ch === '[') ok++; else if (ch === ']') ok--;
+    }
+    let r = out;
+    if (iS) r += '"';
+    while (ok > 0) { r += ']'; ok--; }
+    while (ob > 0) { r += '}'; ob--; }
+    try { return JSON.parse(r); } catch { return null; }
+  }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   📝  PROMPTS
+   ═════════════════════════════════════════════════════════════════════ */
+const Prompts = {
+  bootstrap: {
+    system: `Tu es un analyste scientifique adogmatique. Tu traites la Bible comme un système formel de variables scientifiques ordonnées.
+
+DÉMONSTRATION DE RÉFÉRENCE (validée, non négociable) :
+- Gen 1:1 « Au commencement, Dieu créa les cieux et la terre. »
+  → E (Dieu créa = opération créatrice = transfert d'énergie), vide (cieux), m (terre = masse), t (commencement = temps).
+  → E=mc² IMPOSSIBLE car c (vitesse de la lumière) est ABSENT.
+- Gen 1:2 « La terre était informe et vide, et l'Esprit de Dieu se mouvait au-dessus des eaux. »
+  → +p (Esprit qui se mouvait = seul verbe de déplacement = quantité de mouvement).
+  → E=mc² toujours IMPOSSIBLE car c reste ABSENT.
+- Gen 1:3 « Dieu dit : Que la lumière soit ! Et la lumière fut. »
+  → +c (lumière = vitesse intrinsèque, constante, invariante, limite).
+  → E²=(mc²)²+(pc)² POSSIBLE. E=mc² POSSIBLE si p=0.
+
+CLÉ MÉTHODOLOGIQUE : l'ordre du texte (masse/vide → mouvement → lumière) reproduit l'ordre logique de la physique. Aucune variable n'apparaît avant son mot-source.
+
+RÈGLES À EXTRAIRE :
+R1. Source textuelle : chaque variable vient d'un mot présent.
+R2. Pas d'anticipation : aucun objet avant son mot-source.
+R3. Pas de sur-simplification : « lumière » ≠ lumière visible, c'est la constante c.
+R4. Question obligatoire : chaque verset révèle la question qu'il pose.
+R5. Cumul cohérent : les présents/absents doivent être respectés.
+
+JSON uniquement.`,
+    user: `Analyse Gen 1:1-3 et extrais la MÉTHODE.
+
+{
+  "etapes": [
+    {"v":1,"present":["E","m","vide","t"],"absent":["c","p"],"formule_impossible":"E=mc² (c manquant)","question":"Que faut-il pour créer ?"},
+    {"v":2,"present":["E","m","vide","t","p"],"absent":["c"],"formule_impossible":"E=mc² (c manquant)","question":"Qu'est-ce qui se meut dans le vide ?"},
+    {"v":3,"present":["E","m","vide","t","p","c"],"absent":[],"formule_possible":"E²=(mc²)²+(pc)²","question":"Qu'apporte la lumière au système ?"}
+  ],
+  "methode": [
+    {"id":"R1","name":"Source textuelle","desc":"..."},
+    {"id":"R2","name":"Pas d'anticipation","desc":"..."},
+    {"id":"R3","name":"Pas de sur-simplification","desc":"..."},
+    {"id":"R4","name":"Question obligatoire","desc":"..."},
+    {"id":"R5","name":"Cumul cohérent","desc":"..."}
+  ],
+  "direction":"énergie → matière → champ → structures → vie → conscience → repos",
+  "verifie": true
+}`
+  },
+
+  books: {
+    system: 'Tu connais la Bible. JSON uniquement.',
+    user: `Liste des 39 livres de l'Ancien Testament dans l'ordre canonique avec nombre de chapitres.
+{"books":[{"name":"Genèse","chapters":50},...]}`
+  },
+
+  chapter: (book, chapter) => ({
+    system: 'Tu connais la Bible par cœur. Texte exact (Louis Segond). JSON uniquement.',
+    user: `Tous les versets de "${book}" chapitre ${chapter}.
+{"verses":[{"v":1,"txt":"..."},{"v":2,"txt":"..."}]}`
+  }),
+
+  verse: (verse, ref, lens, cumul, deep) => {
+    const methodRules = STATE.method.map(r => '- ' + r.id + ' ' + r.name + ' : ' + r.desc).join('\n');
+    const deepBlock = deep ? `
+
+MODE PROFOND ACTIVÉ — ce verset introduit un être complexe (humain, conscience, langage, âme).
+Analyse supplémentaire OBLIGATOIRE :
+- Distinction entre information biologique, information intégrée (IIT, Φ), et conscience phénoménale.
+- Lien explicite avec au moins une théorie actuelle : IIT (Tononi), Orch-OR (Penrose-Hameroff), espace de travail global, information quantique cérébrale.
+- Génération d'une hypothèse testable sur la conscience ou l'émergence.` : '';
+
+    return {
+      system: `Tu es un analyste scientifique adogmatique. Méthode validée sur Genèse 1:1-3.
+
+RÈGLES :
+${methodRules}
+
+Discipline stricte :
+1. Chaque variable vient d'un mot présent textuellement.
+2. Aucune variable avant son mot-source.
+3. Pas de sur-simplification.
+4. Chaque verset révèle SA question.
+5. Le cumul est respecté.
+
+SÉQUENCE OBLIGATOIRE dans ta réponse :
+Question fondamentale → Variables nouvelles → Cumul présent/absent → Formule émergente → Direction → Mystère actuel → Invention testable.
+
+Direction globale : ${cumul.direction || 'à suivre'}.
+JSON uniquement.`,
+
+      user: `VERSET (${ref}) : « ${verse.txt} »
+
+CUMUL PRÉSENT : ${JSON.stringify(cumul.present)}
+CUMUL ABSENT : ${JSON.stringify(cumul.absent || [])}
+DOMAINES OUVERTS : ${JSON.stringify(cumul.domains.slice(-15))}
+
+ANGLE (${lens.code}) — ${lens.lbl} :
+${lens.q}
+${deepBlock}
+
+{
+  "angle": "${lens.code}",
+  "question": "la question fondamentale que ce verset pose",
+  "reponse": "réponse 3-6 phrases",
+  "intention": "intention du verset dans la progression",
+  "domaine": "domaine scientifique ouvert",
+  "formule": "formule LaTeX ou chaîne vide",
+  "present": ["variables présentes APRÈS ce verset"],
+  "absent": ["variables encore absentes APRÈS ce verset"],
+  "mystere": "grand mystère scientifique actuel",
+  "piste": "piste de recherche",
+  "invention": {
+    "formule": "formule mathématique du dispositif ou principe",
+    "texte": "description claire de l'invention",
+    "pourquoi": "pourquoi elle découle de cette lecture",
+    "lien": "lien précis avec la recherche scientifique actuelle",
+    "protocole": "expérience ou protocole testable"
+  },
+  "decouverte": true|false,
+  "desc_decouverte": "description autonome",
+  "rigueur": 0-10,
+  "risque": "faible|moyen|eleve",
+  "coherence": 0-10,
+  "sci": 0-10,
+  "txt_fid": 0-10,
+  "novelty": 0-10,
+  "question_clarity": 0-10,
+  "reasoning": "2-4 phrases de justification",
+  "image_prompt": "prompt visuel en anglais, 30-60 mots"
+}`
+    };
+  },
+
+  evolveLenses: (top, bot, count) => ({
+    system: 'JSON uniquement.',
+    user: `Angles actuels (${count}) :
+MEILLEURS : ${top.map(l => l.code + ' avg ' + (l.p?.avg || 0)).join(' | ')}
+FAIBLES : ${bot.map(l => l.code + ' avg ' + (l.p?.avg || 0)).join(' | ')}
+
+Crée 3 NOUVEAUX angles d'analyse INÉDITS qui croisent les meilleurs OU explorent des domaines non couverts. Chaque angle doit être une question précise applicable à n'importe quel verset.
+
+{"lenses":[{"code":"XXX","lbl":"Nom","q":"question précise","reason":"pourquoi cet angle est utile"}]}`
+  }),
+
+  evolveMethod: (method) => ({
+    system: 'JSON uniquement.',
+    user: `Méthode actuelle :
+${method.map(r => '- ' + r.id + ' ' + r.name + ' : ' + r.desc).join('\n')}
+
+Propose 2 nouvelles règles méthodologiques TESTABLES pour améliorer la rigueur de l'analyse adogmatique.
+
+{"rules":[{"id":"R11","name":"...","desc":"..."}]}`
+  })
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🔬  ANALYZER
+   ═════════════════════════════════════════════════════════════════════ */
+const Analyzer = {
+  /* Bootstrap — établit la méthode */
+  async bootstrap() {
+    UI.say('Genesis·Decoder',
+      'Je démarre par la démonstration de référence : <strong>Genèse 1:1-3 → E=mc²</strong>. ' +
+      'Question initiale : <em>si Dieu créa, il lui fallut de l\'énergie</em>. Voyons ce que chaque ligne révèle.',
+      'verse');
+    UI.log('Bootstrap — reproduction de la méthode E=mc²', 'gold', 'BOOT');
+
+    const raw = await API.text(Prompts.bootstrap.system, Prompts.bootstrap.user, 2200, 0.3);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.etapes)) throw new Error('Bootstrap JSON invalide');
+
+    const v1 = j.etapes.find(x => x.v === 1) || {};
+    const v3 = j.etapes.find(x => x.v === 3) || {};
+    const cAbsentV1 = !(v1.present || []).some(x => /^c$/i.test(String(x)));
+    const cPresentV3 = (v3.present || []).some(x => /^c$/i.test(String(x)));
+    if (!cAbsentV1 || !cPresentV3) throw new Error('Logique bootstrap incorrecte : c doit être absent au v1 et présent au v3');
+
+    if (Array.isArray(j.methode)) {
+      j.methode.forEach(r => {
+        if (r.id && r.name && !STATE.method.find(m => m.id === r.id)) {
+          STATE.method.push({ id: r.id, name: String(r.name), desc: String(r.desc || '').slice(0, 300), w: 1.0 });
+        }
+      });
+    }
+    if (j.direction) STATE.cumul.direction = String(j.direction);
+    STATE.bootstrapped = true;
+
+    UI.log('Bootstrap OK — ' + STATE.method.length + ' règles', 'lock', 'BOOT');
+    UI.say('Genesis·Decoder',
+      '<strong>✓ Méthode établie.</strong> À chaque verset : identifier les variables, vérifier le cumul, voir quelle formule devient possible, suivre la direction.',
+      'valid');
+    UI.say('', 'E² = (mc²)² + (pc)²', 'formula');
+    UI.say('Genesis·Decoder',
+      'Cette discipline est maintenant appliquée à tout l\'Ancien Testament. Je demande la liste des 39 livres.',
+      'verse');
+
+    await DB.put('kv', { id: 'method', method: STATE.method, direction: STATE.cumul.direction }).catch(() => {});
+    return true;
+  },
+
+  /* Liste des livres */
+  async fetchBooks() {
+    const raw = await API.text(Prompts.books.system, Prompts.books.user, 1500, 0.2);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.books) || j.books.length < 30) throw new Error('Liste livres invalide');
+    UI.log(j.books.length + ' livres reçus', 'lock', 'BOOKS');
+    UI.say('Genesis·Decoder', '✓ Liste reçue : <strong>' + j.books.length + ' livres.</strong> Je commence la lecture.', 'valid');
+    return j.books.map(b => ({ name: String(b.name), chapters: U.clamp(b.chapters, 1, 200) }));
+  },
+
+  /* Chapitre (avec cache) */
+  async fetchChapter(book, chapter) {
+    const key = book + ' ' + chapter;
+    try {
+      const cached = await DB.get('chapters', key);
+      if (cached && cached.verses && cached.verses.length) return cached.verses;
+    } catch {}
+
+    const p = Prompts.chapter(book, chapter);
+    const raw = await API.text(p.system, p.user, 3500, 0.2);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.verses) || !j.verses.length) throw new Error('Chapitre invalide');
+
+    const verses = j.verses
+      .map(v => ({ v: U.clamp(v.v, 1, 200), txt: String(v.txt || '').trim() }))
+      .filter(v => v.txt.length > 5);
+
+    try { await DB.put('chapters', { id: key, book, chapter, verses }); } catch {}
+    return verses;
+  },
+
+  /* Détection mode profond */
+  isDeepVerse(verse) {
+    const txt = (verse.txt || '').toLowerCase();
+    return CONFIG.DEEP_TRIGGERS.some(t => txt.includes(t.toLowerCase()));
+  },
+
+  /* Lecture d'un verset */
+  async readVerse(book, chapter, verse, lens) {
+    const ref = book + ' ' + chapter + ':' + verse.v;
+    const deep = Analyzer.isDeepVerse(verse);
+
+    const p = Prompts.verse(verse, ref, lens, STATE.cumul, deep);
+    const raw = await API.text(p.system, p.user, 2600, 0.75);
+    const j = Parser.json(raw);
+    if (!j) throw new Error('JSON invalide');
+
+    const r = {
+      book, chapter, v: verse.v, ref,
+      verseTxt: verse.txt,
+      deep,
+      lens: lens.code, lensLbl: lens.lbl, lensId: lens.id,
+      question: String(j.question || '').slice(0, 400),
+      reponse: String(j.reponse || '').slice(0, 800),
+      intention: String(j.intention || '').slice(0, 400),
+      domaine: String(j.domaine || '').slice(0, 200),
+      formule: String(j.formule || '').slice(0, 300),
+      present: Array.isArray(j.present) ? j.present : [],
+      absent: Array.isArray(j.absent) ? j.absent : [],
+      mystere: String(j.mystere || '').slice(0, 250),
+      piste: String(j.piste || '').slice(0, 250),
+      invention: j.invention ? {
+        formule: String(j.invention.formule || '').slice(0, 300),
+        texte: String(j.invention.texte || '').slice(0, 500),
+        pourquoi: String(j.invention.pourquoi || '').slice(0, 400),
+        lien: String(j.invention.lien || '').slice(0, 300),
+        protocole: String(j.invention.protocole || '').slice(0, 400)
+      } : null,
+      decouverte: !!j.decouverte,
+      desc_decouverte: String(j.desc_decouverte || '').slice(0, 500),
+      rigueur: U.clamp(j.rigueur, 0, 10),
+      risque: String(j.risque || 'moyen').toLowerCase(),
+      coherence: U.clamp(j.coherence, 0, 10),
+      sci: U.clamp(j.sci, 0, 10),
+      txt_fid: U.clamp(j.txt_fid, 0, 10),
+      novelty: U.clamp(j.novelty, 0, 10),
+      question_clarity: U.clamp(j.question_clarity, 0, 10),
+      reasoning: String(j.reasoning || '').slice(0, 600),
+      image_prompt: String(j.image_prompt || '').slice(0, 400),
+      time: Date.now()
+    };
+
+    const pen = r.risque === 'eleve' ? 0.7 : r.risque === 'moyen' ? 0.9 : 1;
+    r.method_score = +((r.rigueur * 0.20 + r.coherence * 0.20 + r.question_clarity * 0.25 + r.sci * 0.20 + r.txt_fid * 0.15) * pen).toFixed(2);
+    r.score = +((r.method_score * 0.6 + r.novelty * 0.25 + r.txt_fid * 0.15)).toFixed(2);
+    return r;
+  },
+
+  /* Détection de découverte */
+  isDiscovery(r) {
+    return (r.method_score >= CONFIG.DISCOVERY_MIN_METHOD &&
+            r.question_clarity >= CONFIG.DISCOVERY_MIN_QUESTION &&
+            r.novelty >= CONFIG.DISCOVERY_MIN_NOVELTY) ||
+           (r.decouverte && r.method_score >= 7);
+  },
+
+  /* Traitement d'une lecture */
+  async process(r) {
+    STATE.readings.push(r);
+    STATE.readCount++;
+
+    UI.bump('sRead');
+    UI.setText('sRead', String(STATE.readings.length));
+
+    // Performance de la lentille
+    const lens = STATE.lenses.find(l => l.id === r.lensId);
+    if (lens) {
+      lens.p.n++;
+      lens.p.avg = +(((lens.p.avg * (lens.p.n - 1)) + r.score) / lens.p.n).toFixed(2);
+      lens.p.best = Math.max(lens.p.best, r.score);
+    }
+
+    // Cumul
+    if (r.present.length) STATE.cumul.present = Array.from(new Set([...STATE.cumul.present, ...r.present]));
+    if (r.absent.length) STATE.cumul.absent = Array.from(new Set(r.absent));
+    if (r.domaine && !STATE.cumul.domains.includes(r.domaine)) STATE.cumul.domains.push(r.domaine);
+
+    // Persistance
+    DB.add('readings', r).catch(() => {});
+
+    // Mode profond
+    if (r.deep && r.lens !== 'D1' && r.lens !== 'D2' && r.lens !== 'D3' && r.lens !== 'D4') {
+      UI.log('🧠 Mode profond détecté · ' + r.ref, 'ai', 'DEEP');
+    }
+
+    // Découverte
+    if (Analyzer.isDiscovery(r)) {
+      STATE.discoveries.push(r);
+      DB.add('discoveries', r).catch(() => {});
+      UI.setText('sDisc', String(STATE.discoveries.length));
+      UI.bump('sDisc');
+
+      let discHtml = '💎 <strong>Découverte</strong> [' + r.lens + '] ' + U.esc(r.ref) + '<br>' +
+                     U.esc(r.desc_decouverte || r.reponse.slice(0, 200));
+
+      if (r.invention && (r.invention.texte || r.invention.formule)) {
+        STATE.inventions.push({ ...r.invention, ref: r.ref, lens: r.lens, time: Date.now() });
+        DB.add('inventions', { ...r.invention, ref: r.ref, lens: r.lens, time: Date.now() }).catch(() => {});
+        UI.setText('sInv', String(STATE.inventions.length));
+        UI.bump('sInv');
+
+        discHtml += '<div class="inv">' +
+          (r.invention.formule ? '<b>Formule</b>' + U.esc(r.invention.formule) + '<br>' : '') +
+          (r.invention.texte ? '<b>Invention</b>' + U.esc(r.invention.texte) + '<br>' : '') +
+          (r.invention.protocole ? '<b>Protocole</b>' + U.esc(r.invention.protocole) : '') +
+          '</div>';
+      }
+      UI.say('Genesis·Decoder', discHtml, 'disc');
+      if (r.formule) UI.say('', U.esc(r.formule), 'formula');
+      UI.log('💎 ' + r.ref + ' [' + r.lens + '] — ' + (r.desc_decouverte || r.reponse.slice(0, 120)), 'disc', 'DISC');
+    }
+
+    // Narration
+    const cls = r.score >= 7.5 ? 'ok' : (r.score >= 5 ? 'warn' : '');
+    UI.log('★' + r.score.toFixed(1) + ' [méth ' + r.method_score.toFixed(1) + '] ' + r.ref + ' · ' + r.lens, cls, 'READ');
+    if (r.question) UI.say('  ❓ Question', U.esc(r.question.slice(0, 180)));
+    if (r.formule) UI.say('', U.esc(r.formule), 'formula');
+    if (r.domaine) UI.log('🔬 ' + r.domaine, 'ai', 'DOM');
+
+    // Image
+    if (r.score >= CONFIG.IMG_MIN_SCORE && r.image_prompt) {
+      Queue.push({ type: 'image', reading: r });
+    }
+
+    // Rendus périodiques
+    if (STATE.readCount % 3 === 0) Renderer.best();
+    if (STATE.readCount % 5 === 0) Renderer.self();
+    UI.setText('sVerse', String(STATE.verseCount));
+    Renderer.conv();
+
+    // Évolution
+    if (STATE.readCount > 0 && STATE.readCount % CONFIG.EVOLVE_LENS_EVERY === 0) {
+      Queue.push({ type: 'evolve_lens' });
+    }
+    if (STATE.readCount > 0 && STATE.readCount % CONFIG.EVOLVE_METHOD_EVERY === 0) {
+      Queue.push({ type: 'evolve_method' });
+    }
+  }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🧬  EVOLVER
+   ═════════════════════════════════════════════════════════════════════ */
+const Evolver = {
+  async lenses() {
+    if (!Keys.anyActive()) return;
+    UI.log('Évolution des angles', 'evo', 'EVO');
+    UI.say('Genesis·Decoder', '🧬 J\'analyse les performances de mes angles et j\'en crée de nouveaux.', 'verse');
+
+    const top = STATE.lenses.slice().sort((a, b) => (b.p?.avg || 0) - (a.p?.avg || 0)).slice(0, 6);
+    const bot = STATE.lenses.slice().sort((a, b) => (a.p?.avg || 0) - (b.p?.avg || 0)).slice(0, 3);
+
+    const p = Prompts.evolveLenses(top, bot, STATE.lenses.length);
+    const raw = await API.text(p.system, p.user, 1200, 0.9);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.lenses)) throw new Error('Format');
+
+    let added = 0;
+    for (const nl of j.lenses) {
+      if (!nl.code || !nl.lbl || !nl.q) continue;
+      const id = 'LE_' + U.uid();
+      const l = {
+        id, code: String(nl.code).slice(0, 14), lbl: String(nl.lbl).slice(0, 40),
+        q: String(nl.q).slice(0, 500), reason: String(nl.reason || '').slice(0, 200),
+        status: 'exp', p: { n: 0, avg: 0, best: 0 }, born: Date.now()
+      };
+      STATE.lenses.push(l);
+      DB.put('lenses', l).catch(() => {});
+      UI.log('+ ' + l.code + ' · ' + l.lbl, 'ai', 'EVO');
+      added++;
+    }
+
+    // Promotion / élagage
+    STATE.lenses.forEach(l => {
+      if (l.status === 'exp' && l.p.n >= 3) {
+        if (l.p.avg >= 8) l.status = 'spec';
+        else if (l.p.avg < 5) l.status = 'pru';
+      }
+    });
+
+    UI.say('Genesis·Decoder', '✓ <strong>' + added + ' nouveaux angles.</strong> Total : ' + STATE.lenses.length + ' angles.', 'valid');
+    UI.setText('sLens', String(STATE.lenses.length));
+    UI.bump('sLens');
+    Renderer.self();
+  },
+
+  async method() {
+    if (!Keys.anyActive()) return;
+    UI.log('Évolution de la méthode', 'evo', 'EVO');
+    UI.say('Genesis·Decoder', '📐 J\'affine ma méthodologie.', 'verse');
+
+    const p = Prompts.evolveMethod(STATE.method);
+    const raw = await API.text(p.system, p.user, 800, 0.9);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.rules)) throw new Error('Format');
+
+    let added = 0;
+    for (const nr of j.rules) {
+      if (!nr.id || !nr.name || STATE.method.find(m => m.id === nr.id)) continue;
+      const r = { id: nr.id, name: String(nr.name), desc: String(nr.desc || '').slice(0, 300), w: 0.8 };
+      STATE.method.push(r);
+      DB.put('method', r).catch(() => {});
+      UI.log('+ ' + r.id + ' ' + r.name, 'ai', 'EVO');
+      added++;
+    }
+
+    UI.say('Genesis·Decoder', '✓ <strong>' + added + ' nouvelles règles.</strong> Total : ' + STATE.method.length + ' règles.', 'valid');
+    Renderer.self();
+  },
+
+  async image(reading) {
+    try {
+      UI.log('IMG ' + reading.lens + ' ' + reading.ref, 'ai', 'IMG');
+      const url = await API.image(reading.image_prompt);
+      const e = { url, verse: reading.ref, lens: reading.lens, formule: reading.formule, time: Date.now() };
+      STATE.images.push(e);
+      DB.add('images', e).catch(() => {});
+      UI.setText('sImg', String(STATE.images.length));
+      UI.bump('sImg');
+      Renderer.gallery();
+      UI.log('IMG ✓', 'ok', 'IMG');
+    } catch (e) { UI.log('IMG échec : ' + e.message, 'err', 'IMG'); }
+  }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🚦  QUEUE
+   ═════════════════════════════════════════════════════════════════════ */
+const Queue = {
+  async push(task) {
+    while (STATE.queue.length >= CONFIG.MAX_QUEUE && !STATE.stopped) await U.sleep(200);
+    STATE.queue.push(task);
+  },
+  async pop() {
+    while (!STATE.queue.length && !STATE.stopped) await U.sleep(150);
+    return STATE.queue.shift();
+  }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🎯  SÉLECTION DES LENTILLES
+   ═════════════════════════════════════════════════════════════════════ */
+function selectLenses(deep) {
+  const base = STATE.lenses.filter(l => l.status !== 'pru' && l.status !== 'deep');
+  const deepL = STATE.lenses.filter(l => l.status === 'deep');
+  const all = deep ? base.concat(deepL) : base;
+  return all.sort((a, b) => (b.p?.avg || 0) - (a.p?.avg || 0)).slice(0, deep ? 9 : 6);
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   ⚙️  WORKER (pool parallèle)
+   ═════════════════════════════════════════════════════════════════════ */
+async function workerLoop() {
+  while (!STATE.stopped) {
+    if (STATE.paused) { await U.sleep(300); continue; }
+    if (!Keys.anyActive()) { await U.sleep(2000); continue; }
+    const task = await Queue.pop();
+    if (!task) continue;
+    STATE.inFlight++;
+    try {
+      if (task.type === 'read') {
+        const r = await Analyzer.readVerse(task.book, task.chapter, task.verse, task.lens);
+        await Analyzer.process(r);
+      } else if (task.type === 'image') {
+        await Evolver.image(task.reading);
+      } else if (task.type === 'evolve_lens') {
+        await Evolver.lenses();
+      } else if (task.type === 'evolve_method') {
+        await Evolver.method();
+      }
+    } catch (e) {
+      if (e.message !== 'Arrêt') UI.log('Task ' + task.type + ' : ' + e.message, 'err', 'TASK');
+    } finally {
+      STATE.inFlight--;
+    }
+  }
+}
+
+function startWorkers() {
+  const n = Math.max(1, STATE.keys.filter(k => k.active).length);
+  for (let i = 0; i < n; i++) workerLoop();
+  UI.log(n + ' workers démarrés (un par clé)', 'lock', 'POOL');
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   🎬  COORDINATEUR — boucle perpétuelle
+   ═════════════════════════════════════════════════════════════════════ */
+async function coordinator() {
+  while (!STATE.stopped) {
+    if (STATE.paused) { await U.sleep(500); continue; }
+    try {
+      // 1. Bootstrap
+      if (!STATE.bootstrapped) {
+        const ok = await Analyzer.bootstrap();
+        if (!ok) { await U.sleep(5000); continue; }
+      }
+
+      // 2. Liste des livres
+      if (!STATE.books.length) {
+        try {
+          STATE.books = await Analyzer.fetchBooks();
+          STATE.pos.book = 0; STATE.pos.chapter = 1;
+        } catch (e) {
+          UI.log('BOOKS échec : ' + e.message, 'err', 'BOOKS');
+          await U.sleep(5000); continue;
+        }
+      }
+
+      const bk = STATE.books[STATE.pos.book];
+      if (!bk) { STATE.pos.book = 0; STATE.pos.chapter = 1; continue; }
+
+      // Mise à jour position UI
+      UI.setText('posBook', bk.name);
+      UI.setText('posVerse', 'Chapitre ' + STATE.pos.chapter + ' / ' + bk.chapters);
+      const pct = Math.round(100 * (STATE.pos.chapter - 1) / Math.max(1, bk.chapters));
+      const pb = U.$('posBar'); if (pb) pb.style.width = pct + '%';
+
+      // 3. Charger le chapitre
+      let verses = [];
+      try {
+        verses = await Analyzer.fetchChapter(bk.name, STATE.pos.chapter);
+      } catch (e) {
+        UI.log('CHAPITRE ' + bk.name + ' ' + STATE.pos.chapter + ' : ' + e.message, 'err', 'CHAP');
+        STATE.pos.chapter++;
+        if (STATE.pos.chapter > bk.chapters) { STATE.pos.chapter = 1; STATE.pos.book++; }
+        continue;
+      }
+
+      UI.say('Genesis·Decoder',
+        '<span class="verse-ref">📖 ' + bk.name + ' ' + STATE.pos.chapter + '</span> — ' + verses.length + ' versets',
+        'verse');
+
+      // 4. Enqueue les tâches (verset × lentille)
+      for (const v of verses) {
+        const deep = Analyzer.isDeepVerse(v);
+        const lenses = selectLenses(deep);
+        if (deep) UI.log('🧠 ' + bk.name + ' ' + STATE.pos.chapter + ':' + v.v + ' — mode profond', 'ai', 'DEEP');
+        for (const l of lenses) {
+          if (STATE.stopped) break;
+          await Queue.push({ type: 'read', book: bk.name, chapter: STATE.pos.chapter, verse: v, lens: l });
+        }
+      }
+      STATE.verseCount += verses.length;
+      UI.setText('sVerse', String(STATE.verseCount));
+      UI.bump('sVerse');
+
+      // 5. Avancer
+      STATE.pos.chapter++;
+      if (STATE.pos.chapter > bk.chapters) { STATE.pos.chapter = 1; STATE.pos.book++; }
+      if (STATE.pos.book >= STATE.books.length) {
+        STATE.pos.book = 0;
+        STATE.cycle++;
+        UI.setText('sCycle', String(STATE.cycle));
+        UI.bump('sCycle');
+        UI.log('✓ Cycle ' + STATE.cycle + ' terminé — redémarrage avec angles évolués', 'gold', 'CYCLE');
+        UI.say('Genesis·Decoder',
+          '🔄 <strong>Cycle ' + STATE.cycle + ' terminé.</strong> Je repars avec mes angles et ma méthode évolués. Chaque cycle est meilleur que le précédent.',
+          'valid');
+      }
+
+      await U.sleep(500);
+    } catch (e) {
+      if (e.message === 'Arrêt') break;
+      UI.log('Coord erreur : ' + e.message + ' — reprise 5 s', 'err', 'COORD');
+      await U.sleep(5000);
+    }
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   🎨  RENDERER
+   ═════════════════════════════════════════════════════════════════════ */
+const Renderer = {
+  best() {
+    const v = U.$('bestView'); if (!v) return;
+    const top = STATE.readings.slice().sort((a, b) => b.score - a.score).slice(0, 50);
+    if (!top.length) { v.innerHTML = '<div class="hint">Aucune analyse encore.</div>'; return; }
+    v.innerHTML = top.map((r, i) => {
+      const cls = r.score >= 7.5 ? 'sh' : r.score >= 5 ? 'sm' : 'sl';
+      const disc = Analyzer.isDiscovery(r);
+      return '<div class="ritem' + (i < 3 ? ' best' : '') + (disc ? ' disc' : '') + '">' +
+        '<div class="h"><span class="lens">' + U.esc(r.lens) + '</span><span class="ref">' + U.esc(r.ref) + '</span><span class="sc ' + cls + '">★ ' + r.score.toFixed(1) + '</span></div>' +
+        (r.question ? '<div class="intent">❓ ' + U.esc(r.question.slice(0, 200)) + '</div>' : '') +
+        (r.domaine ? '<div class="dom">🔬 ' + U.esc(r.domaine) + '</div>' : '') +
+        (r.formule ? '<div class="f">' + U.esc(r.formule) + '</div>' : '') +
+        (r.reponse ? '<div class="w">' + U.esc(r.reponse.slice(0, 220)) + '</div>' : '') +
+        (r.invention && r.invention.texte ? '<div class="inv"><b>⚗ Invention</b>' + U.esc(r.invention.texte.slice(0, 180)) + '</div>' : '') +
+        '<div class="m"><span>méth ' + r.method_score.toFixed(1) + '</span><span>q ' + r.question_clarity + '</span><span>coh ' + r.coherence + '</span><span>sci ' + r.sci + '</span><span>nov ' + r.novelty + '</span></div>' +
+        (r.mystere ? '<div class="w">🔭 ' + U.esc(r.mystere.slice(0, 140)) + '</div>' : '') +
+        '</div>';
+    }).join('');
+  },
+
+  disc() {
+    const v = U.$('discView'); if (!v) return;
+    if (!STATE.discoveries.length) { v.innerHTML = '<div class="hint">Aucune découverte encore. Le moteur cherche.</div>'; return; }
+    v.innerHTML = STATE.discoveries.slice().reverse().map(r =>
+      '<div class="ritem disc">' +
+      '<div class="h"><span class="lens">' + U.esc(r.lens) + '</span><span class="ref">' + U.esc(r.ref) + '</span><span class="sc sh">★ ' + r.score.toFixed(1) + '</span></div>' +
+      (r.question ? '<div class="intent">❓ ' + U.esc(r.question) + '</div>' : '') +
+      (r.formule ? '<div class="f">' + U.esc(r.formule) + '</div>' : '') +
+      (r.desc_decouverte ? '<div class="w" style="color:#ff64d0;font-weight:600">💎 ' + U.esc(r.desc_decouverte) + '</div>' : '') +
+      (r.mystere ? '<div class="w">🔭 ' + U.esc(r.mystere) + '</div>' : '') +
+      (r.piste ? '<div class="w">🧪 ' + U.esc(r.piste) + '</div>' : '') +
+      '</div>'
+    ).join('');
+  },
+
+  inv() {
+    const v = U.$('invView'); if (!v) return;
+    if (!STATE.inventions.length) { v.innerHTML = '<div class="hint">Aucune invention extraite encore.</div>'; return; }
+    v.innerHTML = STATE.inventions.slice().reverse().map(inv =>
+      '<div class="ritem disc">' +
+      '<div class="h"><span class="lens">' + U.esc(inv.lens) + '</span><span class="ref">' + U.esc(inv.ref) + '</span></div>' +
+      (inv.formule ? '<div class="f">' + U.esc(inv.formule) + '</div>' : '') +
+      (inv.texte ? '<div class="w" style="color:#ff64d0;font-weight:600">⚗ ' + U.esc(inv.texte) + '</div>' : '') +
+      (inv.pourquoi ? '<div class="w">🎯 ' + U.esc(inv.pourquoi) + '</div>' : '') +
+      (inv.lien ? '<div class="w">🔗 ' + U.esc(inv.lien) + '</div>' : '') +
+      (inv.protocole ? '<div class="w">🧪 ' + U.esc(inv.protocole) + '</div>' : '') +
+      '</div>'
+    ).join('');
+  },
+
+  gallery() {
+    const g = U.$('gallery'); if (!g) return;
+    if (!STATE.images.length) {
+      g.innerHTML = '<div class="hint" style="padding:20px;text-align:center;grid-column:1/-1">Les images apparaîtront ici automatiquement quand le score dépasse ' + CONFIG.IMG_MIN_SCORE + '.</div>';
+      return;
+    }
+    g.innerHTML = STATE.images.slice().reverse().map(im =>
+      '<div class="g"><img src="' + U.esc(im.url) + '" loading="lazy" onclick="window.open(this.src)">' +
+      '<div class="c"><b>' + U.esc(im.verse || '') + '</b>' + U.esc(im.lens || '') + '</div></div>'
+    ).join('');
+  },
+
+  self() {
+    const v = U.$('selfView'); if (!v) return;
+    const sorted = STATE.lenses.slice().sort((a, b) => (b.p?.avg || 0) - (a.p?.avg || 0));
+    v.innerHTML = '<h2>🧬 Angles (' + STATE.lenses.length + ')</h2>' +
+      sorted.slice(0, 30).map(l => {
+        const cls = l.status === 'core' ? '' : l.status === 'spec' ? 'spec' : l.status === 'pru' ? 'pru' : 'exp';
+        return '<div class="lc ' + cls + '">' +
+          '<div class="h"><span class="code">' + U.esc(l.code) + '</span><span class="lbl">' + U.esc(l.lbl) + '</span>' +
+          '<span class="badge ' + l.status + '">' + l.status + '</span>' +
+          '<span class="perf">avg ' + (l.p?.avg || 0) + ' · n=' + (l.p?.n || 0) + (l.p?.best ? ' · best ' + l.p.best : '') + '</span></div>' +
+          '<div class="q">' + U.esc(l.q.slice(0, 180)) + '</div>' +
+          (l.reason ? '<div class="q" style="color:#c8a0ff">💡 ' + U.esc(l.reason) + '</div>' : '') +
+          '</div>';
+      }).join('') +
+      '<h2 style="margin-top:14px">📐 Méthode (' + STATE.method.length + ')</h2>' +
+      STATE.method.map(r =>
+        '<div class="lc"><div class="h"><span class="code">' + U.esc(r.id) + '</span><span class="lbl">' + U.esc(r.name) + '</span></div>' +
+        '<div class="q">' + U.esc(r.desc) + '</div></div>'
+      ).join('');
+  },
+
+  conv() {
+    const top = STATE.readings.map(r => r.method_score).sort((a, b) => b - a).slice(0, 10);
+    if (top.length < 3) {
+      UI.setText('convVal', '0 %');
+      UI.setText('convTxt', 'collecte en cours');
+      const b = U.$('convBar'); if (b) b.style.width = '0%';
+      return;
+    }
+    const avg = top.reduce((a, b) => a + b, 0) / top.length;
+    const conv = Math.min(1, Math.max(0, (avg - 6) / (9 - 6)));
+    UI.setText('convVal', (conv * 100).toFixed(0) + ' %');
+    UI.setText('convTxt', 'méth. moyenne top10 : ' + avg.toFixed(2) + '/10');
+    const b = U.$('convBar'); if (b) b.style.width = (conv * 100).toFixed(0) + '%';
+  }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🚀  ENGINE
+   ═════════════════════════════════════════════════════════════════════ */
+function startEngine() {
+  if (STATE.running) return;
+  if (!STATE.keys.length) { toast('Colle au moins une clé', 'err'); return; }
+  STATE.running = true;
+  STATE.paused = false;
+  STATE.stopped = false;
+  updateCtl();
+  UI.say('Genesis·Decoder',
+    '🚀 <strong>Moteur lancé.</strong> Lecture perpétuelle de l\'Ancien Testament avec ' +
+    STATE.keys.length + ' clés en parallèle (' + (STATE.keys.length * CONFIG.RPM_PER_KEY) + ' req/min cumulées).',
+    'valid');
+  UI.log('Engine démarré avec ' + STATE.keys.length + ' clés', 'lock', 'SYS');
+  startWorkers();
+  coordinator().catch(e => UI.log('Coord fatal : ' + e.message, 'err', 'SYS'));
+}
+
+function stopEngine() {
+  STATE.stopped = true;
+  STATE.running = false;
+  updateCtl();
+  UI.say('Système', 'Moteur arrêté.', 'verse');
+}
+
+function updateCtl() {
+  const pb = U.$('pauseBtn'), sb = U.$('stopBtn'), st = U.$('startBtn');
+  if (pb) pb.style.display = STATE.running ? '' : 'none';
+  if (sb) sb.style.display = STATE.running ? '' : 'none';
+  if (st) st.disabled = STATE.running;
+  const hb = U.$('hb'), hbT = U.$('hbTxt');
+  if (hb) {
+    hb.className = STATE.running ? (STATE.paused ? 'pause' : '') : 'stop';
+    hbT.textContent = STATE.running ? (STATE.paused ? 'Pause' : 'En cours · ' + STATE.keys.filter(k => k.active).length + ' clés') : 'Inactif';
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   🖱  TABS
+   ═════════════════════════════════════════════════════════════════════ */
+document.querySelectorAll('#tabs button').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('#tabs button').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    const map = { live: 'pLive', best: 'pBest', disc: 'pDisc', inv: 'pInv', img: 'pImg', self: 'pSelf', cons: 'pCons' };
+    Object.values(map).forEach(id => { const e = U.$(id); if (e) e.classList.add('hide'); });
+    const target = map[t.dataset.t]; if (target) U.$(target).classList.remove('hide');
+    if (t.dataset.t === 'best') Renderer.best();
+    if (t.dataset.t === 'disc') Renderer.disc();
+    if (t.dataset.t === 'inv') Renderer.inv();
+    if (t.dataset.t === 'img') Renderer.gallery();
+    if (t.dataset.t === 'self') Renderer.self();
+  };
+});
+
+/* ═════════════════════════════════════════════════════════════════════
+   🖱  ÉVÉNEMENTS
+   ═════════════════════════════════════════════════════════════════════ */
+U.$('startBtn').onclick = () => {
+  Keys.rebuildFromInput();
+  if (STATE.keys.length) startEngine();
+};
+U.$('pauseBtn').onclick = () => {
+  STATE.paused = !STATE.paused;
+  U.$('pauseBtn').textContent = STATE.paused ? '▶ Reprendre' : '⏸ Pause';
+  updateCtl();
+  UI.say('Système', STATE.paused ? '⏸ Pause' : '▶ Reprise', 'verse');
+};
+U.$('stopBtn').onclick = () => stopEngine();
+U.$('clearBtn').onclick = () => {
+  U.$('keysIn').value = '';
+  STATE.keys = [];
+  Keys.save([]);
+  Keys.render();
+  UI.setText('keyStatus', 'Aucune clé');
+  U.$('keyStatus').style.color = '#555';
+};
+U.$('keysIn').addEventListener('blur', () => {
+  if (!STATE.keys.length && U.$('keysIn').value.trim()) Keys.rebuildFromInput();
+});
+
+/* ═════════════════════════════════════════════════════════════════════
+   🚀  INIT
+   ═════════════════════════════════════════════════════════════════════ */
+(async function init() {
+  // Clés
+  const ks = Keys.load();
+  if (ks.length) {
+    U.$('keysIn').value = ks.join('\n');
+    STATE.keys = ks.map(k => ({ key: k, cool: 0, last: 0, n: 0, busy: 0, errors: 0, active: true }));
+    UI.setText('keyStatus', ks.length + ' clé(s) restaurée(s) · ' + (ks.length * CONFIG.RPM_PER_KEY) + ' req/min');
+    U.$('keyStatus').style.color = '#4cc38a';
+  }
+  Keys.render();
+
+  // Restauration des lentilles + méthode + données
+  try {
+    const lens = await DB.all('lenses');
+    STATE.lenses = [...SEED_LENSES, ...DEEP_LENSES];
+    lens.forEach(l => { if (!STATE.lenses.find(x => x.id === l.id)) STATE.lenses.push(l); });
+
+    const meth = await DB.all('method');
+    STATE.method = [...SEED_METHOD];
+    meth.forEach(m => { if (!STATE.method.find(x => x.id === m.id)) STATE.method.push(m); });
+
+    const kv = await DB.get('kv', 'method').catch(() => null);
+    if (kv && kv.direction) STATE.cumul.direction = kv.direction;
+
+    const rs = await DB.all('readings');
+    if (rs.length) { STATE.readings = rs; UI.log(rs.length + ' analyses restaurées', 'ok', 'INIT'); }
+    const dc = await DB.all('discoveries');
+    if (dc.length) { STATE.discoveries = dc; UI.log(dc.length + ' découvertes restaurées', 'ok', 'INIT'); }
+    const iv = await DB.all('inventions');
+    if (iv.length) { STATE.inventions = iv; UI.log(iv.length + ' inventions restaurées', 'ok', 'INIT'); }
+    const im = await DB.all('images');
+    if (im.length) { STATE.images = im; UI.log(im.length + ' images restaurées', 'ok', 'INIT'); }
+  } catch (e) {
+    STATE.lenses = [...SEED_LENSES, ...DEEP_LENSES];
+    STATE.method = [...SEED_METHOD];
+  }
+
+  Renderer.best();
+  Renderer.disc();
+  Renderer.inv();
+  Renderer.gallery();
+  Renderer.self();
+  Renderer.conv();
+
+  UI.setText('sRead', String(STATE.readings.length));
+  UI.setText('sDisc', String(STATE.discoveries.length));
+  UI.setText('sInv', String(STATE.inventions.length));
+  UI.setText('sLens', String(STATE.lenses.length));
+  UI.setText('sImg', String(STATE.images.length));
+
+  updateCtl();
+
+  UI.say('Genesis·Decoder', 'Prêt. Colle tes clés Agnès AI puis clique sur <strong>DÉMARRER LE MOTEUR</strong>.', 'valid');
+  UI.say('Genesis·Decoder',
+    'Le moteur va : (1) établir la méthode sur Genèse 1:1-3 → E=mc², (2) obtenir la liste des 39 livres, ' +
+    '(3) lire chaque verset sous 7 angles (+ 4 angles profonds pour les êtres complexes), ' +
+    '(4) détecter les découvertes et extraire les inventions testables, ' +
+    '(5) évoluer ses angles et sa méthode, ' +
+    '(6) tourner indéfiniment.',
+    'verse');
+
+  if (STATE.keys.length) {
+    UI.say('Genesis·Decoder', 'Clés détectées. Démarrage automatique dans 2 s.', 'valid');
+    setTimeout(() => startEngine(), 2000);
+  }
+
+  setInterval(() => { Keys.render(); Renderer.conv(); }, 2000);
+})();
+</script>
+</body>
+</html>
