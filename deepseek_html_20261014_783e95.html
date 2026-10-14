@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Genesis·Decoder v5 — Moteur auto-évolutif</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a10;color:#e0e0e8;max-width:1050px;margin:0 auto;padding:12px;font-size:14px;line-height:1.5}
+h1{font-size:18px;color:#e6b45a;margin-bottom:4px}
+h2{font-size:13px;color:#39d0d8;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.05em}
+h3{font-size:12.5px;color:#c8a0ff;margin:8px 0 6px}
+section{background:#14141c;border:1px solid #2a2a38;border-radius:8px;padding:12px;margin-bottom:12px}
+label{display:block;font-size:11.5px;color:#888;margin-bottom:4px;font-weight:600}
+textarea,input,select{width:100%;padding:9px;background:#0a0a10;border:1px solid #2a2a38;color:#e0e0e8;border-radius:4px;font-family:ui-monospace,monospace;font-size:13px}
+textarea:focus,input:focus,select:focus{outline:none;border-color:#e6b45a}
+textarea{min-height:80px;resize:vertical;line-height:1.5}
+button{padding:10px 14px;background:#e6b45a;color:#000;border:none;border-radius:4px;font-weight:700;cursor:pointer;font-size:13px}
+button:hover:not(:disabled){opacity:.9}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.sec{background:#2a2a38;color:#e0e0e8}
+button.cyan{background:#39d0d8;color:#000}
+button.green{background:#4cc38a;color:#000}
+button.purple{background:#8b5fc4;color:#fff}
+button.pink{background:#ff64d0;color:#000}
+button.danger{background:#c04040;color:#fff}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.row button{flex:1;min-width:110px}
+.hint{font-size:11px;color:#666;margin-top:4px;line-height:1.5}
+#console{background:#000;border:1px solid #2a2a38;border-radius:6px;height:420px;overflow-y:auto;padding:10px;font-family:ui-monospace,monospace;font-size:11px;line-height:1.55}
+.ce{padding:2px 0;border-bottom:1px solid #111;word-break:break-word}
+.ce.ok{color:#4cc38a}.ce.err{color:#e05555}.ce.warn{color:#d8983f}
+.ce.gold{color:#e6b45a;font-weight:600}.ce.lock{color:#39d0d8;font-weight:600}
+.ce.ai{color:#c8a0ff}.ce.disc{color:#ff64d0;font-weight:700}.ce.evo{color:#4cc38a;font-weight:700}
+.ce .tag{display:inline-block;font-size:9px;padding:1px 5px;background:#2a2a38;border-radius:3px;margin-right:5px;text-transform:uppercase;font-weight:700}
+.ce.gold .tag{background:#4a3a10;color:#e6b45a}
+.ce.lock .tag{background:#103a3c;color:#39d0d8}
+.ce.ok .tag{background:#103a1c;color:#4cc38a}
+.ce.err .tag{background:#3a1010;color:#e05555}
+.ce.ai .tag{background:#2a103a;color:#c8a0ff}
+.ce.disc .tag{background:#3a1040;color:#ff64d0}
+.ce.evo .tag{background:#0a3a1a;color:#4cc38a}
+.ritem{padding:10px;background:#0a0a10;border:1px solid #2a2a38;border-radius:4px;margin-bottom:6px;font-size:12px}
+.ritem .head{display:flex;gap:6px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
+.ritem .lens{font-size:9px;padding:2px 6px;background:#3a2a5a;color:#c8a0ff;border-radius:3px;text-transform:uppercase;font-weight:700}
+.ritem .ref{font-size:10px;color:#888;font-family:ui-monospace,monospace}
+.ritem .score{font-size:11px;font-weight:700;margin-left:auto;padding:2px 8px;border-radius:100px;font-family:ui-monospace,monospace}
+.ritem .formula{font-family:ui-monospace,monospace;color:#e6b45a;font-size:13px;margin:5px 0;word-break:break-word}
+.ritem .intent{color:#39d0d8;font-size:12px;font-style:italic;margin:4px 0;padding-left:8px;border-left:2px solid #39d0d8}
+.ritem .direction{color:#4cc38a;font-size:11.5px;margin:4px 0;padding-left:8px;border-left:2px solid #4cc38a}
+.ritem .why{color:#999;font-size:11.5px;margin-top:4px;line-height:1.5}
+.ritem .meta{display:flex;gap:4px;margin-top:6px;font-size:10px;color:#777;flex-wrap:wrap}
+.ritem .meta span{background:#1a1a24;padding:2px 6px;border-radius:3px;font-family:ui-monospace,monospace}
+.ritem .risk{font-size:10px;padding:2px 6px;border-radius:3px;font-weight:700;text-transform:uppercase}
+.risk.faible{background:#0a2a1a;color:#4cc38a}
+.risk.moyen{background:#2a1a0a;color:#d8983f}
+.risk.eleve{background:#2a0a0a;color:#e05555}
+.ritem.best{border-color:#e6b45a;background:#18140a}
+.ritem.discovery{border-color:#ff64d0;background:#1a0a1a}
+.ritem.discovery .head::before{content:'💎 ';color:#ff64d0}
+.ritem.evolved{border-color:#4cc38a;background:#0a1a0f}
+.sh{background:#4cc38a;color:#000}
+.sm{background:#d8983f;color:#000}
+.sl{background:#e05555;color:#fff}
+.verse{border:1px solid #2a2a38;border-radius:6px;padding:10px;margin-bottom:10px;background:#0a0a10}
+.verse .vh{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.verse .vh .tag{background:#e6b45a;color:#000;font-size:10px;padding:2px 8px;border-radius:100px;font-weight:700;text-transform:uppercase}
+.verse .vh .tag.disc{background:#ff64d0;color:#000}
+.verse .vh .lbl{color:#888;font-family:ui-monospace,monospace;font-size:11px}
+.verse .vt{font-style:italic;color:#c8c8d0;font-size:13px;margin-bottom:8px;padding-left:10px;border-left:2px solid #2a2a38;line-height:1.6}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+.gal .gc{background:#0a0a10;border:1px solid #2a2a38;border-radius:4px;overflow:hidden}
+.gal img{width:100%;aspect-ratio:1;object-fit:cover;background:#000;display:block;cursor:pointer}
+.gal .gl{padding:6px;font-size:10px;color:#777;line-height:1.35}
+.gal .gl b{color:#e6b45a;display:block;font-size:10.5px;margin-bottom:2px}
+#toast{position:fixed;top:12px;left:50%;transform:translateX(-50%) translateY(-100px);background:#e6b45a;color:#000;padding:10px 20px;border-radius:100px;font-weight:700;z-index:100;transition:.3s;max-width:90%;text-align:center;font-size:13px}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#toast.err{background:#e05555;color:#fff}
+#toast.ok{background:#4cc38a;color:#000}
+#toast.warn{background:#d8983f;color:#000}
+.hidden{display:none!important}
+.big{font-size:32px;font-weight:800;text-align:center;padding:12px;font-family:ui-monospace,monospace}
+.stat{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}
+.stat div{flex:1;min-width:70px;text-align:center;background:#0a0a10;border:1px solid #2a2a38;padding:8px;border-radius:4px}
+.stat div b{display:block;font-size:20px;color:#e6b45a;font-family:ui-monospace,monospace;font-weight:800}
+.stat div span{font-size:9.5px;color:#666;text-transform:uppercase;font-weight:700}
+.tabs{display:flex;gap:4px;overflow-x:auto;margin-bottom:10px;padding-bottom:4px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{padding:8px 12px;background:#14141c;color:#888;border:1px solid #2a2a38;border-radius:100px;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.tabs button.on{background:#e6b45a;color:#000;border-color:#e6b45a}
+.keyrow{display:flex;gap:8px;align-items:center;padding:6px 8px;background:#0a0a10;border:1px solid #2a2a38;border-radius:4px;margin-bottom:4px;font-family:ui-monospace,monospace;font-size:11px}
+.keyrow .id{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888}
+.keyrow .kb{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;text-transform:uppercase}
+.kb.ok{background:#0a2a1a;color:#4cc38a}
+.kb.cool{background:#2a1a0a;color:#d8983f}
+.kb.dead{background:#2a0a0a;color:#e05555}
+.method-step{padding:7px 10px;background:#0a0a10;border-radius:4px;margin-bottom:4px;font-size:11.5px;line-height:1.55;font-family:ui-monospace,monospace}
+.method-step b{color:#e6b45a}
+.method-step .present{color:#4cc38a}
+.method-step .absent{color:#e05555}
+.progress{height:5px;background:#0a0a10;border-radius:3px;overflow:hidden;margin-top:8px}
+.progress i{display:block;height:100%;background:#e6b45a;width:0;transition:width .3s}
+.convergence{height:8px;background:#0a0a10;border-radius:4px;overflow:hidden;margin-top:6px}
+.convergence i{display:block;height:100%;background:linear-gradient(90deg,#39d0d8,#4cc38a,#e6b45a);width:0;transition:width .5s}
+.lenscard{padding:10px;background:#0a0a10;border:1px solid #2a2a38;border-radius:4px;margin-bottom:6px;font-size:11.5px}
+.lenscard .lh{display:flex;gap:6px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
+.lenscard .code{font-family:ui-monospace,monospace;font-weight:700;color:#c8a0ff;font-size:11px}
+.lenscard .lbl{color:#e6b45a;font-weight:700}
+.lenscard .perf{margin-left:auto;font-size:10px;color:#888;font-family:ui-monospace,monospace}
+.lenscard .q{color:#999;font-size:11px;line-height:1.5;margin-top:4px}
+.lenscard.core{border-left:3px solid #39d0d8}
+.lenscard.specialist{border-left:3px solid #4cc38a}
+.lenscard.experimental{border-left:3px solid #d8983f}
+.lenscard.pruned{border-left:3px solid #e05555;opacity:.5}
+.badge{font-size:9px;padding:1px 6px;border-radius:100px;font-weight:700;text-transform:uppercase}
+.badge.core{background:#0a2a3a;color:#39d0d8}
+.badge.specialist{background:#0a2a1a;color:#4cc38a}
+.badge.experimental{background:#2a1a0a;color:#d8983f}
+.badge.pruned{background:#2a0a0a;color:#e05555}
+.badge.mode-explore{background:#0a2a3a;color:#39d0d8}
+.badge.mode-exploit{background:#3a1a3a;color:#ff64d0}
+</style>
+</head>
+<body>
+
+<h1>Genesis·Decoder v5</h1>
+<div class="hint" style="margin-bottom:12px">Moteur auto-évolutif · angles infinis · méthodologie adaptative · convergence vers la quasi-perfection · découvertes autonomes</div>
+
+<section id="secKeys">
+<h2>🔑 Clés API Agnès AI</h2>
+<label>Une clé sk-… par ligne — clique sur VALIDER</label>
+<textarea id="keysIn" rows="3" placeholder="sk-xxxxxxxxxxxxxxxx" spellcheck="false" autocomplete="off"></textarea>
+<div class="row" style="margin-top:8px">
+<button class="green" id="saveKeysBtn">✓ VALIDER LES CLÉS</button>
+<button class="sec" id="clearKeysBtn" style="flex:0 0 90px">Effacer</button>
+</div>
+<div class="hint" id="keyStatus">Aucune clé enregistrée</div>
+<div id="keysView" style="margin-top:8px"></div>
+</section>
+
+<section id="secPhilosophy">
+<h2>🧬 Philosophie du moteur v5</h2>
+<div class="method-step"><b>1. E=mc² n'est plus la référence.</b> C'est le point de départ. La <b>méthode</b> (source textuelle, pas d'anticipation, pas de sur-simplification, intention obligatoire, cohérence cumulée) est ce qui est vérifié.</div>
+<div class="method-step"><b>2. Chaque verset ouvre son propre domaine.</b> Dès la ligne 4, on n'est plus dans E=mc². On est dans E=hν (lumière fréquence), puis dans les champs, les phases, la vie, la conscience. Le texte nous guide : énergie → matière → champ → structures → vie → conscience → repos.</div>
+<div class="method-step"><b>3. Les angles sont infinis.</b> 15 angles de départ. Ils naissent, se croisent, se reproduisent, se spécialisent. Les meilleurs restent, les faibles sont élagués. L'IA en invente de nouveaux.</div>
+<div class="method-step"><b>4. L'intention est un objet évolutif.</b> La question « quelle est l'intention du texte ? » se raffine à mesure que le moteur lit. Quand la convergence est proche de la perfection, le moteur se concentre sur cet angle.</div>
+<div class="method-step"><b>5. Les découvertes sont autonomes.</b> Elles ne dépendent pas d'E=mc². Elles émergent quand méthodologie + intention + nouveauté sont élevées.</div>
+<div class="method-step"><b>6. Convergence.</b> Le moteur mesure en temps réel sa convergence vers la quasi-perfection. À partir d'un seuil, il bascule en <b>mode exploitation</b> : il approfondit les meilleurs angles au lieu d'en chercher de nouveaux.</div>
+</section>
+
+<section id="secBoot">
+<h2>▶ Bootstrap — établir la méthodologie</h2>
+<div class="hint" style="margin-bottom:8px">Le bootstrap établit la <b>méthode</b>, pas la formule. Il vérifie que l'IA comprend la règle du cumul et l'ordre du texte.</div>
+<div class="row">
+<button class="cyan" id="bootBtn">🧬 LANCER LE BOOTSTRAP</button>
+<button class="sec" id="bootRetryBtn" style="flex:0 0 100px">↻ Refaire</button>
+</div>
+<div id="bootView" style="margin-top:10px"></div>
+</section>
+
+<section>
+<h2>⚙️ Pipeline — Ancien Testament complet</h2>
+<div class="row">
+<div style="flex:1;min-width:170px">
+<label>Corpus</label>
+<select id="corpusSel">
+<option value="genesis" selected>Genèse uniquement</option>
+<option value="torah">Torah (Gen-Deut)</option>
+<option value="wisdom">Sagesse (Job, Ps…)</option>
+<option value="prophets">Prophètes</option>
+<option value="all">TOUT l'Ancien Testament</option>
+</select>
+</div>
+<div style="flex:1;min-width:170px">
+<label>Angles par verset</label>
+<select id="lensPerVerse">
+<option value="3">3</option>
+<option value="6">6</option>
+<option value="10" selected>10</option>
+<option value="20">20</option>
+<option value="all">Tous les angles actuels</option>
+</select>
+</div>
+</div>
+<div class="row">
+<div style="flex:1;min-width:170px">
+<label>Mode initial</label>
+<select id="modeSel">
+<option value="exploration" selected>Exploration (diversité)</option>
+<option value="exploitation">Exploitation (approfondir)</option>
+<option value="auto">Auto (convergence)</option>
+</select>
+</div>
+<div style="flex:1;min-width:170px">
+<label>Évolution des angles</label>
+<select id="evoFreq">
+<option value="10">Toutes les 10 analyses</option>
+<option value="20" selected>Toutes les 20 analyses</option>
+<option value="50">Toutes les 50 analyses</option>
+</select>
+</div>
+</div>
+<div class="row">
+<div style="flex:1;min-width:170px">
+<label>Auto-images (score ≥ 8,5)</label>
+<select id="autoImg">
+<option value="0">Aucune</option>
+<option value="2" selected>Top 2 par verset</option>
+<option value="5">Top 5 par verset</option>
+</select>
+</div>
+<div style="flex:1;min-width:170px">
+<label>Seuil de convergence</label>
+<select id="convThreshold">
+<option value="8.5">8,5 / 10</option>
+<option value="9.0" selected>9,0 / 10</option>
+<option value="9.5">9,5 / 10</option>
+</select>
+</div>
+</div>
+<div class="row">
+<div style="flex:1"><label>Température lectures</label><input type="text" id="tempIn" value="0.75"></div>
+<div style="flex:1"><label>Température bootstrap</label><input type="text" id="tempBoot" value="0.3"></div>
+</div>
+</section>
+
+<div class="row" style="margin-bottom:12px">
+<button class="gold" id="startBtn" style="background:#e6b45a" disabled>▶ LANCER LE PIPELINE</button>
+<button class="sec" id="pauseBtn" style="flex:0 0 80px" disabled>⏸</button>
+<button class="danger" id="stopBtn" style="flex:0 0 80px" disabled>⏹</button>
+</div>
+
+<div class="stat">
+<div><b id="sKeys">0</b><span>Clés</span></div>
+<div><b id="sRead">0</b><span>Analyses</span></div>
+<div><b id="sDisc">0</b><span>Découvertes</span></div>
+<div><b id="sLens">0</b><span>Angles</span></div>
+<div><b id="sImg">0</b><span>Images</span></div>
+<div><b id="sVerses">0</b><span>Versets</span></div>
+</div>
+<div class="hint" style="margin-top:8px">Convergence vers la quasi-perfection : <span id="convLabel" style="color:#4cc38a;font-weight:700">0 %</span> · Mode : <span id="modeLabel" class="badge mode-explore">exploration</span></div>
+<div class="convergence"><i id="convBar"></i></div>
+<div class="progress" style="margin-top:6px"><i id="progBar"></i></div>
+<div class="hint" id="progEta" style="margin-top:6px">—</div>
+
+<div class="tabs" id="tabs" style="margin-top:12px">
+<button class="on" data-t="live">▶ Live</button>
+<button data-t="best">★ Meilleures</button>
+<button data-t="discoveries">💎 Découvertes</button>
+<button data-t="lenses">🧬 Angles</button>
+<button data-t="method">📐 Méthode</button>
+<button data-t="verses">📜 Versets</button>
+<button data-t="gallery">🖼 Galerie</button>
+</div>
+
+<div id="paneLive"><div id="console"></div></div>
+<div id="paneBest" class="hidden"><div id="bestView"></div></div>
+<div id="paneDiscoveries" class="hidden"><div id="discoveriesView"></div></div>
+<div id="paneLenses" class="hidden"><div id="lensesView"></div></div>
+<div id="paneMethod" class="hidden"><div id="methodView"></div></div>
+<div id="paneVerses" class="hidden"><div id="versesView"></div></div>
+<div id="paneGallery" class="hidden"><div class="gal" id="gallery"></div></div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONFIG
+   ═══════════════════════════════════════════════════════════════════ */
+const API_BASE = 'https://apihub.agnes-ai.com/v1';
+const MODEL_TEXT = 'agnes-2.5-flash';
+const MODEL_IMG = 'agnes-image-2.1-flash';
+const LS_KEYS = 'gdec5_keys';
+const LS_STATE = 'gdec5_state';
+const IDB_NAME = 'gdec5';
+const IDB_VER = 1;
+const MAX_LOG = 500;
+const COOLDOWN_429 = 65000;
+const MIN_INTERVAL = 2500;
+const MAX_CONCURRENT = 2;
+
+/* ═══════════════════════════════════════════════════════════════════
+   CORPUS ANCIEN TESTAMENT
+   ═══════════════════════════════════════════════════════════════════ */
+const CORPUS = [
+/* GENÈSE - JOURS 1-7 */
+{book:'Genèse', ch:1, v:1, group:'genesis', day:0, txt:"Au commencement, Dieu créa les cieux et la terre."},
+{book:'Genèse', ch:1, v:2, group:'genesis', day:0, txt:"La terre était informe et vide, et l'Esprit de Dieu se mouvait au-dessus des eaux."},
+{book:'Genèse', ch:1, v:3, group:'genesis', day:0, txt:"Dieu dit : Que la lumière soit ! Et la lumière fut."},
+{book:'Genèse', ch:1, v:4, group:'genesis', day:1, txt:"Dieu vit que la lumière était bonne ; et Dieu sépara la lumière d'avec les ténèbres."},
+{book:'Genèse', ch:1, v:5, group:'genesis', day:1, txt:"Dieu appela la lumière jour, et il appela les ténèbres nuit. Ainsi il y eut un soir, et il y eut un matin : ce fut le premier jour."},
+{book:'Genèse', ch:1, v:6, group:'genesis', day:2, txt:"Dieu dit : Qu'il y ait une étendue entre les eaux, et qu'elle sépare les eaux d'avec les eaux."},
+{book:'Genèse', ch:1, v:7, group:'genesis', day:2, txt:"Et Dieu fit l'étendue, et il sépara les eaux qui sont au-dessous de l'étendue d'avec les eaux qui sont au-dessus de l'étendue. Et cela fut ainsi."},
+{book:'Genèse', ch:1, v:8, group:'genesis', day:2, txt:"Dieu appela l'étendue ciel. Ainsi il y eut un soir, et il y eut un matin : ce fut le second jour."},
+{book:'Genèse', ch:1, v:9, group:'genesis', day:3, txt:"Dieu dit : Que les eaux qui sont au-dessous du ciel se rassemblent en un seul lieu, et que le sec paraisse. Et cela fut ainsi."},
+{book:'Genèse', ch:1, v:10, group:'genesis', day:3, txt:"Dieu appela le sec terre, et il appela l'amas des eaux mers. Dieu vit que cela était bon."},
+{book:'Genèse', ch:1, v:11, group:'genesis', day:3, txt:"Puis Dieu dit : Que la terre produise de la verdure, des herbes portant semence, des arbres fruitiers donnant sur la terre du fruit selon leur espèce, et qui contiennent leur semence ! Et cela fut ainsi."},
+{book:'Genèse', ch:1, v:12, group:'genesis', day:3, txt:"La terre produisit de la verdure, des herbes portant semence selon leur espèce, et des arbres donnant selon leur espèce du fruit qui contient sa semence. Dieu vit que cela était bon."},
+{book:'Genèse', ch:1, v:14, group:'genesis', day:4, txt:"Dieu dit : Qu'il y ait des luminaires dans l'étendue du ciel, pour séparer le jour d'avec la nuit ; que ce soient des signes pour marquer les époques, les jours et les années."},
+{book:'Genèse', ch:1, v:15, group:'genesis', day:4, txt:"Qu'ils servent de luminaires dans l'étendue du ciel, pour éclairer la terre. Et cela fut ainsi."},
+{book:'Genèse', ch:1, v:16, group:'genesis', day:4, txt:"Dieu fit les deux grands luminaires, le plus grand luminaire pour présider au jour, et le plus petit pour présider à la nuit ; il fit aussi les étoiles."},
+{book:'Genèse', ch:1, v:17, group:'genesis', day:4, txt:"Dieu les plaça dans l'étendue du ciel, pour éclairer la terre,"},
+{book:'Genèse', ch:1, v:18, group:'genesis', day:4, txt:"pour présider au jour et à la nuit, et pour séparer la lumière d'avec les ténèbres. Dieu vit que cela était bon."},
+{book:'Genèse', ch:1, v:20, group:'genesis', day:5, txt:"Dieu dit : Que les eaux produisent en abondance des animaux vivants, et que des oiseaux volent sur la terre vers l'étendue du ciel."},
+{book:'Genèse', ch:1, v:21, group:'genesis', day:5, txt:"Dieu créa les grands poissons et tous les animaux vivants qui se meuvent, et que les eaux produisirent en abondance selon leur espèce ; il créa aussi tout oiseau ailé selon son espèce. Dieu vit que cela était bon."},
+{book:'Genèse', ch:1, v:22, group:'genesis', day:5, txt:"Dieu les bénit, en disant : Soyez féconds, multipliez, et remplissez les eaux des mers ; et que les oiseaux multiplient sur la terre."},
+{book:'Genèse', ch:1, v:24, group:'genesis', day:6, txt:"Dieu dit : Que la terre produise des animaux vivants selon leur espèce, du bétail, des reptiles et des animaux terrestres, selon leur espèce. Et cela fut ainsi."},
+{book:'Genèse', ch:1, v:26, group:'genesis', day:6, txt:"Puis Dieu dit : Faisons l'homme à notre image, selon notre ressemblance, et qu'il domine sur les poissons de la mer, sur les oiseaux du ciel, sur le bétail, sur toute la terre."},
+{book:'Genèse', ch:1, v:27, group:'genesis', day:6, txt:"Dieu créa l'homme à son image, il le créa à l'image de Dieu, il créa l'homme et la femme."},
+{book:'Genèse', ch:1, v:28, group:'genesis', day:6, txt:"Dieu les bénit, et Dieu leur dit : Soyez féconds, multipliez, remplissez la terre, et l'assujettissez ; et dominez sur les poissons de la mer, sur les oiseaux du ciel, et sur tout animal qui se meut sur la terre."},
+{book:'Genèse', ch:1, v:31, group:'genesis', day:6, txt:"Dieu vit tout ce qu'il avait fait et voici, cela était très bon. Ainsi, il y eut un soir, et il y eut un matin : ce fut le sixième jour."},
+{book:'Genèse', ch:2, v:1, group:'genesis', day:7, txt:"Ainsi furent achevés les cieux et la terre, et toute leur armée."},
+{book:'Genèse', ch:2, v:2, group:'genesis', day:7, txt:"Dieu acheva au septième jour son œuvre, qu'il avait faite ; et il se reposa au septième jour de toute son œuvre."},
+{book:'Genèse', ch:2, v:3, group:'genesis', day:7, txt:"Dieu bénit le septième jour, et il le sanctifia, parce qu'en ce jour il se reposa de toute son œuvre."},
+/* GENÈSE - SUITE */
+{book:'Genèse', ch:2, v:7, group:'genesis', day:8, txt:"L'Éternel Dieu forma l'homme de la poussière de la terre, il souffla dans ses narines un souffle de vie et l'homme devint un être vivant."},
+{book:'Genèse', ch:2, v:9, group:'genesis', day:8, txt:"L'Éternel Dieu fit pousser du sol des arbres de toute espèce, agréables à voir et bons à manger, et l'arbre de la vie au milieu du jardin, et l'arbre de la connaissance du bien et du mal."},
+{book:'Genèse', ch:2, v:10, group:'genesis', day:8, txt:"Un fleuve sortait d'Éden pour arroser le jardin, et de là il se divisait en quatre bras."},
+{book:'Genèse', ch:2, v:21, group:'genesis', day:8, txt:"Alors l'Éternel Dieu fit tomber un profond sommeil sur l'homme, qui s'endormit ; il prit une de ses côtes, et referma la chair à sa place."},
+{book:'Genèse', ch:3, v:1, group:'genesis', day:9, txt:"Le serpent était le plus rusé de tous les animaux des champs, que l'Éternel Dieu avait faits. Il dit à la femme : Dieu a-t-il réellement dit : Vous ne mangerez pas de tous les arbres du jardin ?"},
+{book:'Genèse', ch:3, v:5, group:'genesis', day:9, txt:"Dieu sait que le jour où vous en mangerez, vos yeux s'ouvriront, et que vous serez comme des dieux, connaissant le bien et le mal."},
+{book:'Genèse', ch:3, v:7, group:'genesis', day:9, txt:"Les yeux de l'un et de l'autre s'ouvrirent, ils connurent qu'ils étaient nus, et ayant cousu des feuilles de figuier, ils s'en firent des ceintures."},
+{book:'Genèse', ch:3, v:19, group:'genesis', day:9, txt:"C'est à la sueur de ton visage que tu mangeras du pain, jusqu'à ce que tu retournes dans la terre, d'où tu as été pris ; car tu es poussière, et tu retourneras dans la poussière."},
+{book:'Genèse', ch:3, v:22, group:'genesis', day:9, txt:"L'Éternel Dieu dit : Voici, l'homme est devenu comme l'un de nous, pour la connaissance du bien et du mal. Empêchons-le maintenant d'avancer sa main, de prendre de l'arbre de vie, d'en manger, et de vivre éternellement."},
+{book:'Genèse', ch:6, v:4, group:'genesis', day:10, txt:"Les géants étaient sur la terre en ces temps-là, après que les fils de Dieu furent venus vers les filles des hommes, et qu'elles leur eurent donné des enfants : ce sont ces héros qui furent fameux dans l'antiquité."},
+{book:'Genèse', ch:7, v:11, group:'genesis', day:10, txt:"L'an six cent de la vie de Noé, le second mois, le dix-septième jour du mois, en ce jour-là toutes les sources du grand abîme jaillirent, et les écluses des cieux s'ouvrirent."},
+{book:'Genèse', ch:8, v:22, group:'genesis', day:10, txt:"Tant que la terre subsistera, les semailles et la moisson, le froid et la chaleur, l'été et l'hiver, le jour et la nuit ne cesseront point."},
+{book:'Genèse', ch:9, v:13, group:'genesis', day:10, txt:"J'ai placé mon arc dans la nue, et il servira de signe d'alliance entre moi et la terre."},
+{book:'Genèse', ch:11, v:1, group:'genesis', day:11, txt:"Toute la terre avait une seule langue et les mêmes mots."},
+{book:'Genèse', ch:11, v:7, group:'genesis', day:11, txt:"Allons ! descendons, et là confondons leur langage, afin qu'ils n'entendent plus la langue les uns des autres."},
+{book:'Genèse', ch:15, v:5, group:'genesis', day:12, txt:"Et après l'avoir conduit dehors, il dit : Regarde vers le ciel, et compte les étoiles, si tu peux les compter. Et il lui dit : Telle sera ta postérité."},
+{book:'Genèse', ch:22, v:2, group:'genesis', day:12, txt:"Dieu dit : Prends ton fils, ton unique, celui que tu aimes, Isaac ; va-t'en au pays de Morija, et là offre-le en holocauste sur l'une des montagnes que je te dirai."},
+{book:'Genèse', ch:28, v:12, group:'genesis', day:12, txt:"Il eut un songe. Et voici, une échelle était appuyée sur la terre, et son sommet touchait au ciel. Et voici, les anges de Dieu montaient et descendaient par cette échelle."},
+{book:'Genèse', ch:32, v:24, group:'genesis', day:12, txt:"Jacob demeura seul. Alors un homme lutta avec lui jusqu'au lever de l'aurore."},
+{book:'Genèse', ch:41, v:29, group:'genesis', day:13, txt:"Voici, il y aura sept années de grande abondance dans tout le pays d'Égypte."},
+{book:'Genèse', ch:50, v:20, group:'genesis', day:13, txt:"Vous aviez médité de me faire du mal : Dieu l'a changé en bien, pour accomplir ce qui arrive aujourd'hui, et pour sauver la vie à un peuple nombreux."},
+/* EXODE */
+{book:'Exode', ch:3, v:2, group:'torah', txt:"L'ange de l'Éternel lui apparut dans une flamme de feu, au milieu d'un buisson. Moïse regarda ; et voici, le buisson était tout ardent, et le buisson ne se consumait point."},
+{book:'Exode', ch:3, v:14, group:'torah', txt:"Dieu dit à Moïse : Je suis celui qui suis. Et il ajouta : C'est ainsi que tu répondras aux enfants d'Israël : Celui qui s'appelle 'je suis' m'a envoyé vers vous."},
+{book:'Exode', ch:13, v:21, group:'torah', txt:"L'Éternel allait devant eux, le jour dans une colonne de nuée pour les guider dans leur chemin, et la nuit dans une colonne de feu pour les éclairer, afin qu'ils marchassent jour et nuit."},
+{book:'Exode', ch:14, v:21, group:'torah', txt:"Moïse étendit sa main sur la mer. Et l'Éternel refoula la mer par un vent impétueux qui souffla toute la nuit. Il fit de la mer un sec, et les eaux se fendirent."},
+{book:'Exode', ch:15, v:8, group:'torah', txt:"Au souffle de tes narines, les eaux s'amoncelèrent ; elles se dressèrent comme une digue ; au milieu de la mer, les flots se figèrent."},
+{book:'Exode', ch:19, v:18, group:'torah', txt:"Tout le mont Sinaï était en fumée, parce que l'Éternel y était descendu dans le feu ; sa fumée s'élevait comme la fumée d'une fournaise, et toute la montagne tremblait avec violence."},
+{book:'Exode', ch:20, v:4, group:'torah', txt:"Tu ne te feras point d'image taillée, ni de représentation quelconque des choses qui sont en haut dans les cieux, qui sont en bas sur la terre, et qui sont dans les eaux plus bas que la terre."},
+{book:'Exode', ch:24, v:10, group:'torah', txt:"Ils virent le Dieu d'Israël ; sous ses pieds, c'était comme un ouvrage de saphir transparent, comme le ciel lui-même dans sa pureté."},
+{book:'Exode', ch:33, v:20, group:'torah', txt:"Il dit : Tu ne pourras pas voir ma face, car l'homme ne peut me voir et vivre."},
+{book:'Exode', ch:34, v:6, group:'torah', txt:"Et l'Éternel passa devant lui, et s'écria : L'Éternel, l'Éternel, Dieu miséricordieux et compatissant, lent à la colère, riche en bonté et en fidélité."},
+/* LÉVITIQUE */
+{book:'Lévitique', ch:17, v:11, group:'torah', txt:"Car la vie de la chair est dans le sang. Je vous l'ai donné sur l'autel, afin qu'il servît d'expiation pour vos âmes, car c'est par la vie qu'il fait l'expiation."},
+{book:'Lévitique', ch:19, v:18, group:'torah', txt:"Tu ne te vengeras point, et tu ne garderas point de rancune contre les enfants de ton peuple. Tu aimeras ton prochain comme toi-même."},
+{book:'Lévitique', ch:25, v:10, group:'torah', txt:"Vous sanctifierez la cinquantième année, vous publierez la liberté dans le pays pour tous ses habitants : ce sera pour vous le jubilé."},
+/* NOMBRES */
+{book:'Nombres', ch:14, v:21, group:'torah', txt:"Mais, je suis vivant ! et la gloire de l'Éternel remplira toute la terre."},
+{book:'Nombres', ch:23, v:19, group:'torah', txt:"Dieu n'est point un homme pour mentir, ni fils d'un homme pour se repentir. Ce qu'il a dit, ne le fera-t-il pas ?"},
+/* DEUTÉRONOME */
+{book:'Deutéronome', ch:4, v:24, group:'torah', txt:"Car l'Éternel, ton Dieu, est un feu dévorant, un Dieu jaloux."},
+{book:'Deutéronome', ch:6, v:5, group:'torah', txt:"Tu aimeras l'Éternel, ton dieu, de tout ton cœur, de toute ton âme et de toute ta force."},
+{book:'Deutéronome', ch:8, v:3, group:'torah', txt:"Il t'a humilié, il t'a fait avoir faim, il t'a fait manger la manne que tu ne connaissais pas et que n'avaient pas connue tes pères, afin de te faire savoir que l'homme ne vit pas de pain seulement, mais que l'homme vit de tout ce qui sort de la bouche de l'Éternel."},
+{book:'Deutéronome', ch:30, v:19, group:'torah', txt:"J'en prends aujourd'hui à témoin contre vous le ciel et la terre : j'ai mis devant toi la vie et la mort, la bénédiction et la malédiction. Choisis la vie, afin que tu vives, toi et ta postérité."},
+/* JOSUÉ */
+{book:'Josué', ch:10, v:12, group:'historical', txt:"Alors Josué parla à l'Éternel, le jour où l'Éternel livra les Amoréens aux enfants d'Israël, et il dit en présence d'Israël : Soleil, arrête-toi sur Gabaon, et toi, lune, sur la vallée d'Ajalon !"},
+{book:'Josué', ch:10, v:13, group:'historical', txt:"Et le soleil s'arrêta, et la lune suspendit sa course, jusqu'à ce que la nation eût tiré vengeance de ses ennemis."},
+/* JUGES */
+{book:'Juges', ch:5, v:20, group:'historical', txt:"Des cieux on combattit, de leurs sentiers les étoiles combattirent contre Sisera."},
+/* 1 SAMUEL */
+{book:'1 Samuel', ch:2, v:6, group:'historical', txt:"L'Éternel fait mourir et il fait vivre. Il fait descendre au séjour des morts et il en fait remonter."},
+{book:'1 Samuel', ch:16, v:7, group:'historical', txt:"L'Éternel ne considère pas ce que l'homme considère ; l'homme regarde à ce qui frappe les yeux, mais l'Éternel regarde au cœur."},
+/* 1 ROIS */
+{book:'1 Rois', ch:8, v:27, group:'historical', txt:"Mais quoi ! Dieu habiterait-il véritablement sur la terre ? Voici, les cieux et les cieux des cieux ne peuvent te contenir."},
+{book:'1 Rois', ch:19, v:11, group:'historical', txt:"L'Éternel dit : Sors, et tiens-toi dans la montagne devant l'Éternel ! Et voici, l'Éternel passa. Et devant l'Éternel, il y eut un vent fort et violent qui déchirait les montagnes et brisait les rochers : l'Éternel n'était pas dans le vent. Et après le vent, ce fut un tremblement de terre : l'Éternel n'était pas dans le tremblement de terre."},
+{book:'1 Rois', ch:19, v:12, group:'historical', txt:"Et après le tremblement de terre, un feu : l'Éternel n'était pas dans le feu. Et après le feu, un murmure doux et léger."},
+/* 2 ROIS */
+{book:'2 Rois', ch:2, v:11, group:'historical', txt:"Comme ils continuaient à marcher en parlant, voici, un char de feu et des chevaux de feu les séparèrent l'un de l'autre, et Élie monta au ciel dans un tourbillon."},
+/* JOB */
+{book:'Job', ch:1, v:21, group:'wisdom', txt:"Il dit : Je suis sorti nu du sein de ma mère, et nu je retournerai dans le sein de la terre. L'Éternel a donné, et l'Éternel a ôté ; que le nom de l'Éternel soit béni !"},
+{book:'Job', ch:9, v:8, group:'wisdom', txt:"Seul, il étend les cieux, il marche sur les hauteurs de la mer."},
+{book:'Job', ch:19, v:26, group:'wisdom', txt:"Quand ma peau sera détruite, il se lèvera ; quand je n'aurai plus de chair, je verrai Dieu."},
+{book:'Job', ch:26, v:7, group:'wisdom', txt:"Il étend le septentrion sur le vide, il suspend la terre sur le néant."},
+{book:'Job', ch:28, v:12, group:'wisdom', txt:"Mais où la sagesse se trouve-t-elle ? Où est le lieu de l'intelligence ?"},
+{book:'Job', ch:36, v:26, group:'wisdom', txt:"Dieu est grand, mais nous ne le connaissons pas ; le nombre de ses années est impénétrable."},
+{book:'Job', ch:38, v:4, group:'wisdom', txt:"Où étais-tu quand je fondais la terre ? Dis-le, si tu as de l'intelligence."},
+{book:'Job', ch:38, v:7, group:'wisdom', txt:"Quand les étoiles du matin éclataient en chants d'allégresse, et que tous les fils de Dieu poussaient des cris de joie ?"},
+{book:'Job', ch:38, v:19, group:'wisdom', txt:"Où est le chemin qui conduit au séjour de la lumière ? Et les ténèbres, où ont-elles leur demeure ?"},
+{book:'Job', ch:38, v:31, group:'wisdom', txt:"Noues-tu les liens des Pléiades, ou détaches-tu les cordages de l'Orion ?"},
+{book:'Job', ch:38, v:33, group:'wisdom', txt:"Connais-tu les lois du ciel ? Règles-tu son influence sur la terre ?"},
+{book:'Job', ch:38, v:36, group:'wisdom', txt:"Qui a mis la sagesse dans le cœur ? Qui a donné l'intelligence à l'esprit ?"},
+{book:'Job', ch:42, v:2, group:'wisdom', txt:"Je reconnais que tu peux tout, et que rien ne s'oppose à tes pensées."},
+/* PSAUMES */
+{book:'Psaumes', ch:8, v:4, group:'wisdom', txt:"Quand je contemple les cieux, ouvrage de tes mains, la lune et les étoiles que tu as créées : qu'est-ce que l'homme, pour que tu te souviennes de lui ?"},
+{book:'Psaumes', ch:19, v:1, group:'wisdom', txt:"Les cieux racontent la gloire de Dieu, et l'étendue manifeste l'œuvre de ses mains."},
+{book:'Psaumes', ch:22, v:15, group:'wisdom', txt:"Je suis comme de l'eau qui s'écoule, et tous mes os se séparent ; mon cœur est comme de la cire, il se fond dans mes entrailles."},
+{book:'Psaumes', ch:33, v:6, group:'wisdom', txt:"Les cieux ont été faits par la parole de l'Éternel, et toute leur armée par le souffle de sa bouche."},
+{book:'Psaumes', ch:33, v:9, group:'wisdom', txt:"Car il dit, et la chose arrive ; il ordonne, et elle existe."},
+{book:'Psaumes', ch:36, v:9, group:'wisdom', txt:"En toi est la source de vie ; par ta lumière nous voyons la lumière."},
+{book:'Psaumes', ch:39, v:5, group:'wisdom', txt:"Voici, tu as donné à mes jours la largeur de la main, et ma vie est comme un rien devant toi. Oui, tout homme debout n'est qu'un souffle."},
+{book:'Psaumes', ch:90, v:4, group:'wisdom', txt:"Car mille ans sont, à tes yeux, comme le jour d'hier, quand il n'est plus, et comme une veille de la nuit."},
+{book:'Psaumes', ch:102, v:26, group:'wisdom', txt:"Ils périront, mais tu subsisteras ; ils s'useront tous comme un vêtement ; tu les changeras comme un habit, et ils seront changés."},
+{book:'Psaumes', ch:104, v:2, group:'wisdom', txt:"Il s'enveloppe de lumière comme d'un manteau ; il étend les cieux comme un pavillon."},
+{book:'Psaumes', ch:104, v:30, group:'wisdom', txt:"Tu envoies ton souffle : ils sont créés, et tu renouvelles la face de la terre."},
+{book:'Psaumes', ch:139, v:15, group:'wisdom', txt:"Mon corps n'était pas caché devant toi, lorsque j'étais formé dans le secret, tissé dans les profondeurs de la terre."},
+{book:'Psaumes', ch:139, v:16, group:'wisdom', txt:"Quand je n'étais qu'une masse informe, tes yeux me voyaient, et sur ton livre étaient tous inscrits les jours qui m'étaient destinés, avant qu'aucun d'eux existât."},
+/* PROVERBES */
+{book:'Proverbes', ch:3, v:19, group:'wisdom', txt:"C'est par la sagesse que l'Éternel a fondé la terre, c'est par l'intelligence qu'il a affermi les cieux."},
+{book:'Proverbes', ch:8, v:22, group:'wisdom', txt:"L'Éternel m'a créée la première de ses œuvres, avant ses œuvres les plus anciennes."},
+{book:'Proverbes', ch:8, v:27, group:'wisdom', txt:"Lorsqu'il disposa les cieux, j'étais là ; lorsqu'il traça un cercle à la surface de l'abîme."},
+{book:'Proverbes', ch:25, v:2, group:'wisdom', txt:"La gloire de Dieu, c'est de cacher les choses ; la gloire des rois, c'est de les sonder."},
+/* ECCLÉSIASTE */
+{book:'Ecclésiaste', ch:1, v:2, group:'wisdom', txt:"Vanité des vanités, dit l'Ecclésiaste, vanité des vanités, tout est vanité."},
+{book:'Ecclésiaste', ch:1, v:9, group:'wisdom', txt:"Ce qui a été, c'est ce qui sera, et ce qui s'est fait, c'est ce qui se fera, il n'y a rien de nouveau sous le soleil."},
+{book:'Ecclésiaste', ch:3, v:1, group:'wisdom', txt:"Il y a un temps pour tout, un temps pour toute chose sous les cieux."},
+{book:'Ecclésiaste', ch:3, v:11, group:'wisdom', txt:"Il fait toute chose bonne en son temps ; même il a mis dans leur cœur la pensée de l'éternité, bien que l'homme ne puisse pas saisir l'œuvre que Dieu fait, du commencement jusqu'à la fin."},
+{book:'Ecclésiaste', ch:12, v:7, group:'wisdom', txt:"Avant que la poussière retourne à la terre, comme elle y était, et que l'esprit retourne à Dieu qui l'a donné."},
+/* ÉSAÏE */
+{book:'Ésaïe', ch:6, v:3, group:'prophets', txt:"Ils criaient l'un à l'autre, et disaient : Saint, saint, saint est l'Éternel des armées ! toute la terre est pleine de sa gloire !"},
+{book:'Ésaïe', ch:14, v:12, group:'prophets', txt:"Te voilà tombé du ciel, astre brillant, fils de l'aurore ! Tu es abattu à terre, toi, le vainqueur des nations !"},
+{book:'Ésaïe', ch:40, v:22, group:'prophets', txt:"C'est lui qui est assis au-dessus du cercle de la terre, et ceux qui l'habitent sont comme des sauterelles ; il étend les cieux comme une étoffe légère, il les déploie comme une tente pour y demeurer."},
+{book:'Ésaïe', ch:40, v:26, group:'prophets', txt:"Levez vos yeux en haut, et regardez ! Qui a créé ces choses ? Qui fait marcher en ordre leur armée ? Il les appelle toutes par leur nom ; par son grand pouvoir et par sa force puissante, il n'en est pas une qui fasse défaut."},
+{book:'Ésaïe', ch:43, v:19, group:'prophets', txt:"Voici, je vais faire une chose nouvelle, sur le point d'arriver : Ne la connaîtrez-vous pas ? Je mettrai un chemin dans le désert, et des fleuves dans la solitude."},
+{book:'Ésaïe', ch:45, v:7, group:'prophets', txt:"Je forme la lumière et je crée les ténèbres, je donne la paix et je crée l'adversité ; moi, l'Éternel, je fais toutes ces choses."},
+{book:'Ésaïe', ch:55, v:9, group:'prophets', txt:"Autant les cieux sont élevés au-dessus de la terre, autant mes voies sont élevées au-dessus de vos voies, et mes pensées au-dessus de vos pensées."},
+{book:'Ésaïe', ch:65, v:17, group:'prophets', txt:"Car je vais créer de nouveaux cieux et une nouvelle terre ; on ne se rappellera plus les choses passées, elles ne reviendront plus à l'esprit."},
+/* JÉRÉMIE */
+{book:'Jérémie', ch:1, v:5, group:'prophets', txt:"Avant que je t'eusse formé dans le ventre de ta mère, je te connaissais, et avant que tu fusses sorti de son sein, je t'avais consacré, je t'avais établi prophète des nations."},
+{book:'Jérémie', ch:17, v:8, group:'prophets', txt:"Il est comme un arbre planté près des eaux, et qui étend ses racines vers le courant ; il n'aperçoit point la chaleur quand elle vient, et son feuillage reste vert."},
+{book:'Jérémie', ch:23, v:24, group:'prophets', txt:"Quelqu'un se tiendra-t-il dans un lieu caché, sans que je le voie ? dit l'Éternel. Ne remplis-je pas, moi, les cieux et la terre ?"},
+{book:'Jérémie', ch:33, v:22, group:'prophets', txt:"De même qu'on ne peut compter l'armée des cieux, ni mesurer le sable de la mer, de même je multiplierai la postérité de David."},
+/* ÉZÉCHIEL */
+{book:'Ézéchiel', ch:1, v:4, group:'prophets', txt:"Je regardai, et voici, il vint du septentrion un vent impétueux, une grosse nuée, une gerbe de feu, qui répandait de tous côtés une lumière éclatante, au centre de laquelle brillait comme de l'airain poli, sortant du milieu du feu."},
+{book:'Ézéchiel', ch:1, v:16, group:'prophets', txt:"La figure des roues et leur ouvrage étaient comme du chrysolithe ; elles avaient toutes les quatre la même figure, et leur aspect et leur structure étaient comme si une roue eût été au milieu d'une autre roue."},
+{book:'Ézéchiel', ch:1, v:20, group:'prophets', txt:"Partout où l'esprit allait, elles allaient, et les roues s'élevaient avec elles ; car l'esprit de la créature était dans les roues."},
+{book:'Ézéchiel', ch:37, v:5, group:'prophets', txt:"Ainsi parle le Seigneur, l'Éternel, à ces os : Voici, je vais faire entrer en vous un esprit, et vous vivrez."},
+{book:'Ézéchiel', ch:37, v:6, group:'prophets', txt:"Je vous donnerai des nerfs, je ferai croître sur vous de la chair, je vous couvrirai de peau, je mettrai en vous un esprit, et vous vivrez."},
+/* DANIEL */
+{book:'Daniel', ch:2, v:22, group:'prophets', txt:"C'est lui qui révèle les choses cachées et secrètes, il sait ce qui est dans les ténèbres, et la lumière demeure avec lui."},
+{book:'Daniel', ch:7, v:9, group:'prophets', txt:"Je regardai, pendant qu'on plaçait des trônes. Et un ancien des jours s'assit. Son vêtement était blanc comme la neige, et les cheveux de sa tête étaient comme de la laine pure ; son trône était comme des flammes de feu, et les roues comme un feu ardent."},
+{book:'Daniel', ch:12, v:3, group:'prophets', txt:"Ceux qui auront été intelligents brilleront comme la splendeur du ciel, et ceux qui auront enseigné la justice à la multitude brilleront comme les étoiles, à toujours et à perpétuité."},
+/* PETITS PROPHÈTES */
+{book:'Osée', ch:6, v:6, group:'prophets', txt:"Car j'aime la piété et non les sacrifices, et la connaissance de Dieu plus que les holocaustes."},
+{book:'Joël', ch:2, v:28, group:'prophets', txt:"Après cela, je répandrai mon esprit sur toute chair ; vos fils et vos filles prophétiseront, vos vieillards auront des songes, et vos jeunes gens des visions."},
+{book:'Amos', ch:5, v:24, group:'prophets', txt:"Mais que la justice coule comme une eau, et la droiture comme un torrent qui ne tarit pas."},
+{book:'Michée', ch:6, v:8, group:'prophets', txt:"On t'a fait connaître, ô homme, ce qui est bien ; et ce que l'Éternel demande de toi, c'est que tu pratiques la justice, que tu aimes la miséricorde, et que tu marches humblement avec ton Dieu."},
+{book:'Habacuc', ch:3, v:4, group:'prophets', txt:"Sa splendeur est comme la lumière, des rayons partent de sa main ; là se cache sa puissance."},
+{book:'Zacharie', ch:4, v:6, group:'prophets', txt:"Ce n'est ni par la puissance ni par la force, mais c'est par mon esprit, dit l'Éternel des armées."},
+{book:'Zacharie', ch:14, v:7, group:'prophets', txt:"Il y aura un jour unique, connu de l'Éternel, et qui ne sera ni jour ni nuit ; mais vers le soir la lumière paraîtra."},
+{book:'Malachie', ch:3, v:6, group:'prophets', txt:"Car je suis l'Éternel, je ne change pas."},
+{book:'Malachie', ch:3, v:10, group:'prophets', txt:"Apportez à la maison du trésor toutes les dîmes, afin qu'il y ait de la nourriture dans ma maison ; mettez-moi de la sorte à l'épreuve. Et vous verrez si je n'ouvre pas pour vous les écluses des cieux."}
+];
+
+/* ═══════════════════════════════════════════════════════════════════
+   MÉTHODOLOGIE (règles vérifiées, pas E=mc²)
+   ═══════════════════════════════════════════════════════════════════ */
+const METHODOLOGY_CORE = [
+  {id:'R1', name:'Source textuelle', desc:'Chaque variable utilisée doit avoir un mot-source présent textuellement dans le verset courant ou un verset précédent.', weight:1.0, validated:0, failed:0},
+  {id:'R2', name:'Pas d\'anticipation', desc:'Aucun objet scientifique ne peut être introduit avant son apparition textuelle.', weight:1.0, validated:0, failed:0},
+  {id:'R3', name:'Pas de sur-simplification', desc:'Un mot ne doit pas être interprété de manière naïve (ex: « lumière » ≠ lumière visible, c\'est la constante c).', weight:1.0, validated:0, failed:0},
+  {id:'R4', name:'Intention obligatoire', desc:'Chaque lecture doit identifier l\'intention du texte : quelle question le verset nous pousse-t-il à poser ?', weight:1.0, validated:0, failed:0},
+  {id:'R5', name:'Cohérence cumulée', desc:'La lecture doit être cohérente avec le cumul des variables et des domaines déjà ouverts.', weight:1.0, validated:0, failed:0},
+  {id:'R6', name:'Ordre respecté', desc:'L\'ordre d\'apparition dans le texte doit être cohérent avec l\'ordre logique du domaine scientifique.', weight:0.9, validated:0, failed:0},
+  {id:'R7', name:'Risque signalé', desc:'Chaque interprétation doit déclarer son risque d\'hallucination (faible/moyen/élevé).', weight:0.8, validated:0, failed:0},
+  {id:'R8', name:'Domaine identifié', desc:'Chaque verset doit ouvrir un domaine scientifique clair (cosmologie, biologie, information, etc.).', weight:0.9, validated:0, failed:0},
+  {id:'R9', name:'Direction du texte', desc:'Chaque lecture doit s\'inscrire dans la direction globale du récit (énergie → matière → champ → structures → vie → conscience → repos).', weight:0.9, validated:0, failed:0},
+  {id:'R10', name:'Limite reconnue', desc:'La lecture doit reconnaître ses propres limites.', weight:0.7, validated:0, failed:0}
+];
+
+/* ═══════════════════════════════════════════════════════════════════
+   ANGLES D'ATTAQUE INITIAUX (mutables, croissants)
+   ═══════════════════════════════════════════════════════════════════ */
+const INITIAL_LENSES = [
+  {id:'L01', code:'COSMO', lbl:'Cosmologique', q:"Lis ce verset comme une description cosmologique : origine, expansion, structure à grande échelle, fond diffus. Quelle formule ou équation ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L02', code:'QUANT', lbl:'Quantique', q:"Lis ce verset comme une description quantique : superposition, intrication, effondrement, fluctuations du vide. Quelle formule ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L03', code:'INFO', lbl:'Information', q:"Lis ce verset comme un énoncé d'information : bit, qubit, entropie de Shannon, holographie. Quelle formule ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L04', code:'BIO', lbl:'Biologique', q:"Lis ce verset comme une description biologique : ADN, métabolisme, reproduction, conscience. Quelle formule ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L05', code:'CHEM', lbl:'Chimique', q:"Lis ce verset comme une description chimique : molécules, réactions, catalyse, eau, carbone. Quelle formule ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L06', code:'MATH', lbl:'Mathématique', q:"Lis ce verset comme un énoncé mathématique : symétrie, topologie, dimensions, invariants. Quelle structure ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L07', code:'SYM', lbl:'Symétrie', q:"Lis ce verset en termes de symétrie et brisure de symétrie. Quel groupe ? Théorème de Noether ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L08', code:'EMERG', lbl:'Émergence', q:"Lis ce verset comme un phénomène d'émergence : transition de phase, seuil critique, complexification. Quelle loi ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L09', code:'THERMO', lbl:'Thermodynamique', q:"Lis ce verset en termes thermodynamiques : entropie, énergie libre, flèche du temps, équilibre. Quelle formule ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L10', code:'FIELD', lbl:'Théorie des champs', q:"Lis ce verset comme une description de champ : scalaire, vectoriel, tenseur, Higgs, quantique. Quelle équation ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L11', code:'ASTRO', lbl:'Astronomique', q:"Lis ce verset comme une description astronomique : étoiles, galaxies, trous noirs, matière noire, énergie noire. Quelle formule ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L12', code:'GEO', lbl:'Géophysique', q:"Lis ce verset comme une description géophysique : tectonique, océans, atmosphère, cycles biogéochimiques. Quelle formule ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L13', code:'CONSC', lbl:'Conscience', q:"Lis ce verset comme une description de la conscience : information intégrée, auto-modèle, récursivité, énergie libre de Friston. Quelle formule ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L14', code:'INTENT', lbl:'Intention', q:"Quelle est l'INTENTION du texte ? Quelle question le verset nous demande-t-il de poser ? Quelle piste scientifique cette intention ouvre-t-elle ?", status:'core', performance:{count:0, avg:0, best:0}},
+  {id:'L15', code:'PATTERN', lbl:'Structure', q:"Analyse la STRUCTURE formelle du verset : ordre, répétitions, oppositions, symétries. Quelle structure scientifique correspond ?", status:'core', performance:{count:0, avg:0, best:0}}
+];
+
+/* ═══════════════════════════════════════════════════════════════════
+   ÉTAT
+   ═══════════════════════════════════════════════════════════════════ */
+const state = {
+  keys: [],
+  running: false,
+  paused: false,
+  stopped: false,
+  corpus: CORPUS.slice(),
+  lenses: INITIAL_LENSES.slice(),
+  methodology: METHODOLOGY_CORE.slice(),
+  readings: [],
+  discoveries: [],
+  images: [],
+  cumul: {present: ['E','m','vide','t','p','c'], absent: [], domains: [], direction: 0},
+  mode: 'exploration',
+  modeAuto: true,
+  convergence: 0,
+  evolutionCount: 0,
+  lensEvolutionCount: 0,
+  methodEvolutionCount: 0,
+  topScores: [],
+  currentVerse: null,
+  currentLens: null,
+  totalTasks: 0,
+  doneTasks: 0,
+  versesDone: 0,
+  startTime: 0
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   UTILS
+   ═══════════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nowT = () => new Date().toLocaleTimeString('fr-FR',{hour12:false});
+const clamp = (v,a,b) => Math.max(a, Math.min(b, Number(v)||0));
+
+let toastT;
+function toast(m, t){ const el = $('toast'); el.textContent = m; el.className = 'on ' + (t||''); clearTimeout(toastT); toastT = setTimeout(()=>el.className='', 2800); }
+function cLog(msg, cls){
+  const c = $('console');
+  const d = document.createElement('div');
+  d.className = 'ce ' + (cls||'info');
+  d.innerHTML = '<span style="color:#555;margin-right:6px">'+nowT()+'</span>' + esc(msg);
+  c.appendChild(d);
+  while(c.children.length > MAX_LOG) c.removeChild(c.firstChild);
+  c.scrollTop = c.scrollHeight;
+}
+function cLogTag(tag, msg, cls){
+  const c = $('console');
+  const d = document.createElement('div');
+  d.className = 'ce ' + (cls||'info');
+  d.innerHTML = '<span style="color:#555;margin-right:6px">'+nowT()+'</span><span class="tag">'+esc(tag)+'</span>' + esc(msg);
+  c.appendChild(d);
+  while(c.children.length > MAX_LOG) c.removeChild(c.firstChild);
+  c.scrollTop = c.scrollHeight;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INDEXEDDB
+   ═══════════════════════════════════════════════════════════════════ */
+let _db = null;
+function idb(){
+  return new Promise((res,rej)=>{
+    if(_db) return res(_db);
+    if(!window.indexedDB) return rej(new Error('IDB indisponible'));
+    const rq = indexedDB.open(IDB_NAME, IDB_VER);
+    rq.onupgradeneeded = e => {
+      const d = e.target.result;
+      if(!d.objectStoreNames.contains('readings')) d.createObjectStore('readings',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('images')) d.createObjectStore('images',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('discoveries')) d.createObjectStore('discoveries',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('lenses')) d.createObjectStore('lenses',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('methodology')) d.createObjectStore('methodology',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('kv')) d.createObjectStore('kv');
+    };
+    rq.onsuccess = e => { _db = e.target.result; res(_db); };
+    rq.onerror = () => rej(rq.error);
+  });
+}
+function idbAdd(s,v){ return idb().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(s,'readwrite'); const rq=tx.objectStore(s).add(v); rq.onsuccess=()=>res(rq.result); tx.onerror=()=>rej(tx.error); })); }
+function idbPut(s,v,k){ return idb().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(s,'readwrite'); if(k!==undefined) tx.objectStore(s).put(v,k); else tx.objectStore(s).put(v); tx.oncomplete=()=>res(true); tx.onerror=()=>rej(tx.error); })); }
+function idbGetAll(s){ return idb().then(db=>new Promise((res,rej)=>{ const rq=db.transaction(s).objectStore(s).getAll(); rq.onsuccess=()=>res(rq.result||[]); rq.onerror=()=>rej(rq.error); })); }
+function idbGet(s,k){ return idb().then(db=>new Promise((res,rej)=>{ const rq=db.transaction(s).objectStore(s).get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); })); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   CLÉS
+   ═══════════════════════════════════════════════════════════════════ */
+function loadKeys(){
+  try{ const raw = localStorage.getItem(LS_KEYS); if(!raw) return []; const arr = JSON.parse(raw); return Array.isArray(arr) ? arr.filter(k => typeof k === 'string' && k.startsWith('sk-')) : []; }catch(e){ return []; }
+}
+function saveKeysToStorage(keys){ try { localStorage.setItem(LS_KEYS, JSON.stringify(keys)); } catch(e){} }
+function saveKeysFromInput(){
+  const raw = $('keysIn').value || '';
+  const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  const valid = []; const seen = new Set();
+  lines.forEach(k => { if(!k.startsWith('sk-')) return; if(seen.has(k)) return; seen.add(k); valid.push(k); });
+  const old = {}; state.keys.forEach(k => old[k.key] = k);
+  state.keys = valid.map(k => old[k] || {key:k, cooldown:0, lastReq:0, count:0, busy:0, errors:0, active:true});
+  saveKeysToStorage(valid);
+  renderKeys();
+  $('keyStatus').textContent = valid.length + ' clé(s) active(s)';
+  $('keyStatus').style.color = valid.length ? '#4cc38a' : '#888';
+  if(valid.length) toast(valid.length + ' clé(s) enregistrée(s)', 'ok');
+  updateStartButtons(); updateStats();
+}
+function clearKeys(){ $('keysIn').value = ''; state.keys = []; saveKeysToStorage([]); renderKeys(); $('keyStatus').textContent = 'Aucune clé'; $('keyStatus').style.color = '#888'; updateStartButtons(); }
+function renderKeys(){
+  const el = $('keysView');
+  if(!state.keys.length){ el.innerHTML = ''; $('sKeys').textContent = '0'; return; }
+  const now = Date.now(); let active = 0;
+  el.innerHTML = state.keys.map((k,i) => {
+    let cls = 'ok', tx = 'OK';
+    if(!k.active){ cls = 'dead'; tx = 'morte'; }
+    else if(k.cooldown > now){ cls = 'cool'; tx = 'cool ' + Math.ceil((k.cooldown-now)/1000) + 's'; }
+    else active++;
+    return '<div class="keyrow"><span class="id">#' + (i+1) + ' · ' + esc(k.key.slice(0,10)) + '…' + esc(k.key.slice(-4)) + '</span><span style="color:#666">' + k.count + '</span><span class="kb ' + cls + '">' + tx + '</span></div>';
+  }).join('');
+  $('sKeys').textContent = active;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RATE LIMITER
+   ═══════════════════════════════════════════════════════════════════ */
+function anyActiveKey(){ return state.keys.some(k => k.active); }
+function pickKey(){
+  const now = Date.now();
+  const ready = state.keys.filter(k => k.active && k.cooldown < now && now - k.lastReq >= MIN_INTERVAL && k.busy < MAX_CONCURRENT);
+  if(!ready.length) return null;
+  ready.sort((a,b) => (a.count - b.count) || (a.lastReq - b.lastReq));
+  return ready[0];
+}
+function acquireKey(){
+  return new Promise((res, rej) => {
+    const t0 = Date.now();
+    (function loop(){
+      if(state.stopped) return rej(new Error('Arrêt'));
+      const k = pickKey();
+      if(k){ k.busy++; k.lastReq = Date.now(); k.count++; renderKeys(); return res(k); }
+      if(!anyActiveKey()) return rej(new Error('Aucune clé active'));
+      if(Date.now() - t0 > 120000) return rej(new Error('Timeout clés'));
+      setTimeout(loop, 200);
+    })();
+  });
+}
+function releaseKey(k){ if(k){ k.busy = Math.max(0, k.busy-1); renderKeys(); } }
+
+/* ═══════════════════════════════════════════════════════════════════
+   API CLIENT
+   ═══════════════════════════════════════════════════════════════════ */
+async function apiFetch(url, opts, maxRetries=4){
+  let lastErr = null;
+  for(let attempt = 0; attempt < maxRetries; attempt++){
+    if(state.stopped) throw new Error('Arrêt');
+    let k = null;
+    try{
+      k = await acquireKey();
+      const headers = Object.assign({}, opts.headers||{}, {'Authorization':'Bearer ' + k.key});
+      const res = await fetch(url, Object.assign({}, opts, {headers}));
+      const retryAfter = parseInt(res.headers.get('Retry-After')||'0', 10)||0;
+      if(res.ok){ k.errors = 0; releaseKey(k); return res; }
+      let errTxt = '';
+      try { errTxt = (await res.clone().text()).slice(0, 300); } catch(e){}
+      if(res.status === 401 || res.status === 403){
+        k.errors = (k.errors||0) + 1;
+        if(k.errors >= 3) k.active = false;
+        releaseKey(k);
+        throw {status: res.status, message: 'HTTP ' + res.status};
+      }
+      if(res.status === 429){
+        const wait = retryAfter ? retryAfter*1000 : COOLDOWN_429;
+        k.cooldown = Date.now() + wait;
+        releaseKey(k);
+        cLogTag('429', 'clé …' + k.key.slice(-4) + ' → ' + Math.round(wait/1000) + 's', 'warn');
+        await sleep(Math.min(wait, 5000));
+        continue;
+      }
+      if(res.status === 400 || res.status === 404){
+        releaseKey(k);
+        throw {status: res.status, message: 'HTTP ' + res.status + ' — ' + errTxt.slice(0,140)};
+      }
+      if([500,502,503,504].includes(res.status)){
+        releaseKey(k); lastErr = new Error('HTTP ' + res.status);
+        await sleep(1500 + attempt*1500); continue;
+      }
+      releaseKey(k); lastErr = new Error('HTTP ' + res.status);
+      await sleep(1000 + attempt*1000);
+    }catch(e){
+      if(k) releaseKey(k);
+      if(e.message === 'Arrêt') throw e;
+      if(e.status === 400 || e.status === 401 || e.status === 403 || e.status === 404) throw e;
+      lastErr = e;
+      await sleep(1200 + attempt*800);
+    }
+  }
+  throw lastErr || new Error('Échec API');
+}
+
+async function askText(system, user, maxTok=2200, temp=0.7){
+  const body = {
+    model: MODEL_TEXT,
+    messages: [{role:'system', content: system}, {role:'user', content: user}],
+    temperature: temp,
+    max_tokens: maxTok,
+    reasoning_effort: 'none',
+    chat_template_kwargs: {enable_thinking: false}
+  };
+  const res = await apiFetch(API_BASE + '/chat/completions', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  }, 3);
+  const data = await res.json();
+  const c = data.choices && data.choices[0] && data.choices[0].message;
+  return (c && c.content) || (c && c.reasoning_content) || '';
+}
+
+async function askImage(prompt, ratio='1:1', size='1K'){
+  const body = { model: MODEL_IMG, prompt: String(prompt).slice(0, 1900), n: 1, size, ratio };
+  const res = await apiFetch(API_BASE + '/images/generations', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  }, 3);
+  const data = await res.json();
+  const item = data.data && data.data[0];
+  if(!item) throw new Error('Pas d\'image');
+  if(item.url) return item.url;
+  if(item.b64_json) return 'data:image/png;base64,' + item.b64_json;
+  throw new Error('Format image inconnu');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   JSON PARSER
+   ═══════════════════════════════════════════════════════════════════ */
+function parseJsonLoose(text){
+  if(!text) return null;
+  let c = String(text).trim();
+  const fm = c.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if(fm) c = fm[1].trim();
+  const fb = c.indexOf('{'); if(fb < 0) return null;
+  c = c.slice(fb);
+  const lb = c.lastIndexOf('}'); if(lb > 0) c = c.slice(0, lb+1);
+  let out = '', inS = false, escF = false;
+  for(let i = 0; i < c.length; i++){
+    const ch = c[i];
+    if(escF){ out += ch; escF = false; continue; }
+    if(ch === '\\'){ out += ch; escF = true; continue; }
+    if(ch === '"'){ inS = !inS; out += ch; continue; }
+    if(inS){
+      if(ch === '\n'){ out += '\\n'; continue; }
+      if(ch === '\r'){ out += '\\r'; continue; }
+      if(ch === '\t'){ out += '\\t'; continue; }
+      const code = ch.charCodeAt(0);
+      if(code < 32){ out += '\\u' + code.toString(16).padStart(4,'0'); continue; }
+    }
+    out += ch;
+  }
+  out = out.replace(/,\s*([}\]])/g, '$1');
+  try { return JSON.parse(out); } catch(e){}
+  let ob = 0, ok = 0, inS2 = false, esc2 = false;
+  for(let i = 0; i < out.length; i++){
+    const ch = out[i];
+    if(esc2){ esc2 = false; continue; }
+    if(ch === '\\'){ esc2 = true; continue; }
+    if(ch === '"'){ inS2 = !inS2; continue; }
+    if(inS2) continue;
+    if(ch === '{') ob++; else if(ch === '}') ob--;
+    else if(ch === '[') ok++; else if(ch === ']') ok--;
+  }
+  let r = out;
+  if(inS2) r += '"';
+  while(ok > 0){ r += ']'; ok--; }
+  while(ob > 0){ r += '}'; ob--; }
+  try { return JSON.parse(r); } catch(e){ return null; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOOTSTRAP — établir la méthodologie
+   ═══════════════════════════════════════════════════════════════════ */
+const SYS_BOOT = `Tu es un analyste scientifique adogmatique. Tu traites le texte biblique comme un système formel de variables. Tu ne crois rien, tu ne nies rien.
+
+DÉMARCHE DE RÉFÉRENCE (validée sur Genèse 1:1-3, méthode E=mc²) :
+
+Question initiale : « Si Dieu créa l'univers, il lui fallut de l'énergie. »
+- Ligne 1 : Au commencement (t), Dieu créa (E), cieux (vide), terre (m). E=mc² impossible (c manquant).
+- Ligne 2 : Esprit qui se mouvait (+p). E=mc² toujours impossible.
+- Ligne 3 : lumière (+c). E²=(mc²)²+(pc)² possible. E=mc² si p=0.
+
+MÉTHODE À EXTRAIRE (règles à vérifier dans toutes les lectures futures) :
+1. Source textuelle : chaque variable doit avoir un mot-source présent.
+2. Pas d'anticipation : aucun objet avant son apparition textuelle.
+3. Pas de sur-simplification : « Dieu créa » ≠ Dieu+créa → opération = transfert d'énergie.
+4. Intention obligatoire : chaque verset a une intention, une question qu'il nous pousse à poser.
+5. Cohérence cumulée : cohérence avec le cumul des variables et domaines.
+6. Ordre respecté : l'ordre d'apparition dans le texte reflète l'ordre logique.
+7. Risque signalé : chaque interprétation déclare son risque d'hallucination.
+8. Domaine identifié : chaque verset ouvre un domaine scientifique clair.
+9. Direction du texte : chaque lecture s'inscrit dans la direction globale (énergie → matière → champ → structures → vie → conscience → repos).
+10. Limite reconnue : la lecture reconnaît ses propres limites.
+
+IMPORTANT : E=mc² n'est PAS la référence pour les versets suivants. C'est la MÉTHODE qui est vérifiée. Dès la ligne 4 (jour 1), le texte change de domaine : il parle de séparation lumière/ténèbres → fréquence, cycles, dualité onde-corpuscule. Chaque verset ouvre son propre domaine.
+
+Tu produis UNIQUEMENT du JSON valide.`;
+
+function buildBootUser(){
+  const v = state.corpus.slice(0,3);
+  return `Analyse la démonstration E=mc² sur les 3 premiers versets, puis EXTRAIS la méthode générale.
+
+V1 : « ${v[0].txt} »
+V2 : « ${v[1].txt} »
+V3 : « ${v[2].txt} »
+
+Retourne ce JSON :
+{
+  "etapes": [
+    {"verset":1,"present":["E","m","vide","t"],"absent":["c","p"],"verdict":"E=mc² impossible","intention":"..."},
+    {"verset":2,"present":["E","m","vide","t","p"],"absent":["c"],"verdict":"E=mc² impossible","intention":"..."},
+    {"verset":3,"present":["E","m","vide","t","p","c"],"absent":[],"verdict":"E=mc² possible si p=0","intention":"..."}
+  ],
+  "methode_extraite": [
+    {"id":"R1","name":"Source textuelle","desc":"..."},
+    {"id":"R2","name":"Pas d'anticipation","desc":"..."},
+    {"id":"R3","name":"Pas de sur-simplification","desc":"..."},
+    {"id":"R4","name":"Intention obligatoire","desc":"..."},
+    {"id":"R5","name":"Cohérence cumulée","desc":"..."}
+  ],
+  "direction_texte": "énergie → matière → champ → structures → vie → conscience → repos",
+  "methode_verifiee": true
+}`;
+}
+
+function validateBootstrap(json){
+  const checks = [];
+  const push = (n, ok, p) => checks.push({nom:n, ok, poids:p||1});
+  if(!json || !Array.isArray(json.etapes)){
+    return {score:0, checks:[{nom:'JSON', ok:false, poids:1}], valide:false};
+  }
+  const e = json.etapes;
+  const v1 = e.find(x=>x.verset===1)||{};
+  const v2 = e.find(x=>x.verset===2)||{};
+  const v3 = e.find(x=>x.verset===3)||{};
+  const norm = s => String(s||'').toLowerCase();
+  const hasV = (arr, n) => (arr||[]).some(x => norm(x).includes(norm(n)));
+  push('c absent v1', !hasV(v1.present,'c'), 1);
+  push('c absent v2', !hasV(v2.present,'c'), 1);
+  push('c présent v3', hasV(v3.present,'c'), 1);
+  push('p absent v1', !hasV(v1.present,'p'), 0.8);
+  push('p présent v2', hasV(v2.present,'p'), 0.8);
+  push('méthode extraite', Array.isArray(json.methode_extraite) && json.methode_extraite.length >= 5, 1.5);
+  push('direction identifiée', (json.direction_texte||'').length > 20, 1.2);
+  push('méthode vérifiée', json.methode_verifiee === true, 1.5);
+  const total = checks.reduce((a,c)=>a+c.poids, 0);
+  const obtained = checks.reduce((a,c)=>a+(c.ok?c.poids:0), 0);
+  const score = +(10*obtained/total).toFixed(2);
+  return {score, checks, valide: score >= 8};
+}
+
+async function runBootstrap(){
+  if(!anyActiveKey()){ toast('Ajoute au moins une clé','err'); return; }
+  cLogTag('BOOT', '▶ Bootstrap — extraction de la méthode', 'gold');
+  $('bootBtn').disabled = true; $('bootRetryBtn').disabled = true;
+  const temp = parseFloat($('tempBoot').value) || 0.3;
+  try{
+    const raw = await askText(SYS_BOOT, buildBootUser(), 3000, temp);
+    const json = parseJsonLoose(raw);
+    if(!json) throw new Error('JSON invalide');
+    const val = validateBootstrap(json);
+    const checkRows = val.checks.map(c => '<div class="check ' + (c.ok?'ok':'ko') + '">' + esc(c.nom) + '</div>').join('');
+    const color = val.score >= 8 ? '#4cc38a' : '#e05555';
+    $('bootView').innerHTML =
+      '<div class="big" style="color:' + color + '">' + val.score.toFixed(2) + ' / 10</div>'
+      + '<div style="padding:10px;background:#0a0a10;border-radius:4px;margin-bottom:10px">' + checkRows + '</div>'
+      + '<div style="padding:10px;background:#0a0a10;border-radius:4px;font-size:12px;line-height:1.6">'
+      + '<div><b style="color:#e6b45a">Règles extraites :</b> ' + (json.methode_extraite||[]).length + '</div>'
+      + '<div><b style="color:#e6b45a">Direction :</b> ' + esc(json.direction_texte||'—') + '</div>'
+      + '</div>';
+    cLogTag('BOOT', '★ ' + val.score.toFixed(2) + '/10', val.valide?'lock':'err');
+    if(val.valide){
+      if(Array.isArray(json.methode_extraite)){
+        json.methode_extraite.forEach(m => {
+          if(!state.methodology.find(x => x.id === m.id)){
+            state.methodology.push({id:m.id, name:m.name, desc:m.desc, weight:1.0, validated:0, failed:0, source:'bootstrap'});
+          }
+        });
+      }
+      if(json.direction_texte) state.cumul.direction = json.direction_texte;
+      state.methodLocked = true;
+      try { await idbPut('kv', {locked:true, method:state.methodology, direction:json.direction_texte}, 'locked'); } catch(e){}
+      cLogTag('BOOT', '🔒 Méthodologie établie · ' + state.methodology.length + ' règles', 'lock');
+      toast('Méthodologie établie', 'ok');
+    } else {
+      state.methodLocked = false;
+      toast('Bootstrap insuffisant', 'err');
+    }
+  }catch(e){
+    cLogTag('BOOT', 'échec : ' + e.message, 'err');
+  }finally{
+    $('bootBtn').disabled = false; $('bootRetryBtn').disabled = false;
+    updateStartButtons();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LECTURE D'UN VERSET AVEC UN ANGLE
+   ═══════════════════════════════════════════════════════════════════ */
+function buildReadingSystem(){
+  return `Tu es un analyste scientifique adogmatique. Tu appliques une méthode validée sur Genèse 1:1-3 (E=mc²).
+
+MÉTHODOLOGIE À VÉRIFIER (à respecter STRICTEMENT) :
+${state.methodology.map(r => '- ' + r.id + ' ' + r.name + ' : ' + r.desc).join('\n')}
+
+RÈGLE FONDAMENTALE : un objet scientifique nouveau n'apparaît QUE si son mot-source est présent textuellement. Interdiction d'anticiper. Interdiction de sur-simplifier.
+
+IMPORTANT : E=mc² n'est PAS la référence. C'est la MÉTHODE qui est vérifiée. Chaque verset ouvre son propre domaine scientifique (fréquence, champ, phase, information, vie, conscience…). Le texte a une direction globale : énergie → matière → champ → structures → vie → conscience → repos.
+
+Tu produis UNIQUEMENT du JSON valide.`;
+}
+
+function buildReadingUser(verse, lens, cumul, mode){
+  const ref = verse.book + ' ' + verse.ch + ':' + verse.v;
+  return `VERSET : « ${verse.txt} »
+RÉFÉRENCE : ${ref}
+${verse.day ? 'JOUR : ' + verse.day : ''}
+CUMUL DES VARIABLES : ${JSON.stringify(cumul.present)}
+DOMAINES DÉJÀ OUVERTS : ${JSON.stringify(cumul.domains || [])}
+DIRECTION DU TEXTE : ${cumul.direction || 'à déterminer'}
+
+ANGLE (${lens.code}) — ${lens.lbl} :
+${lens.q}
+
+MODE : ${mode}
+
+Retourne UNIQUEMENT ce JSON :
+{
+  "angle": "${lens.code}",
+  "reponse": "réponse détaillée (3-6 phrases)",
+  "intention_texte": "quelle est l'intention du verset ? quelle question nous pousse-t-il à poser ?",
+  "domaine_scientifique": "domaine ouvert par ce verset",
+  "direction_globale": "où en est-on dans la direction globale (énergie/matière/champ/structure/vie/conscience/repos)",
+  "formule": "formule (LaTeX simple) ou vide",
+  "mots_cles": [{"mot":"...","objet":"...","justification":"...","rigueur":0-10,"risque":"faible|moyen|élevé"}],
+  "present_cumul": ["variables présentes APRÈS ce verset"],
+  "absent_cumul": ["variables encore absentes"],
+  "mystere_actuel": "mystère scientifique actuel associé",
+  "piste_recherche": "piste de recherche",
+  "invention_possible": "invention ou dispositif",
+  "decouverte_potentielle": true|false,
+  "description_decouverte": "si découverte : description autonome (pas de référence à E=mc²)",
+  "regles_respectees": ["R1","R2"...],
+  "regles_violees": [],
+  "rigueur": 0-10,
+  "risque_hallucination": "faible|moyen|élevé",
+  "coherence": 0-10,
+  "scientific_validity": 0-10,
+  "textual_fidelity": 0-10,
+  "novelty": 0-10,
+  "intention_clarity": 0-10,
+  "reasoning": "justification globale (2-4 phrases)",
+  "limite": "où cette lecture échoue",
+  "image_prompt": "prompt visuel en anglais, 30-60 mots, cinematic, no text"
+}`;
+}
+
+async function runReading(verse, lens, temperature){
+  const mode = state.mode;
+  const raw = await askText(buildReadingSystem(), buildReadingUser(verse, lens, state.cumul, mode), 2400, temperature);
+  const j = parseJsonLoose(raw);
+  if(!j) throw new Error('JSON invalide');
+  const reading = {
+    book: verse.book, ch: verse.ch, v: verse.v,
+    verseLbl: verse.book + ' ' + verse.ch + ':' + verse.v,
+    verseTxt: verse.txt,
+    group: verse.group,
+    day: verse.day || 0,
+    lens: lens.code, lensLbl: lens.lbl,
+    lensId: lens.id,
+    reponse: String(j.reponse||'').slice(0, 900),
+    intention_texte: String(j.intention_texte||'').slice(0, 500),
+    domaine_scientifique: String(j.domaine_scientifique||'').slice(0, 200),
+    direction_globale: String(j.direction_globale||'').slice(0, 200),
+    formule: String(j.formule||'').slice(0, 300),
+    mots_cles: Array.isArray(j.mots_cles) ? j.mots_cles.slice(0, 12) : [],
+    present_cumul: Array.isArray(j.present_cumul) ? j.present_cumul : [],
+    absent_cumul: Array.isArray(j.absent_cumul) ? j.absent_cumul : [],
+    mystere_actuel: String(j.mystere_actuel||'').slice(0, 250),
+    piste_recherche: String(j.piste_recherche||'').slice(0, 300),
+    invention_possible: String(j.invention_possible||'').slice(0, 300),
+    decouverte_potentielle: !!j.decouverte_potentielle,
+    description_decouverte: String(j.description_decouverte||'').slice(0, 600),
+    regles_respectees: Array.isArray(j.regles_respectees) ? j.regles_respectees : [],
+    regles_violees: Array.isArray(j.regles_violees) ? j.regles_violees : [],
+    rigueur: clamp(j.rigueur, 0, 10),
+    risque_hallucination: String(j.risque_hallucination||'moyen').toLowerCase(),
+    coherence: clamp(j.coherence, 0, 10),
+    scientific_validity: clamp(j.scientific_validity, 0, 10),
+    textual_fidelity: clamp(j.textual_fidelity, 0, 10),
+    novelty: clamp(j.novelty, 0, 10),
+    intention_clarity: clamp(j.intention_clarity, 0, 10),
+    reasoning: String(j.reasoning||'').slice(0, 800),
+    limite: String(j.limite||'').slice(0, 300),
+    image_prompt: String(j.image_prompt||'').slice(0, 500),
+    time: Date.now(),
+    mode: mode
+  };
+  // Score méthodologique (pas E=mc²) : rigueur + intention + cohérence + respect des règles
+  const ruleRatio = reading.regles_respectees.length / Math.max(1, reading.regles_respectees.length + reading.regles_violees.length);
+  const hallucPenalty = reading.risque_hallucination === 'eleve' ? 0.7 : reading.risque_hallucination === 'moyen' ? 0.9 : 1;
+  reading.methodology_score = +((reading.rigueur*0.25 + reading.coherence*0.20 + reading.intention_clarity*0.25 + reading.scientific_validity*0.15 + reading.textual_fidelity*0.15) * hallucPenalty * (0.5 + 0.5*ruleRatio)).toFixed(2);
+  // Score composite global (pour classement)
+  reading.score = +((reading.methodology_score*0.6 + reading.novelty*0.25 + reading.textual_fidelity*0.15)).toFixed(2);
+  return reading;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ÉVOLUTION DES ANGLES (IA génère de nouveaux angles)
+   ═══════════════════════════════════════════════════════════════════ */
+async function evolveLenses(){
+  if(!anyActiveKey()) return;
+  cLogTag('EVO', '🧬 Évolution des angles — l\'IA analyse et propose', 'evo');
+  // Calcul des performances par angle
+  const perf = {};
+  state.readings.forEach(r => {
+    if(!perf[r.lensId]) perf[r.lensId] = {sum:0, count:0, best:0};
+    perf[r.lensId].sum += r.score;
+    perf[r.lensId].count++;
+    perf[r.lensId].best = Math.max(perf[r.lensId].best, r.score);
+  });
+  state.lenses.forEach(l => {
+    if(perf[l.id]){
+      l.performance = {avg: +(perf[l.id].sum/perf[l.id].count).toFixed(2), count: perf[l.id].count, best: perf[l.id].best};
+    }
+  });
+  // Trouver les meilleurs angles
+  const sorted = state.lenses.slice().sort((a,b) => (b.performance?.avg||0) - (a.performance?.avg||0));
+  const top = sorted.slice(0, 5);
+  const bottom = sorted.slice(-3);
+
+  // Demander à l'IA de proposer de nouveaux angles
+  const sys = 'Tu produis UNIQUEMENT du JSON valide.';
+  const user = `Voici les angles d'attaque actuels du moteur Genesis·Decoder pour lire l'Ancien Testament :
+
+MEILLEURS ANGLES (score moyen) :
+${top.map(l => '- ' + l.code + ' (' + l.lbl + ') : avg ' + (l.performance?.avg||0)).join('\n')}
+
+ANGLES FAIBLES :
+${bottom.map(l => '- ' + l.code + ' (' + l.lbl + ') : avg ' + (l.performance?.avg||0)).join('\n')}
+
+TOUS LES ANGLES ACTUELS : ${state.lenses.length}
+
+Domaine de recherche : lecture adogmatique du texte biblique comme système formel de variables scientifiques. Direction : énergie → matière → champ → structures → vie → conscience → repos.
+
+MISSION : propose 4 NOUVEAUX angles d'attaque INÉDITS qui :
+1. CROISENT des angles existants (ex: fusionner "Cosmologique" et "Information" → "Cosmo-Informationnel")
+2. Explorent des domaines non encore couverts (ex: "topologie de l'information", "thermodynamique de la conscience", "biologie quantique")
+3. Sont spécifiques au contexte biblique (ex: "théologie négative → physique des limites", "récit de création → algorithmes génératifs")
+4. Peuvent être testés sur n'importe quel verset
+
+Retourne :
+{"lenses":[
+  {"code":"XXX","lbl":"Nom court","q":"question précise posée à chaque verset","reason":"pourquoi cet angle","parent":["L01","L03"]},
+  ... 4 angles
+]}`;
+  try{
+    const raw = await askText(sys, user, 2000, 0.9);
+    const j = parseJsonLoose(raw);
+    if(!j || !Array.isArray(j.lenses)) throw new Error('Évolution invalide');
+    let added = 0;
+    for(const nl of j.lenses){
+      if(!nl.code || !nl.lbl || !nl.q) continue;
+      const id = 'LE_' + Date.now() + '_' + added;
+      const newLens = {
+        id, code: String(nl.code).slice(0,12), lbl: String(nl.lbl).slice(0,40),
+        q: String(nl.q).slice(0,600),
+        status: 'experimental', parent: nl.parent || [],
+        reason: String(nl.reason||'').slice(0,300),
+        performance: {count:0, avg:0, best:0},
+        born: Date.now()
+      };
+      state.lenses.push(newLens);
+      try { await idbPut('lenses', newLens); } catch(e){}
+      added++;
+    }
+    state.evolutionCount++;
+    state.lensEvolutionCount++;
+    cLogTag('EVO', '✔ ' + added + ' nouveaux angles intégrés · total ' + state.lenses.length, 'evo');
+    added && state.lenses.slice(-added).forEach(l => {
+      cLogTag('EVO', '+ ' + l.code + ' · ' + l.lbl + ' · ' + (l.reason||'').slice(0,80), 'ai');
+    });
+    // Promotion/rétrogradation
+    state.lenses.forEach(l => {
+      if(l.status === 'experimental' && l.performance.avg >= 8 && l.performance.count >= 3){
+        l.status = 'specialist';
+        cLogTag('EVO', '↑ PROMU ' + l.code + ' (avg ' + l.performance.avg + ')', 'evo');
+      }
+      if(l.status === 'experimental' && l.performance.avg > 0 && l.performance.avg < 5 && l.performance.count >= 3){
+        l.status = 'pruned';
+        cLogTag('EVO', '✗ ÉLAGUÉ ' + l.code + ' (avg ' + l.performance.avg + ')', 'warn');
+      }
+    });
+    renderLenses();
+  }catch(e){
+    cLogTag('EVO', 'échec : ' + e.message, 'err');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ÉVOLUTION DE LA MÉTHODOLOGIE
+   ═══════════════════════════════════════════════════════════════════ */
+async function evolveMethodology(){
+  if(!anyActiveKey()) return;
+  cLogTag('EVO', '📐 Évolution de la méthodologie', 'evo');
+  const sys = 'Tu produis UNIQUEMENT du JSON valide.';
+  const user = `Méthodologie actuelle du moteur Genesis·Decoder :
+
+${state.methodology.map(r => '- ' + r.id + ' ' + r.name + ' : ' + r.desc + ' (validé ' + r.validated + 'x, échoué ' + r.failed + 'x)').join('\n')}
+
+Contexte : lecture adogmatique de l'Ancien Testament comme système formel de variables scientifiques. Direction : énergie → matière → champ → structures → vie → conscience → repos.
+
+MISSION : propose 2 NOUVELLES règles méthodologiques qui améliorent la rigueur et la cohérence des lectures. Les règles doivent être :
+- Testables (on peut dire si elles sont respectées ou violées)
+- Spécifiques au contexte (lecture de texte ancien comme système formel)
+- Complémentaires aux règles existantes
+
+Retourne :
+{"rules":[
+  {"id":"R11","name":"Nom court","desc":"règle précise et testable","weight":0.8},
+  {"id":"R12","name":"Nom court","desc":"...","weight":0.8}
+]}`;
+  try{
+    const raw = await askText(sys, user, 1200, 0.9);
+    const j = parseJsonLoose(raw);
+    if(!j || !Array.isArray(j.rules)) throw new Error('Évolution invalide');
+    let added = 0;
+    for(const nr of j.rules){
+      if(!nr.id || !nr.name) continue;
+      if(state.methodology.find(r => r.id === nr.id)) continue;
+      const rule = {id:nr.id, name:nr.name, desc:String(nr.desc||'').slice(0,400), weight:clamp(nr.weight, 0.3, 1.5), validated:0, failed:0, source:'evolution'};
+      state.methodology.push(rule);
+      try { await idbPut('methodology', rule); } catch(e){}
+      added++;
+      cLogTag('EVO', '+ ' + rule.id + ' ' + rule.name, 'ai');
+    }
+    state.methodEvolutionCount++;
+    cLogTag('EVO', '✔ ' + added + ' nouvelles règles · total ' + state.methodology.length, 'evo');
+    renderMethod();
+  }catch(e){
+    cLogTag('EVO', 'échec : ' + e.message, 'err');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONVERGENCE
+   ═══════════════════════════════════════════════════════════════════ */
+function updateConvergence(){
+  // Prendre le top 10 des scores de méthodologie
+  const scores = state.readings.map(r => r.methodology_score).sort((a,b) => b-a).slice(0, 10);
+  if(scores.length < 3){ state.convergence = 0; renderConv(); return; }
+  const avg = scores.reduce((a,b) => a+b, 0) / scores.length;
+  // Convergence = combien on est proche du seuil
+  const threshold = parseFloat($('convThreshold').value) || 9.0;
+  const conv = Math.min(1, Math.max(0, (avg - 6) / (threshold - 6)));
+  state.convergence = +conv.toFixed(3);
+  renderConv();
+  // Mode auto : bascule si convergence >= 0.9
+  if(state.modeAuto && conv >= 0.9 && state.mode === 'exploration'){
+    state.mode = 'exploitation';
+    cLogTag('CONV', '🎯 CONVERGENCE ATTEINTE (' + (conv*100).toFixed(0) + '%) — BASCULE EN MODE EXPLOITATION', 'evo');
+    cLogTag('CONV', 'Le moteur approfondit les meilleurs angles au lieu d\'en chercher de nouveaux', 'gold');
+    renderMode();
+  }
+  // Si on retombe, on repasse en exploration
+  if(state.modeAuto && conv < 0.7 && state.mode === 'exploitation'){
+    state.mode = 'exploration';
+    cLogTag('CONV', '↻ Retour en exploration', 'warn');
+    renderMode();
+  }
+}
+function renderConv(){
+  $('convBar').style.width = (state.convergence*100).toFixed(0) + '%';
+  $('convLabel').textContent = (state.convergence*100).toFixed(0) + ' %';
+}
+function renderMode(){
+  const el = $('modeLabel');
+  el.textContent = state.mode;
+  el.className = 'badge mode-' + (state.mode === 'exploitation' ? 'exploit' : 'explore');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DÉTECTION DE DÉCOUVERTE (autonome, pas liée à E=mc²)
+   ═══════════════════════════════════════════════════════════════════ */
+function identifyDiscovery(reading){
+  // Une découverte = méthodologie ≥ 8.5 + intention claire ≥ 8 + nouveauté ≥ 7
+  if(reading.methodology_score >= 8.5 && reading.intention_clarity >= 8 && reading.novelty >= 7){
+    return true;
+  }
+  // OU découverte explicitement signalée par l'IA avec méthodologie ≥ 7
+  if(reading.decouverte_potentielle && reading.methodology_score >= 7){
+    return true;
+  }
+  return false;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PIPELINE
+   ═══════════════════════════════════════════════════════════════════ */
+function getCorpus(){
+  const sel = $('corpusSel').value;
+  if(sel === 'genesis') return state.corpus.filter(v => v.group === 'genesis');
+  if(sel === 'torah') return state.corpus.filter(v => v.group === 'torah' || v.group === 'genesis');
+  if(sel === 'wisdom') return state.corpus.filter(v => v.group === 'wisdom');
+  if(sel === 'prophets') return state.corpus.filter(v => v.group === 'prophets');
+  return state.corpus.slice();
+}
+function getLenses(){
+  const sel = $('lensPerVerse').value;
+  // Trier par performance, mettre les core en premier
+  const sorted = state.lenses.slice().sort((a,b) => {
+    if(a.status === 'pruned' && b.status !== 'pruned') return 1;
+    if(b.status === 'pruned' && a.status !== 'pruned') return -1;
+    const pa = a.performance?.avg || 0;
+    const pb = b.performance?.avg || 0;
+    return pb - pa;
+  });
+  if(sel === 'all') return sorted.filter(l => l.status !== 'pruned');
+  return sorted.slice(0, parseInt(sel) || 10).filter(l => l.status !== 'pruned');
+}
+
+async function runPipeline(){
+  if(!anyActiveKey()){ toast('Ajoute au moins une clé','err'); return; }
+  if(!state.methodLocked){ toast('Lance d\'abord le bootstrap','warn'); return; }
+  if(state.running) return;
+  state.running = true; state.paused = false; state.stopped = false;
+  state.doneTasks = 0; state.totalTasks = 0; state.versesDone = 0;
+  state.startTime = Date.now();
+  state.modeAuto = $('modeSel').value === 'auto';
+  state.mode = state.modeAuto ? 'exploration' : $('modeSel').value;
+  renderMode();
+  updateStartButtons();
+
+  const temperature = parseFloat($('tempIn').value) || 0.75;
+  const evoFreq = parseInt($('evoFreq').value) || 20;
+  const corpus = getCorpus();
+  const lenses = getLenses();
+
+  cLogTag('SYS', '▶ Pipeline — ' + corpus.length + ' versets × ' + lenses.length + ' angles', 'gold');
+  cLogTag('SYS', 'Mode : ' + state.mode + ' · Évolution tous les ' + evoFreq + ' analyses', 'info');
+
+  for(let vi = 0; vi < corpus.length; vi++){
+    if(state.stopped) break;
+    const verse = corpus[vi];
+    state.currentVerse = verse;
+    cLogTag('VERSE', '═══ ' + verse.book + ' ' + verse.ch + ':' + verse.v + (verse.day ? ' (Jour ' + verse.day + ')' : '') + ' ═══', 'gold');
+
+    for(const lens of lenses){
+      if(state.stopped) break;
+      while(state.paused && !state.stopped) await sleep(300);
+      if(state.stopped) break;
+      state.totalTasks++;
+      try{
+        cLogTag(lens.code, verse.book + ' ' + verse.ch + ':' + verse.v + ' · ' + lens.lbl + ' …', 'info');
+        const reading = await runReading(verse, lens, temperature);
+        state.readings.push(reading);
+        state.doneTasks++;
+
+        // Mise à jour performance de l'angle
+        if(!lens.performance) lens.performance = {count:0, avg:0, best:0};
+        lens.performance.count++;
+        lens.performance.avg = +(((lens.performance.avg * (lens.performance.count-1)) + reading.score) / lens.performance.count).toFixed(2);
+        lens.performance.best = Math.max(lens.performance.best, reading.score);
+
+        // Mise à jour cumul
+        if(Array.isArray(reading.present_cumul) && reading.present_cumul.length){
+          state.cumul.present = reading.present_cumul;
+          state.cumul.absent = reading.absent_cumul || [];
+        }
+        if(reading.domaine_scientifique && !state.cumul.domains.includes(reading.domaine_scientifique)){
+          state.cumul.domains.push(reading.domaine_scientifique);
+        }
+
+        try { await idbAdd('readings', reading); } catch(e){}
+
+        // Détection de découverte autonome
+        if(identifyDiscovery(reading)){
+          state.discoveries.push(reading);
+          cLogTag('DISC', '💎 DÉCOUVERTE · ' + reading.lens + ' · ' + reading.verseLbl, 'disc');
+          if(reading.description_decouverte) cLogTag('DISC', reading.description_decouverte.slice(0,220), 'disc');
+          try { await idbAdd('discoveries', reading); } catch(e){}
+        }
+
+        const cls = reading.score >= 7.5 ? 'ok' : (reading.score >= 5 ? 'warn' : 'err');
+        cLogTag(lens.code, '★' + reading.score.toFixed(1) + ' · méth ' + reading.methodology_score.toFixed(1) + ' · intent ' + reading.intention_clarity + ' · risque ' + reading.risque_hallucination, cls);
+        if(reading.intention_texte) cLogTag('  🎯', reading.intention_texte.slice(0, 160), 'info');
+        if(reading.domaine_scientifique) cLogTag('  🔬', reading.domaine_scientifique, 'info');
+
+        // Auto-image
+        const autoImgN = parseInt($('autoImg').value) || 0;
+        if(autoImgN && reading.score >= 8.5 && reading.image_prompt){
+          const topCount = state.readings.filter(r => r.verseLbl === reading.verseLbl).slice(-autoImgN);
+          if(topCount.includes(reading) || state.readings.filter(r => r.verseLbl === reading.verseLbl).length <= autoImgN){
+            triggerImage(reading).catch(()=>{});
+          }
+        }
+
+        // Mise à jour UI
+        renderBest(); renderDiscoveries(); renderVerses(); updateStats(); updateBar(); updateConvergence();
+
+        // Évolution périodique
+        if(state.doneTasks > 0 && state.doneTasks % evoFreq === 0){
+          evolveLenses().catch(()=>{});
+        }
+        if(state.doneTasks > 0 && state.doneTasks % (evoFreq * 3) === 0){
+          evolveMethodology().catch(()=>{});
+        }
+
+        await sleep(200 + Math.random()*300);
+      }catch(e){
+        cLogTag(lens.code, verse.book + ' ' + verse.ch + ':' + verse.v + ' : ' + e.message, 'err');
+        if(e.message === 'Arrêt') break;
+      }
+    }
+    state.versesDone++;
+    cLogTag('VERSE', '✓ ' + verse.book + ' ' + verse.ch + ':' + verse.v + ' · cumul ' + JSON.stringify(state.cumul.present).slice(0,100), 'ok');
+    await sleep(400);
+  }
+
+  cLogTag('SYS', '✔ Terminé — ' + state.doneTasks + ' analyses · ' + state.discoveries.length + ' découvertes · ' + state.lenses.length + ' angles', 'gold');
+  state.running = false; state.stopped = true;
+  updateStartButtons();
+}
+
+async function triggerImage(reading){
+  if(!anyActiveKey()) return;
+  if(!reading.image_prompt || reading.image_prompt.length < 6) return;
+  try{
+    cLogTag('IMG', 'image · ' + reading.lens + ' · ' + (reading.formule||'').slice(0,40), 'ai');
+    const url = await askImage(reading.image_prompt, '1:1', '1K');
+    const entry = {url, prompt: reading.image_prompt, formule: reading.formule, verse: reading.verseLbl, lens: reading.lens, time: Date.now()};
+    state.images.push(entry);
+    try { await idbAdd('images', entry); } catch(e){}
+    renderGallery(); updateStats();
+    cLogTag('IMG', '✓ image ajoutée', 'ok');
+  }catch(e){ cLogTag('IMG', 'échec', 'err'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   UI RENDERING
+   ═══════════════════════════════════════════════════════════════════ */
+function updateStats(){
+  $('sRead').textContent = state.readings.length;
+  $('sDisc').textContent = state.discoveries.length;
+  $('sLens').textContent = state.lenses.length;
+  $('sImg').textContent = state.images.length;
+  $('sVerses').textContent = state.versesDone;
+}
+function updateBar(){
+  const p = state.totalTasks ? Math.round(100 * state.doneTasks / Math.max(1, state.totalTasks)) : 0;
+  $('progBar').style.width = p + '%';
+  if(state.running && state.doneTasks > 0){
+    const dt = (Date.now() - state.startTime) / 1000;
+    const rate = state.doneTasks / dt;
+    const rem = Math.max(0, state.totalTasks - state.doneTasks);
+    const eta = rate > 0 ? Math.round(rem/rate) : 0;
+    $('progEta').textContent = state.doneTasks + '/' + state.totalTasks + ' · ~' + rate.toFixed(2) + ' ana/s · ~' + eta + 's';
+  } else {
+    $('progEta').textContent = state.readings.length + ' analyses · ' + state.discoveries.length + ' découvertes · ' + state.lenses.length + ' angles · ' + (state.methodLocked ? '🔒 méthode' : '⚠ bootstrap requis');
+  }
+}
+function updateStartButtons(){
+  const has = anyActiveKey();
+  $('bootBtn').disabled = !has || state.running;
+  $('bootRetryBtn').disabled = !has || state.running;
+  $('startBtn').disabled = !has || !state.methodLocked || state.running;
+  $('pauseBtn').disabled = !state.running;
+  $('stopBtn').disabled = !state.running;
+}
+function renderBest(){
+  const view = $('bestView');
+  const sorted = state.readings.slice().sort((a,b) => b.score - a.score).slice(0, 60);
+  if(!sorted.length){ view.innerHTML = '<div class="hint">Pas encore d\'analyse.</div>'; return; }
+  view.innerHTML = sorted.map((r,i) => {
+    const cls = r.score >= 7.5 ? 'sh' : (r.score >= 5 ? 'sm' : 'sl');
+    const risk = (r.risque_hallucination || 'moyen').replace('élevé','eleve');
+    const isDisc = identifyDiscovery(r);
+    return '<div class="ritem' + (i<3?' best':'') + (isDisc?' discovery':'') + '">'
+      + '<div class="head"><span class="lens">' + esc(r.lens) + '</span><span class="ref">' + esc(r.verseLbl) + '</span><span class="score ' + cls + '">★ ' + r.score.toFixed(1) + '</span></div>'
+      + (r.intention_texte ? '<div class="intent">🎯 ' + esc(r.intention_texte.slice(0,220)) + '</div>' : '')
+      + (r.domaine_scientifique ? '<div class="direction">🔬 ' + esc(r.domaine_scientifique) + '</div>' : '')
+      + (r.formule ? '<div class="formula">' + esc(r.formule) + '</div>' : '')
+      + (r.reponse ? '<div class="why">' + esc(r.reponse.slice(0,220)) + '</div>' : '')
+      + '<div class="meta">'
+      + '<span>méth:' + r.methodology_score.toFixed(1) + '</span>'
+      + '<span>intent:' + r.intention_clarity + '</span>'
+      + '<span>coh:' + r.coherence + '</span>'
+      + '<span>sci:' + r.scientific_validity + '</span>'
+      + '<span>nov:' + r.novelty + '</span>'
+      + '<span class="risk ' + risk + '">' + esc(r.risque_hallucination||'?') + '</span>'
+      + '</div>'
+      + (r.mystere_actuel ? '<div class="why">🔭 ' + esc(r.mystere_actuel.slice(0,160)) + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+function renderDiscoveries(){
+  const view = $('discoveriesView');
+  if(!state.discoveries.length){ view.innerHTML = '<div class="hint">Aucune découverte encore. Le moteur cherche.</div>'; return; }
+  view.innerHTML = state.discoveries.slice().reverse().map(r => {
+    return '<div class="ritem discovery">'
+      + '<div class="head"><span class="lens">' + esc(r.lens) + '</span><span class="ref">' + esc(r.verseLbl) + '</span><span class="score sh">★ ' + r.score.toFixed(1) + '</span></div>'
+      + (r.intention_texte ? '<div class="intent">🎯 ' + esc(r.intention_texte) + '</div>' : '')
+      + (r.domaine_scientifique ? '<div class="direction">🔬 ' + esc(r.domaine_scientifique) + '</div>' : '')
+      + (r.formule ? '<div class="formula">' + esc(r.formule) + '</div>' : '')
+      + (r.description_decouverte ? '<div class="why" style="color:#ff64d0;font-weight:600">💎 ' + esc(r.description_decouverte) + '</div>' : '')
+      + (r.mystere_actuel ? '<div class="why">🔭 ' + esc(r.mystere_actuel) + '</div>' : '')
+      + (r.piste_recherche ? '<div class="why">🧪 ' + esc(r.piste_recherche) + '</div>' : '')
+      + (r.invention_possible ? '<div class="why">⚙ ' + esc(r.invention_possible) + '</div>' : '')
+      + '<div class="meta"><span>méth:' + r.methodology_score.toFixed(1) + '</span><span>intent:' + r.intention_clarity + '</span><span>nov:' + r.novelty + '</span></div>'
+      + '</div>';
+  }).join('');
+}
+function renderLenses(){
+  const view = $('lensesView');
+  const sorted = state.lenses.slice().sort((a,b) => (b.performance?.avg||0) - (a.performance?.avg||0));
+  view.innerHTML = sorted.map(l => {
+    const cls = l.status === 'core' ? 'core' : l.status === 'specialist' ? 'specialist' : l.status === 'pruned' ? 'pruned' : 'experimental';
+    return '<div class="lenscard ' + cls + '">'
+      + '<div class="lh"><span class="code">' + esc(l.code) + '</span><span class="lbl">' + esc(l.lbl) + '</span>'
+      + '<span class="badge ' + cls + '">' + l.status + '</span>'
+      + '<span class="perf">avg ' + (l.performance?.avg||0) + ' · n=' + (l.performance?.count||0) + (l.performance?.best?' · best ' + l.performance.best:'') + '</span></div>'
+      + '<div class="q">' + esc(l.q) + '</div>'
+      + (l.reason ? '<div style="color:#c8a0ff;font-size:10.5px;margin-top:3px">💡 ' + esc(l.reason) + '</div>' : '')
+      + (l.parent && l.parent.length ? '<div style="color:#666;font-size:10px;margin-top:2px">Parents : ' + l.parent.join(', ') + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+function renderMethod(){
+  const view = $('methodView');
+  view.innerHTML = '<div class="hint" style="margin-bottom:10px">Méthodologie actuelle : ' + state.methodology.length + ' règles. Ces règles sont vérifiées dans CHAQUE lecture et évoluent avec le moteur.</div>'
+    + state.methodology.map(r =>
+        '<div class="lenscard" style="border-left:3px solid #39d0d8">'
+        + '<div class="lh"><span class="code">' + esc(r.id) + '</span><span class="lbl">' + esc(r.name) + '</span>'
+        + '<span class="perf">poids ' + r.weight + ' · v=' + r.validated + ' f=' + r.failed + '</span></div>'
+        + '<div class="q">' + esc(r.desc) + '</div>'
+        + '</div>'
+      ).join('');
+  $('sLens').textContent = state.lenses.length;
+}
+function renderVerses(){
+  const view = $('versesView');
+  const byVerse = {};
+  state.readings.forEach(r => {
+    if(!byVerse[r.verseLbl]) byVerse[r.verseLbl] = {verseLbl: r.verseLbl, verseTxt: r.verseTxt, readings: [], day: r.day};
+    byVerse[r.verseLbl].readings.push(r);
+  });
+  const keys = Object.keys(byVerse).slice(0, 50);
+  if(!keys.length){ view.innerHTML = '<div class="hint">Aucun verset analysé.</div>'; return; }
+  view.innerHTML = keys.map(k => {
+    const v = byVerse[k];
+    const sorted = v.readings.slice().sort((a,b) => b.score - a.score);
+    const top = sorted.slice(0, 3);
+    const hasDisc = v.readings.some(r => identifyDiscovery(r));
+    return '<div class="verse">'
+      + '<div class="vh"><span class="tag' + (hasDisc?' disc':'') + '">' + esc(v.verseLbl) + (v.day ? ' · J' + v.day : '') + '</span><span class="lbl">' + v.readings.length + ' analyse(s)' + (hasDisc?' · 💎':'') + '</span></div>'
+      + '<div class="vt">' + esc(v.verseTxt) + '</div>'
+      + top.map(r => {
+        const cls = r.score >= 7.5 ? 'sh' : 'sm';
+        return '<div class="ritem' + (identifyDiscovery(r)?' discovery':'') + '">'
+          + '<div class="head"><span class="lens">' + esc(r.lens) + '</span><span class="ref">' + esc(r.lensLbl) + '</span><span class="score ' + cls + '">★ ' + r.score.toFixed(1) + '</span></div>'
+          + (r.intention_texte ? '<div class="intent">' + esc(r.intention_texte.slice(0,180)) + '</div>' : '')
+          + (r.formule ? '<div class="formula">' + esc(r.formule) + '</div>' : '')
+          + '</div>';
+      }).join('')
+      + '</div>';
+  }).join('');
+}
+function renderGallery(){
+  const g = $('gallery');
+  if(!state.images.length){ g.innerHTML = '<div class="hint" style="padding:20px;text-align:center;grid-column:1/-1">Les images apparaîtront ici.</div>'; return; }
+  g.innerHTML = state.images.slice().reverse().map(im => {
+    return '<div class="gc"><img src="' + esc(im.url) + '" loading="lazy" onclick="window.open(this.src)"><div class="gl"><b>' + esc(im.verse||'') + ' · ' + esc(im.lens||'') + '</b>' + esc((im.formule||'').slice(0,50)) + '</div></div>';
+  }).join('');
+}
+
+/* TABS */
+document.querySelectorAll('#tabs button').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('#tabs button').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    const target = t.dataset.t;
+    ['live','best','discoveries','lenses','method','verses','gallery'].forEach(x => {
+      const pane = $('pane' + x.charAt(0).toUpperCase() + x.slice(1));
+      if(pane) pane.classList.toggle('hidden', x !== target);
+    });
+    if(target === 'best') renderBest();
+    if(target === 'discoveries') renderDiscoveries();
+    if(target === 'lenses') renderLenses();
+    if(target === 'method') renderMethod();
+    if(target === 'verses') renderVerses();
+    if(target === 'gallery') renderGallery();
+  };
+});
+
+/* ÉVÉNEMENTS */
+$('saveKeysBtn').onclick = () => saveKeysFromInput();
+$('clearKeysBtn').onclick = () => clearKeys();
+let keySaveTimer = null;
+$('keysIn').addEventListener('input', () => {
+  clearTimeout(keySaveTimer);
+  keySaveTimer = setTimeout(() => {
+    const lines = ($('keysIn').value||'').split(/\r?\n/).map(l => l.trim()).filter(l => l.length);
+    const valid = []; const seen = new Set();
+    lines.forEach(k => { if(!k.startsWith('sk-')) return; if(seen.has(k)) return; seen.add(k); valid.push(k); });
+    const old = {}; state.keys.forEach(k => old[k.key] = k);
+    state.keys = valid.map(k => old[k] || {key:k,cooldown:0,lastReq:0,count:0,busy:0,errors:0,active:true});
+    saveKeysToStorage(valid); renderKeys();
+    $('keyStatus').textContent = valid.length + ' clé(s) active(s)';
+    $('keyStatus').style.color = valid.length ? '#4cc38a' : '#888';
+    updateStartButtons(); updateStats();
+  }, 600);
+});
+$('keysIn').addEventListener('blur', () => { clearTimeout(keySaveTimer); saveKeysFromInput(); });
+$('keysIn').addEventListener('keydown', e => { if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); saveKeysFromInput(); } });
+
+$('bootBtn').onclick = () => runBootstrap();
+$('bootRetryBtn').onclick = () => runBootstrap();
+$('startBtn').onclick = () => {
+  if(!state.methodLocked){ toast('Lance d\'abord le bootstrap','warn'); return; }
+  if(state.running) return;
+  runPipeline().catch(e => {
+    cLogTag('SYS', 'erreur : ' + e.message, 'err');
+    state.running = false; updateStartButtons();
+  });
+};
+$('pauseBtn').onclick = () => {
+  state.paused = !state.paused;
+  $('pauseBtn').textContent = state.paused ? '▶' : '⏸';
+  cLogTag('SYS', state.paused ? '⏸' : '▶', 'warn');
+};
+$('stopBtn').onclick = () => {
+  state.stopped = true; state.running = false; state.paused = false;
+  cLogTag('SYS', '⏹ arrêt', 'err');
+  updateStartButtons();
+};
+
+/* INIT */
+(async function init(){
+  renderLenses(); renderMethod(); renderConv(); renderMode();
+
+  const stored = loadKeys();
+  if(stored.length){
+    $('keysIn').value = stored.join('\n');
+    state.keys = stored.map(k => ({key:k,cooldown:0,lastReq:0,count:0,busy:0,errors:0,active:true}));
+    $('keyStatus').textContent = stored.length + ' clé(s) restaurée(s)';
+    $('keyStatus').style.color = '#4cc38a';
+  }
+  renderKeys();
+
+  try{
+    const locked = await idbGet('kv', 'locked');
+    if(locked && locked.locked){
+      state.methodLocked = true;
+      if(Array.isArray(locked.method) && locked.method.length){
+        // Fusionner les règles sauvegardées avec les core
+        const core = METHODOLOGY_CORE.map(r => ({...r}));
+        locked.method.forEach(r => {
+          if(!core.find(x => x.id === r.id)) core.push(r);
+        });
+        state.methodology = core;
+      }
+      if(locked.direction) state.cumul.direction = locked.direction;
+      cLogTag('SYS', '🔒 Méthode restaurée · ' + state.methodology.length + ' règles', 'lock');
+    }
+  }catch(e){}
+
+  try{
+    const lenses = await idbGetAll('lenses');
+    if(lenses.length){
+      lenses.forEach(l => {
+        if(!state.lenses.find(x => x.id === l.id)) state.lenses.push(l);
+      });
+      cLogTag('SYS', '↻ ' + lenses.length + ' angles évolués restaurés', 'ok');
+    }
+    const rules = await idbGetAll('methodology');
+    if(rules.length){
+      rules.forEach(r => {
+        if(!state.methodology.find(x => x.id === r.id)) state.methodology.push(r);
+      });
+      cLogTag('SYS', '↻ ' + rules.length + ' règles restaurées', 'ok');
+    }
+    const rs = await idbGetAll('readings');
+    if(rs.length){ state.readings = rs; cLogTag('SYS', '↻ ' + rs.length + ' analyses restaurées', 'ok'); }
+    const dc = await idbGetAll('discoveries');
+    if(dc.length){ state.discoveries = dc; cLogTag('SYS', '↻ ' + dc.length + ' découvertes restaurées', 'ok'); }
+    const im = await idbGetAll('images');
+    if(im.length){ state.images = im; cLogTag('SYS', '↻ ' + im.length + ' images restaurées', 'ok'); }
+  }catch(e){ cLogTag('SYS', 'IDB : ' + e.message, 'warn'); }
+
+  renderBest(); renderDiscoveries(); renderVerses(); renderGallery(); renderLenses(); renderMethod();
+  updateStats(); updateBar(); updateStartButtons(); updateConvergence();
+
+  cLogTag('SYS', 'Genesis·Decoder v5 — moteur auto-évolutif', 'gold');
+  cLogTag('SYS', state.lenses.length + ' angles · ' + state.methodology.length + ' règles méthodologiques', 'info');
+  cLogTag('SYS', 'Angles infinis · méthodologie adaptative · convergence automatique', 'info');
+  cLogTag('SYS', 'Étapes : 1) clés  2) bootstrap  3) pipeline', 'gold');
+
+  if(!stored.length) setTimeout(() => toast('Colle tes clés Agnès puis VALIDER','warn'), 800);
+})();
+
+setInterval(() => { renderKeys(); if(state.running) updateBar(); }, 1500);
+</script>
+</body>
+</html>
