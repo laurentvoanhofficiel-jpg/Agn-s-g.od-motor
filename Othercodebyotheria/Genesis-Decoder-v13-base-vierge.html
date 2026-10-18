@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Genesis·Decoder v13 — base vierge</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:14px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#08080e;color:#d0d0dc;max-width:1280px;margin:0 auto;padding:12px}
+h1{font:800 20px system-ui;color:#e6b45a;letter-spacing:-.02em}
+h1 span{color:#39d0d8;font-size:11px;font-weight:400;margin-left:6px}
+h2{font:700 11px system-ui;color:#39d0d8;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.08em}
+.hint{font:11px ui-monospace;color:#555;margin-top:3px}
+.card{background:#111118;border:1px solid #222230;border-radius:8px;padding:12px;margin-bottom:10px}
+input,textarea,select{width:100%;padding:8px;background:#08080e;border:1px solid #222230;color:#d0d0dc;border-radius:5px;font:12px ui-monospace}
+input:focus,textarea:focus,select:focus{outline:0;border-color:#e6b45a}
+textarea{min-height:56px;resize:vertical}
+button{padding:8px 14px;background:#e6b45a;color:#000;border:0;border-radius:5px;font:700 12px system-ui;cursor:pointer;transition:.15s}
+button:hover:not(:disabled){filter:brightness(1.1)}
+button:disabled{opacity:.35;cursor:not-allowed}
+button.sec{background:#222230;color:#d0d0dc}
+button.cyan{background:#39d0d8;color:#000}
+button.green{background:#4cc38a;color:#000}
+button.red{background:#c04040;color:#fff}
+button.ghost{background:transparent;color:#888;border:1px solid #222230;padding:4px 10px;font-size:11px}
+button.ghost:hover{color:#e6b45a;border-color:#e6b45a}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.row button{flex:1;min-width:90px}
+
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:6px;margin-bottom:10px}
+.stat .s{background:#111118;border:1px solid #222230;border-radius:5px;padding:8px;text-align:center;transition:.3s}
+.stat .s.bump{background:#1a1a28;border-color:#e6b45a;transform:scale(1.04)}
+.stat .s b{display:block;font:800 22px ui-monospace;color:#e6b45a}
+.stat .s.pink b{color:#ff64d0}.stat .s.cyan b{color:#39d0d8}.stat .s.green b{color:#4cc38a}
+.stat .s span{font:9px ui-monospace;color:#666;text-transform:uppercase;letter-spacing:.05em}
+
+.tabs{display:flex;gap:4px;overflow-x:auto;margin:10px 0 8px;padding-bottom:2px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{background:#111118;color:#888;border:1px solid #222230;border-radius:100px;font:700 12px system-ui;padding:7px 14px;white-space:nowrap;flex-shrink:0}
+.tabs button:hover{color:#d0d0dc}
+.tabs button.on{background:#e6b45a;color:#000;border-color:#e6b45a}
+.tabs button .bdg{display:inline-block;min-width:16px;padding:0 4px;margin-left:5px;border-radius:100px;background:#2a2a3a;color:#9fd8b0;font:700 10px ui-monospace}
+.tabs button.on .bdg{background:#000;color:#e6b45a}
+
+.live{display:grid;grid-template-columns:1fr 270px;gap:10px}
+@media(max-width:820px){.live{grid-template-columns:1fr}}
+#narration{background:#0c0c14;border:1px solid #1a1a28;border-radius:8px;padding:14px;height:640px;overflow-y:auto;scroll-behavior:smooth}
+#narration .n{padding:8px 0;border-bottom:1px solid #1a1a28;opacity:0;transform:translateY(6px);animation:in .35s forwards}
+#narration .n:last-child{border-bottom:0}
+@keyframes in{to{opacity:1;transform:translateY(0)}}
+#narration .n .t{font:10px ui-monospace;color:#444}
+#narration .n .s{color:#e6b45a;font:700 11px system-ui;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+#narration .n .x{margin-top:4px;color:#d0d0dc;line-height:1.6}
+#narration .n .x em{color:#39d0d8;font-style:normal}
+#narration .n .x strong{color:#e6b45a;font-weight:700}
+#narration .n .x code{font:11px ui-monospace;background:#1a1a28;padding:1px 5px;border-radius:3px;color:#4cc38a}
+#narration .f{display:block;font:13px ui-monospace;color:#4cc38a;background:#0a1a0f;border-left:3px solid #4cc38a;padding:8px 12px;border-radius:5px;margin:6px 0;word-break:break-word;animation:glow 1s}
+@keyframes glow{from{box-shadow:0 0 0 4px rgba(76,195,138,.3)}to{box-shadow:0 0 0 0 rgba(76,195,138,0)}}
+#narration .disc{background:#1a0a1a;border-left:3px solid #ff64d0;padding:12px 16px;border-radius:5px;margin:8px 0;color:#ff64d0;font-weight:600;animation:pulse 1.2s}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,100,208,.6)}70%{box-shadow:0 0 0 12px rgba(255,100,208,0)}100%{box-shadow:0 0 0 0 rgba(255,100,208,0)}}
+#narration .disc .inv,#narration .disc .sim{margin-top:6px;padding:8px 10px;background:#0a0a14;border-left:2px solid #39d0d8;color:#39d0d8;font-size:12px;font-weight:400;border-radius:3px}
+#narration .disc .inv b,#narration .disc .sim b{color:#e6b45a;display:block;margin-bottom:3px;font-size:10px;text-transform:uppercase}
+#narration .valid{background:#0a1a0f;border-left:3px solid #4cc38a;padding:8px 12px;border-radius:5px;margin:6px 0;color:#4cc38a}
+#narration .deep{background:#1a0a14;border-left:3px solid #ff64d0;padding:10px 14px;border-radius:5px;margin:8px 0;color:#ff64d0;font-weight:600}
+#narration .verse-ref{color:#39d0d8;font:700 12px ui-monospace}
+#narration .verse-txt{color:#888;font-style:italic;margin:4px 0 6px 0;padding-left:10px;border-left:2px solid #222230}
+#narration .more{display:inline-block;margin-top:4px}
+
+#side{display:flex;flex-direction:column;gap:10px}
+#side .box{background:#0c0c14;border:1px solid #1a1a28;border-radius:8px;padding:10px}
+#side .box h3{font:700 10px system-ui;color:#666;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+#side .pos{font:700 13px ui-monospace;color:#39d0d8}
+#side .pos-sub{font:11px ui-monospace;color:#666;margin-top:2px}
+#side .bar{height:4px;background:#1a1a28;border-radius:2px;overflow:hidden;margin-top:6px}
+#side .bar i{display:block;height:100%;background:linear-gradient(90deg,#39d0d8,#e6b45a);transition:width .5s}
+#side .keylist{max-height:220px;overflow-y:auto}
+#side .k{display:flex;align-items:center;gap:5px;padding:4px 0;font:10px ui-monospace;border-bottom:1px solid #1a1a28}
+#side .k:last-child{border:0}
+#side .k .id{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888}
+#side .k .st{font:8px ui-monospace;padding:1px 5px;border-radius:3px;font-weight:700;text-transform:uppercase}
+#side .k .st.ok{background:#0a2a1a;color:#4cc38a}
+#side .k .st.cool{background:#2a1a0a;color:#d8983f}
+#side .k .st.dead{background:#2a0a0a;color:#e05555}
+
+.ritem{padding:10px;background:#0c0c14;border:1px solid #1a1a28;border-radius:6px;margin-bottom:6px;font-size:12px;cursor:pointer;transition:.15s}
+.ritem:hover{border-color:#39d0d8}
+.ritem .h{display:flex;gap:5px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
+.ritem .lens{font:9px ui-monospace;padding:2px 6px;background:#3a2a5a;color:#c8a0ff;border-radius:3px;font-weight:700;text-transform:uppercase}
+.ritem .ref{font:10px ui-monospace;color:#888}
+.ritem .sc{font:700 11px ui-monospace;margin-left:auto;padding:2px 7px;border-radius:100px}
+.ritem .f{font:12px ui-monospace;color:#e6b45a;margin:5px 0;word-break:break-word}
+.ritem .intent{color:#39d0d8;font-size:11.5px;padding-left:8px;border-left:2px solid #39d0d8;margin:4px 0}
+.ritem .dom{color:#4cc38a;font-size:11.5px;padding-left:8px;border-left:2px solid #4cc38a;margin:4px 0}
+.ritem .w{color:#888;margin-top:4px;line-height:1.5}
+.ritem .inv,.ritem .simb{margin-top:6px;padding:8px 10px;background:#0a0a14;border-left:2px solid #39d0d8;border-radius:3px}
+.ritem .inv b,.ritem .simb b{color:#39d0d8;font-size:10px;text-transform:uppercase;display:block;margin-bottom:3px}
+.ritem .m{display:flex;gap:3px;margin-top:6px;font:9px ui-monospace;color:#777;flex-wrap:wrap}
+.ritem .m span{background:#1a1a28;padding:2px 5px;border-radius:3px}
+.ritem .readmore{margin-top:5px;font:700 10px system-ui;color:#39d0d8;text-transform:uppercase;letter-spacing:.05em}
+.ritem.best{border-color:#e6b45a;background:#1a1408}
+.ritem.disc{border-color:#ff64d0;background:#1a0a1a}
+.sh{background:#4cc38a;color:#000}.sm{background:#d8983f;color:#000}.sl{background:#e05555;color:#fff}
+
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.gal .g{background:#0c0c14;border:1px solid #1a1a28;border-radius:6px;overflow:hidden}
+.gal .g:hover{border-color:#e6b45a}
+.gal img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:pointer}
+.gal .c{padding:6px 8px;font:10px ui-monospace;color:#777;line-height:1.35}
+.gal .c b{color:#e6b45a;display:block;margin-bottom:2px}
+.gal .cap{font-size:9px;color:#555;margin-top:4px;word-break:break-word}
+
+#console{background:#040408;border:1px solid #1a1a28;border-radius:6px;height:560px;overflow-y:auto;padding:8px;font:11px/1.5 ui-monospace}
+#console .e{padding:2px 0;border-bottom:1px solid #0a0a10;word-break:break-word}
+#console .e .t{color:#333;margin-right:6px}
+#console .e .g{color:#c8a0ff;margin-right:5px;font-weight:700}
+#console .ok{color:#4cc38a}#console .err{color:#e05555}#console .warn{color:#d8983f}
+#console .gold{color:#e6b45a}#console .lock{color:#39d0d8}#console .ai{color:#c8a0ff}
+#console .disc{color:#ff64d0;font-weight:700}#console .evo{color:#4cc38a;font-weight:700}
+
+.lc{padding:10px;background:#0c0c14;border:1px solid #1a1a28;border-left:3px solid #39d0d8;border-radius:5px;margin-bottom:6px;font-size:11.5px}
+.lc.spec{border-left-color:#4cc38a}
+.lc.exp{border-left-color:#d8983f}
+.lc.pru{border-left-color:#e05555;opacity:.5}
+.lc .h{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:5px}
+.lc .code{font:700 11px ui-monospace;color:#c8a0ff}
+.lc .lbl{color:#e6b45a;font-weight:700;font-size:12px}
+.lc .perf{margin-left:auto;font:10px ui-monospace;color:#888}
+.lc .q{color:#999;line-height:1.45;margin-top:4px}
+.badge{font:9px ui-monospace;padding:2px 6px;border-radius:100px;font-weight:700;text-transform:uppercase}
+.badge.core{background:#0a2a3a;color:#39d0d8}
+.badge.spec{background:#0a2a1a;color:#4cc38a}
+.badge.exp{background:#2a1a0a;color:#d8983f}
+.badge.pru{background:#2a0a0a;color:#e05555}
+.badge.deep{background:#2a0a2a;color:#ff64d0}
+
+/* Clés — panneau repliable */
+#keysCard .keyshead{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+#keysCard .keyshead h2{margin:0}
+#keysCard .keyshead .kinfo{margin-left:auto;font:11px ui-monospace;color:#4cc38a}
+#keysCard .keysbody{margin-top:10px}
+#keysCard.closed .keysbody{display:none}
+#keysCard.closed{padding:10px 12px}
+.keysvalid{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.keysvalid button{flex:1;min-width:110px}
+.masked{display:flex;align-items:center;gap:10px;padding:10px;background:#08080e;border:1px dashed #2a2a3a;border-radius:6px;font:12px ui-monospace;color:#4cc38a}
+.masked .keymask{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Modal lecture */
+#modalBk{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:120;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+#modalBk.on{display:flex}
+#modal{background:#0e0e16;border:1px solid #2a2a3a;border-radius:10px;max-width:760px;width:100%;max-height:82vh;display:flex;flex-direction:column}
+#modal .mh{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #1a1a28}
+#modal .mh .mt{font:700 13px system-ui;color:#e6b45a}
+#modal .mh button{margin-left:auto;padding:4px 10px;font-size:11px}
+#modal .mb{padding:16px;overflow-y:auto;font-size:13px;line-height:1.65}
+#modal .mb .field{margin-bottom:12px}
+#modal .mb .field .lab{font:700 10px system-ui;color:#39d0d8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+#modal .mb .field .val{color:#c8c8d4;word-break:break-word}
+#modal .mb .field .val.vf{font:14px ui-monospace;color:#4cc38a}
+#modal .mb .versefull{font-style:italic;color:#a8a8b8;border-left:3px solid #e6b45a;padding:8px 12px;background:#12121c;border-radius:5px;margin-bottom:12px}
+
+/* Synthèse */
+.sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:12px}
+.sumbox{background:#0c0c14;border:1px solid #1a1a28;border-radius:8px;padding:12px}
+.sumbox h3{font:700 10px system-ui;color:#666;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.sumbox .big{font:800 24px ui-monospace;color:#e6b45a}
+.sumbox .sub{font:11px ui-monospace;color:#666;margin-top:4px}
+.sumlist{margin-top:6px}
+.sumlist .row0{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #14141f;font:11.5px ui-monospace;color:#999}
+.sumlist .row0:last-child{border:0}
+.sumlist .row0 .r{color:#39d0d8;min-width:110px}
+.sumlist .row0 .s{margin-left:auto;color:#e6b45a;font-weight:700}
+
+/* Paramètres */
+.setrow{display:grid;grid-template-columns:210px 1fr;gap:10px;align-items:center;margin-bottom:8px;font-size:12px}
+@media(max-width:700px){.setrow{grid-template-columns:1fr}}
+.setrow .lab{color:#888}
+.setrow input,.setrow select{max-width:340px}
+
+#hb{position:fixed;bottom:12px;right:12px;background:rgba(12,12,20,.95);border:1px solid #222230;border-radius:100px;padding:6px 14px;font:11px ui-monospace;color:#4cc38a;display:flex;gap:8px;align-items:center;z-index:90;backdrop-filter:blur(8px);box-shadow:0 4px 20px rgba(0,0,0,.5)}
+#hb .d{width:8px;height:8px;border-radius:50%;background:#4cc38a;animation:pulse-dot 1.5s infinite}
+#hb.pause .d{background:#d8983f;animation:none}
+#hb.freeze .d{background:#39d0d8;animation:none}
+#hb.stop .d{background:#e05555;animation:none}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:.8}}
+#toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-120px);background:#e6b45a;color:#000;padding:10px 20px;border-radius:100px;font:700 13px system-ui;z-index:130;transition:.3s cubic-bezier(.2,.9,.3,1.1);max-width:90%;text-align:center}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#toast.err{background:#e05555;color:#fff}
+#toast.ok{background:#4cc38a;color:#000}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+
+<h1>Genesis·Decoder <span>v13 · base vierge isolée · LBD automatique · thèses documentées</span></h1>
+<div class="hint">Question → Variables → Cumul → Formule → Direction → Mystère → Similitude → Invention · boucle infinie · affichage gelable · lecture intégrale sur clic</div>
+
+<!-- ═══════════ CLÉS API (panneau repliable + validation + masquage) ═══════════ -->
+<div class="card" id="keysCard">
+  <div class="keyshead" id="keysHead">
+    <h2>🔑 Clés API</h2>
+    <span class="kinfo" id="keyInfo">—</span>
+  </div>
+  <div class="keysbody" id="keysBody">
+    <textarea id="keysIn" placeholder="Colle tes clés API (une par ligne)&#10;sk-...&#10;sk-..." spellcheck="false" rows="3"></textarea>
+    <div class="keysvalid">
+      <button class="green" id="validateKeysBtn">✓ Valider les clés</button>
+      <button class="sec" id="clearKeysBtn" style="flex:0 0 auto;min-width:80px">Effacer</button>
+    </div>
+    <div class="hint" id="keyStatus">Colle tes clés, valide, puis ferme le panneau : elles restent masquées (idéal en tutoriel).</div>
+    <div class="masked hide" id="keyMask" style="margin-top:8px">
+      <span>🔒</span><span class="keymask" id="keyMaskTxt"></span>
+      <button class="ghost" id="editKeysBtn">Modifier</button>
+    </div>
+  </div>
+</div>
+
+<div class="row" style="margin-bottom:10px">
+  <button class="green" id="startBtn">▶ DÉMARRER LE MOTEUR</button>
+  <button class="sec" id="pauseBtn" style="display:none">⏸ Pause moteur</button>
+  <button class="cyan" id="freezeBtn">🧊 Geler l'affichage</button>
+  <button class="red" id="stopBtn" style="display:none">⏹ Stop</button>
+</div>
+
+<div class="stat">
+  <div class="s"><b id="sKeys">0</b><span>Clés</span></div>
+  <div class="s cyan"><b id="sRead">0</b><span>Analyses</span></div>
+  <div class="s pink"><b id="sDisc">0</b><span>Découvertes</span></div>
+  <div class="s"><b id="sSim">0</b><span>Similitudes</span></div>
+  <div class="s cyan"><b id="sLens">0</b><span>Angles</span></div>
+  <div class="s"><b id="sImg">0</b><span>Images</span></div>
+  <div class="s"><b id="sVerse">0</b><span>Versets</span></div>
+  <div class="s cyan"><b id="sCycle">0</b><span>Cycle</span></div>
+  <div class="s pink"><b id="sInv">0</b><span>Inventions</span></div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="on" data-t="live">📡 En direct</button>
+  <button data-t="best">★ Meilleures</button>
+  <button data-t="disc">💎 Découvertes</button>
+  <button data-t="sim">≅ Similitudes</button>
+  <button data-t="inv">⚗ Inventions</button>
+  <button data-t="sum">📊 Synthèse</button>
+  <button data-t="img">🖼 Images</button>
+  <button data-t="self">🧬 Auto-organisation</button>
+  <button data-t="lbd">📚 LBD scientifique</button>
+  <button data-t="journal">📖 Journal de recherche</button>
+  <button data-t="cons">⌨ Console</button>
+  <button data-t="set">⚙ Paramètres</button>
+</div>
+
+<div id="pLive">
+  <div class="live">
+    <div id="narration">
+      <div class="n"><div class="t">—</div><div class="s">Genesis·Decoder</div><div class="x">En attente. Valide tes clés API et clique sur <strong>DÉMARRER LE MOTEUR</strong>. Méthode : traiter Genèse 1:1-3 comme hypothèse interprétative à tester, puis comparer les analyses aux sources scientifiques, sans présumer qu'une équation est démontrée par le texte.</div></div>
+    </div>
+    <div id="side">
+      <div class="box">
+        <h3>Position</h3>
+        <div class="pos" id="posBook">—</div>
+        <div class="pos-sub" id="posVerse">En attente</div>
+        <div class="bar"><i id="posBar" style="width:0%"></i></div>
+      </div>
+      <div class="box">
+        <h3>Convergence</h3>
+        <div class="pos" id="convVal">0 %</div>
+        <div class="pos-sub" id="convTxt">en attente</div>
+        <div class="bar"><i id="convBar" style="width:0%"></i></div>
+      </div>
+      <div class="box">
+        <h3>Clés actives</h3>
+        <div class="keylist" id="keyList"></div>
+      </div>
+      <div class="box">
+        <h3>Affichage</h3>
+        <div class="pos-sub" id="freezeStatus">Flux actif</div>
+        <button class="ghost" id="freezeBtn2" style="margin-top:6px;width:100%">Geler / dégeler l'affichage</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="pBest" class="hide"><div id="bestView"></div></div>
+<div id="pDisc" class="hide"><div id="discView"></div></div>
+<div id="pSim" class="hide"><div id="simView"></div></div>
+<div id="pInv" class="hide"><div id="invView"></div></div>
+<div id="pSum" class="hide"><div id="sumView"></div></div>
+<div id="pImg" class="hide"><div class="gal" id="gallery"></div></div>
+<div id="pSelf" class="hide"><div id="selfView"></div></div>
+<div id="pLbd" class="hide"><div class="card"><h2>Library-Based Discovery · recherche bibliographique</h2><p class="hint" style="margin-bottom:8px">Recherche dans des index scientifiques publics. Une correspondance bibliographique ne prouve pas une hypothèse : les résultats restent à vérifier.</p><div class="setrow"><span class="lab">Question / hypothèse</span><textarea id="lbdQuery" rows="3" placeholder="Ex. relation énergie-impulsion, interprétation textuelle et histoire des sciences"></textarea></div><div class="row"><button class="cyan" id="lbdSearchBtn">🔎 Rechercher les publications</button><button class="sec" id="lbdExportBtn">Exporter les résultats JSON</button></div><div id="lbdStatus" class="hint">En attente d’une recherche.</div><div id="lbdResults"></div></div></div>
+<div id="pJournal" class="hide"><div class="card"><h2>Journal de recherche — état opérationnel</h2><p class="hint">Ce journal décrit les opérations, les décisions, les incertitudes et les prochaines étapes. Il ne prétend pas démontrer une conscience subjective.</p><div class="row"><button class="cyan" id="journalRefresh">Actualiser le rapport</button><button class="sec" id="journalExport">Exporter le journal JSON</button></div><div id="journalStatus" class="hint"></div><div id="journalPages"></div></div></div>
+<div id="pCons" class="hide"><div id="console"></div></div>
+<div id="pSet" class="hide"><div class="card">
+  <h2>API</h2>
+  <div class="setrow"><span class="lab">Endpoint chat</span><input id="setApi" placeholder="https://apihub.agnes-ai.com/v1"></div>
+  <div class="setrow"><span class="lab">Modèle texte</span><input id="setModelText" placeholder="agnes-2.5-flash"></div>
+  <div class="setrow"><span class="lab">Modèle images</span><input id="setModelImg" placeholder="agnes-image-2.1-flash"></div>
+  <div class="setrow"><span class="lab">Req/min par clé</span><input id="setRpm" type="number" min="1" max="60"></div>
+  <h2>Seuils de découverte</h2>
+  <div class="setrow"><span class="lab">Score méthode min (découverte)</span><input id="setMinMethod" type="number" min="0" max="10" step="0.5"></div>
+  <div class="setrow"><span class="lab">Clarté question min</span><input id="setMinQuestion" type="number" min="0" max="10" step="0.5"></div>
+  <div class="setrow"><span class="lab">Novelty min</span><input id="setMinNovelty" type="number" min="0" max="10" step="0.5"></div>
+  <h2>Images</h2>
+  <div class="setrow"><span class="lab">Score min pour générer</span><input id="setImgMin" type="number" min="0" max="10" step="0.5"></div>
+  <div class="setrow"><span class="lab">Anti-hallucination (prompt construit depuis l'analyse uniquement)</span><select id="setImgGuard"><option value="1">Activé (recommandé)</option><option value="0">Désactivé (prompt libre du modèle)</option></select></div>
+  <h2>Évolution</h2>
+  <div class="setrow"><span class="lab">Nouveaux angles toutes les N analyses</span><input id="setEvolveLens" type="number" min="5" max="200"></div>
+  <div class="setrow"><span class="lab">Nouvelles règles toutes les N analyses</span><input id="setEvolveMethod" type="number" min="10" max="500"></div>
+  <div style="margin-top:10px"><button class="cyan" id="saveSetBtn">💾 Enregistrer les paramètres</button></div>
+</div></div>
+
+<div id="modalBk"><div id="modal">
+  <div class="mh"><span class="mt" id="modalTitle">Lecture</span><button class="red" id="modalClose">✕ Fermer</button></div>
+  <div class="mb" id="modalBody"></div>
+</div></div>
+
+<div id="hb" class="stop"><span class="d"></span><span id="hbTxt">Inactif</span></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ═════════════════════════════════════════════════════════════════════
+   ⚙️  CONFIG (persistée dans localStorage, éditable dans Paramètres)
+   ═════════════════════════════════════════════════════════════════════ */
+const DEFAULTS = {
+  API: 'https://apihub.agnes-ai.com/v1',
+  MODEL_TEXT: 'agnes-2.5-flash',
+  MODEL_IMG: 'agnes-image-2.1-flash',
+  LS_KEYS: 'gd13_clean_20261018_keys',
+  LS_SET: 'gd13_clean_20261018_settings',
+  DB_NAME: 'genesis_decoder_v13_clean_20261018',
+  DB_VERSION: 1,
+  MAX_LOG: 500,
+  MAX_NARRATION: 300,
+  MAX_QUEUE: 80,
+  RPM_PER_KEY: 10,
+  COOLDOWN_429_MS: 65000,
+  FETCH_TIMEOUT_MS: 60000,
+  EVOLVE_LENS_EVERY: 20,
+  EVOLVE_METHOD_EVERY: 60,
+  IMG_MIN_SCORE: 8.5,
+  IMG_GUARD: true,
+  DISCOVERY_MIN_METHOD: 8.5,
+  DISCOVERY_MIN_QUESTION: 8,
+  DISCOVERY_MIN_NOVELTY: 7,
+  SIM_MIN_SCORE: 7,
+  DEEP_TRIGGERS: [
+    'homme','femme','âme','esprit','souffle','image','ressemblance','conscience',
+    'pensée','connais','volonté','être vivant','langage','parole','nom','cœur',
+    'vie éternelle','arbre de vie','connaissance du bien','dieu dit','faisons'
+  ]
+};
+let CONFIG = Object.assign({}, DEFAULTS);
+// Base vierge : aucun chargement des paramètres, clés ou données des anciennes versions.
+// Les réglages de cette version sont isolés dans un espace de noms neuf.
+
+/* ═════════════════════════════════════════════════════════════════════
+   🧠  STATE
+   ═════════════════════════════════════════════════════════════════════ */
+const STATE = {
+  keys: [],
+  running: false,
+  paused: false,
+  stopped: false,
+  freezeUI: false,       // gèle l'affichage sans arrêter le moteur
+  activeTab: 'live',
+  lenses: [],
+  method: [],
+  readings: [],
+  discoveries: [],
+  similitudes: [],
+  inventions: [],
+  images: [],
+  books: [],
+  pos: { book: 0, chapter: 1 },
+  cumul: { present: ['E','m','vide','t','p','c'], absent: [], domains: [], direction: '' },
+  cycle: 0,
+  bootstrapped: false,
+  readCount: 0,
+  verseCount: 0,
+  queue: [],
+  inFlight: 0,
+  dirty: { best:false, disc:false, sim:false, inv:false, sum:false, img:false, self:false }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🛠  UTILS
+   ═════════════════════════════════════════════════════════════════════ */
+const U = {
+  $: id => document.getElementById(id),
+  sleep: ms => new Promise(r => setTimeout(r, ms)),
+  esc: s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+  now: () => new Date().toLocaleTimeString('fr-FR', { hour12: false }),
+  clamp: (v, a, b) => Math.max(a, Math.min(b, Number(v) || 0)),
+  uid: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+  nearBottom(el, tol = 60) { return el.scrollHeight - el.scrollTop - el.clientHeight < tol; }
+};
+let _toastT;
+const toast = (msg, type) => {
+  const el = U.$('toast');
+  el.textContent = msg;
+  el.className = 'on ' + (type || '');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.className = '', 2600);
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   📺  UI — gère le gel de l'affichage
+   ═════════════════════════════════════════════════════════════════════ */
+const UI = {
+  log(msg, cls, group) {
+    if (STATE.freezeUI) return; // le flux console est gelé
+    const c = U.$('console'); if (!c) return;
+    const d = document.createElement('div');
+    d.className = 'e ' + (cls || '');
+    d.innerHTML = '<span class="t">' + U.now() + '</span>' + (group ? '<span class="g">[' + U.esc(group) + ']</span>' : '') + U.esc(msg);
+    c.appendChild(d);
+    while (c.children.length > CONFIG.MAX_LOG) c.removeChild(c.firstChild);
+    c.scrollTop = c.scrollHeight;
+  },
+
+  say(speaker, html, cls) {
+    if (STATE.freezeUI) return;
+    const n = U.$('narration'); if (!n) return;
+    const stick = U.nearBottom(n);
+    const d = document.createElement('div');
+    d.className = 'n';
+    if (cls === 'disc') d.innerHTML = '<div class="disc">' + html + '</div>';
+    else if (cls === 'valid') d.innerHTML = '<div class="valid">' + html + '</div>';
+    else if (cls === 'deep') d.innerHTML = '<div class="deep">' + html + '</div>';
+    else if (cls === 'formula') d.innerHTML = '<span class="f">' + html + '</span>';
+    else if (cls === 'verse') d.innerHTML = html;
+    else d.innerHTML = '<div class="t">' + U.now() + '</div><div class="s">' + U.esc(speaker) + '</div><div class="x">' + html + '</div>';
+    n.appendChild(d);
+    while (n.children.length > CONFIG.MAX_NARRATION) n.removeChild(n.firstChild);
+    if (stick) n.scrollTop = n.scrollHeight; // ne saute pas si le lecteur a remonté
+  },
+
+  bump(id) {
+    const el = U.$(id); if (!el) return;
+    const card = el.closest('.s');
+    if (card) { card.classList.add('bump'); setTimeout(() => card.classList.remove('bump'), 300); }
+  },
+  setText(id, txt) { const el = U.$(id); if (el) el.textContent = txt; },
+  markDirty(...keys) { keys.forEach(k => STATE.dirty[k] = true); }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   💾  PERSISTENCE (IndexedDB)
+   ═════════════════════════════════════════════════════════════════════ */
+const DB = (() => {
+  let _db = null;
+  const open = () => new Promise((res, rej) => {
+    if (_db) return res(_db);
+    if (!window.indexedDB) return rej(new Error('IndexedDB indisponible'));
+    const rq = indexedDB.open(CONFIG.DB_NAME, CONFIG.DB_VERSION);
+    rq.onupgradeneeded = e => {
+      const d = e.target.result;
+      ['readings','images','discoveries','similitudes','inventions','chapters'].forEach(s => {
+        if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath:'id', autoIncrement:true });
+      });
+      ['lenses','method','kv'].forEach(s => {
+        if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath:'id' });
+      });
+    };
+    rq.onsuccess = e => { _db = e.target.result; res(_db); };
+    rq.onerror = () => rej(rq.error);
+  });
+  const add = (s, v) => open().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(s, 'readwrite');
+    const rq = tx.objectStore(s).add(v);
+    rq.onsuccess = () => res(rq.result);
+    tx.onerror = () => rej(tx.error);
+  }));
+  const put = (s, v, k) => open().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(s, 'readwrite');
+    if (k !== undefined) tx.objectStore(s).put(v, k); else tx.objectStore(s).put(v);
+    tx.oncomplete = () => res(true);
+    tx.onerror = () => rej(tx.error);
+  }));
+  const all = s => open().then(d => new Promise((res, rej) => {
+    const rq = d.transaction(s).objectStore(s).getAll();
+    rq.onsuccess = () => res(rq.result || []);
+    rq.onerror = () => rej(rq.error);
+  }));
+  const get = (s, k) => open().then(d => new Promise((res, rej) => {
+    const rq = d.transaction(s).objectStore(s).get(k);
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  }));
+  return { open, add, put, all, get };
+})();
+
+/* ═════════════════════════════════════════════════════════════════════
+   🔑  KEYS — validation, masquage, persistance
+   ═════════════════════════════════════════════════════════════════════ */
+const Keys = {
+  load() {
+    try {
+      const r = localStorage.getItem(CONFIG.LS_KEYS);
+      return r ? JSON.parse(r).filter(k => typeof k === 'string' && k.trim().length >= 8) : [];
+    } catch { return []; }
+  },
+  save(keys) { try { localStorage.setItem(CONFIG.LS_KEYS, JSON.stringify(keys)); } catch {} },
+
+  /* Validation : normalise, dédoublonne, restaure l'état connu, puis masque */
+  validate() {
+    const raw = (U.$('keysIn').value || '').split(/\s|,|;/).map(x => x.trim()).filter(x => x.length >= 8);
+    const seen = new Set(); const valid = [];
+    raw.forEach(k => { if (!seen.has(k)) { seen.add(k); valid.push(k); } });
+    const old = {}; STATE.keys.forEach(k => old[k.key] = k);
+    STATE.keys = valid.map(k => old[k.key] || { key: k, cool: 0, last: 0, n: 0, busy: 0, errors: 0, active: true });
+    Keys.save(valid);
+
+    if (valid.length) {
+      U.$('keysIn').value = '';
+      U.$('keysIn').classList.add('hide');
+      U.$('keyMask').classList.remove('hide');
+      U.$('keyMaskTxt').textContent = valid.map(k => k.slice(0, 6) + '…' + k.slice(-3)).join('  ·  ');
+      UI.setText('keyInfo', valid.length + ' clé(s) validée(s)');
+      U.$('keyInfo').style.color = '#4cc38a';
+      const totalRpm = valid.length * CONFIG.RPM_PER_KEY;
+      UI.setText('keyStatus', valid.length + ' clé(s) validée(s) et masquée(s) · ' + totalRpm + ' req/min cumulées. Le panneau peut rester fermé en tutoriel.');
+      toast(valid.length + ' clé(s) validée(s)', 'ok');
+    } else {
+      toast('Aucune clé valide détectée', 'err');
+      UI.setText('keyStatus', 'Aucune clé valide. Chaque clé doit faire au moins 8 caractères.');
+    }
+    Keys.render();
+  },
+
+  edit() {
+    U.$('keysIn').classList.remove('hide');
+    U.$('keysIn').value = Keys.load().join('\n');
+    U.$('keyMask').classList.add('hide');
+  },
+
+  render() {
+    const el = U.$('keyList'); if (!el) return;
+    const now = Date.now(); let active = 0;
+    if (!STATE.keys.length) {
+      el.innerHTML = '<div style="color:#555;font-size:10px;padding:4px">Aucune clé</div>';
+      UI.setText('sKeys', '0'); return;
+    }
+    el.innerHTML = STATE.keys.map((k, i) => {
+      let cls = 'ok', tx = 'OK';
+      if (!k.active) { cls = 'dead'; tx = 'morte'; }
+      else if (k.cool > now) { cls = 'cool'; tx = Math.ceil((k.cool - now) / 1000) + 's'; }
+      else active++;
+      return '<div class="k"><span class="id">#' + (i + 1) + ' ' + U.esc(k.key.slice(0, 6)) + '…' + U.esc(k.key.slice(-3)) + '</span>' +
+             '<span style="color:#555">' + k.n + '</span><span class="st ' + cls + '">' + tx + '</span></div>';
+    }).join('');
+    UI.setText('sKeys', String(active));
+    const hb = U.$('hbTxt');
+    if (STATE.running && hb) hb.textContent = STATE.paused ? 'Pause moteur' : (STATE.freezeUI ? 'Affichage gelé · moteur en cours' : 'En cours · ' + active + ' clés');
+  },
+  anyActive() { return STATE.keys.some(k => k.active); },
+  pick() {
+    const now = Date.now();
+    const minInt = Math.ceil(60000 / CONFIG.RPM_PER_KEY);
+    const ready = STATE.keys.filter(k => k.active && k.cool < now && now - k.last >= minInt && k.busy < 1);
+    if (!ready.length) return null;
+    ready.sort((a, b) => (a.n - b.n) || (a.last - b.last));
+    return ready[0];
+  },
+  acquire() {
+    return new Promise((res, rej) => {
+      const t0 = Date.now();
+      (function loop() {
+        if (STATE.stopped) return rej(new Error('Arrêt'));
+        const k = Keys.pick();
+        if (k) { k.busy++; k.last = Date.now(); k.n++; return res(k); }
+        if (!Keys.anyActive()) return rej(new Error('Aucune clé active'));
+        if (Date.now() - t0 > 300000) return rej(new Error('Timeout clés'));
+        setTimeout(loop, 250);
+      })();
+    });
+  },
+  release(k) { if (k) k.busy = Math.max(0, k.busy - 1); }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🌐  API
+   ═════════════════════════════════════════════════════════════════════ */
+const API = {
+  async call(url, opts, tries = 4) {
+    let last;
+    for (let a = 0; a < tries; a++) {
+      if (STATE.stopped) throw new Error('Arrêt');
+      let k = null;
+      try {
+        k = await Keys.acquire();
+        const ctl = new AbortController();
+        const t = setTimeout(() => ctl.abort(), CONFIG.FETCH_TIMEOUT_MS);
+        const headers = Object.assign({}, opts.headers || {}, { 'Authorization': 'Bearer ' + k.key });
+        const res = await fetch(url, Object.assign({}, opts, { headers, signal: ctl.signal }));
+        clearTimeout(t);
+        const ra = parseInt(res.headers.get('Retry-After') || '0', 10) || 0;
+        if (res.ok) { k.errors = 0; Keys.release(k); return res; }
+        let txt = '';
+        try { txt = (await res.clone().text()).slice(0, 300); } catch {}
+        if (res.status === 401 || res.status === 403) {
+          k.errors++; if (k.errors >= 3) k.active = false;
+          Keys.release(k);
+          throw { status: res.status, message: 'HTTP ' + res.status };
+        }
+        if (res.status === 429) {
+          const w = ra ? ra * 1000 : CONFIG.COOLDOWN_429_MS;
+          k.cool = Date.now() + w; Keys.release(k);
+          UI.log('429 · clé …' + k.key.slice(-4) + ' → ' + Math.round(w / 1000) + 's', 'warn', 'RATE');
+          await U.sleep(Math.min(w, 5000));
+          continue;
+        }
+        if (res.status === 400 || res.status === 404) {
+          Keys.release(k);
+          throw { status: res.status, message: 'HTTP ' + res.status + ' — ' + txt.slice(0, 140) };
+        }
+        if ([500,502,503,504].includes(res.status)) {
+          Keys.release(k); last = new Error('HTTP ' + res.status);
+          await U.sleep(2000 + a * 1500); continue;
+        }
+        Keys.release(k); last = new Error('HTTP ' + res.status);
+        await U.sleep(1500 + a * 1000);
+      } catch (e) {
+        if (k) Keys.release(k);
+        if (e.message === 'Arrêt') throw e;
+        if (e.status === 400 || e.status === 401 || e.status === 403 || e.status === 404) throw e;
+        if (e.name === 'AbortError') { last = new Error('Timeout'); continue; }
+        last = e;
+        await U.sleep(1500 + a * 800);
+      }
+    }
+    throw last || new Error('Échec API');
+  },
+
+  async text(sys, usr, max = 2400, temp = 0.75) {
+    const body = {
+      model: CONFIG.MODEL_TEXT,
+      messages: [{ role:'system', content:sys }, { role:'user', content:usr }],
+      temperature: temp, max_tokens: max,
+      reasoning_effort: 'none',
+      chat_template_kwargs: { enable_thinking: false }
+    };
+    const r = await API.call(CONFIG.API + '/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    }, 3);
+    const d = await r.json();
+    const c = d.choices && d.choices[0] && d.choices[0].message;
+    return (c && c.content) || (c && c.reasoning_content) || '';
+  },
+
+  async image(prompt) {
+    const body = { model: CONFIG.MODEL_IMG, prompt: String(prompt).slice(0, 1900), n: 1, size: '1K', ratio: '1:1' };
+    const r = await API.call(CONFIG.API + '/images/generations', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    }, 3);
+    const d = await r.json();
+    const it = d.data && d.data[0];
+    if (!it) throw new Error('Pas d\'image');
+    if (it.url) return it.url;
+    if (it.b64_json) return 'data:image/png;base64,' + it.b64_json;
+    throw new Error('Format image inconnu');
+  }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🧩  JSON PARSER TOLÉRANT
+   ═════════════════════════════════════════════════════════════════════ */
+const Parser = {
+  json(text) {
+    if (!text) return null;
+    let c = String(text).trim();
+    const fm = c.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fm) c = fm[1].trim();
+    const fb = c.indexOf('{'); if (fb < 0) return null;
+    c = c.slice(fb);
+    const lb = c.lastIndexOf('}'); if (lb > 0) c = c.slice(0, lb + 1);
+    let out = '', inS = false, escF = false;
+    for (let i = 0; i < c.length; i++) {
+      const ch = c[i];
+      if (escF) { out += ch; escF = false; continue; }
+      if (ch === '\\') { out += ch; escF = true; continue; }
+      if (ch === '"') { inS = !inS; out += ch; continue; }
+      if (inS) {
+        if (ch === '\n') { out += '\\n'; continue; }
+        if (ch === '\r') { out += '\\r'; continue; }
+        if (ch === '\t') { out += '\\t'; continue; }
+        if (ch.charCodeAt(0) < 32) { out += '\\u' + ch.charCodeAt(0).toString(16).padStart(4, '0'); continue; }
+      }
+      out += ch;
+    }
+    out = out.replace(/,\s*([}\]])/g, '$1');
+    try { return JSON.parse(out); } catch {}
+    let ob = 0, ok = 0, iS = false, eF = false;
+    for (let i = 0; i < out.length; i++) {
+      const ch = out[i];
+      if (eF) { eF = false; continue; }
+      if (ch === '\\') { eF = true; continue; }
+      if (ch === '"') { iS = !iS; continue; }
+      if (iS) continue;
+      if (ch === '{') ob++; else if (ch === '}') ob--;
+      else if (ch === '[') ok++; else if (ch === ']') ok--;
+    }
+    let r = out;
+    if (iS) r += '"';
+    while (ok > 0) { r += ']'; ok--; }
+    while (ob > 0) { r += '}'; ob--; }
+    try { return JSON.parse(r); } catch { return null; }
+  }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🔬  LENTILLES
+   ═════════════════════════════════════════════════════════════════════ */
+const SEED_LENSES = [
+  { id:'L1', code:'QUESTION', lbl:'Question fondamentale', status:'core', p:{n:0,avg:0,best:0},
+    q:"Quelle est LA question scientifique que ce verset pose ? Que doit se demander un scientifique qui lit ce texte adogmatiquement ? Formule la question en une phrase précise." },
+  { id:'L2', code:'VARIABLES', lbl:'Variables textuelles', status:'core', p:{n:0,avg:0,best:0},
+    q:"Quels mots du verset correspondent à des objets scientifiques ? Identifie les NOUVEAUX mots par rapport au cumul des versets précédents. Chaque variable doit venir d'un mot présent textuellement." },
+  { id:'L3', code:'CUMUL', lbl:'Cumul présents/absents', status:'core', p:{n:0,avg:0,best:0},
+    q:"Après ce verset, quelles variables sont PRÉSENTES ? Lesquelles sont encore ABSENTES ? Qu'est-ce que ce cumul rend POSSIBLE ou IMPOSSIBLE ?" },
+  { id:'L4', code:'FORMULE', lbl:'Formule émergente', status:'core', p:{n:0,avg:0,best:0},
+    q:"Quelle formule scientifique devient POSSIBLE avec les variables présentes ? Écris-la en LaTeX simple. Si aucune formule n'est encore possible, explique pourquoi précisément." },
+  { id:'L5', code:'DIRECTION', lbl:'Direction de complexification', status:'core', p:{n:0,avg:0,best:0},
+    q:"Où ce verset nous emmène-t-il dans la direction globale du texte (énergie → matière → champ → structures → vie → conscience → repos) ? Quelle nouvelle étape de complexification est franchie ?" },
+  { id:'L6', code:'MYSTERE', lbl:'Mystère scientifique actuel', status:'core', p:{n:0,avg:0,best:0},
+    q:"À quel grand mystère scientifique ACTUEL ce verset fait-il écho ? (matière noire, énergie noire, gravité quantique, unification, conscience, origine de la vie, flèche du temps, asymétrie matière-antimatière, information quantique, vide quantique, trous noirs, expansion accélérée, etc.)" },
+  { id:'L7', code:'INVENTION', lbl:'Piste d\'invention testable', status:'core', p:{n:0,avg:0,best:0},
+    q:"Quelle INVENTION ou quel PROTOCOLE EXPÉRIMENTAL concret découle de cette lecture ? Sois précis : formule du dispositif, principe physique mis en jeu, et pourquoi c'est cohérent avec la recherche scientifique actuelle." },
+  { id:'L8', code:'SIMILITUDE', lbl:'Similitude avec une formule existante', status:'core', p:{n:0,avg:0,best:0},
+    q:"Le cumul de variables de ce verset reproduit-il la structure d'une FORMULE SCIENTIFIQUE EXISTANTE et IDENTIFIÉE ? Si oui : laquelle, avec sa référence exacte (auteur, année), et la correspondance variable → symbole terme à terme. Si non, dis 'aucune' explicitement. N'invente JAMAIS une formule qui n'existe pas." }
+];
+
+const DEEP_LENSES = [
+  { id:'D1', code:'BIOL_INFO', lbl:'Information biologique', status:'deep', p:{n:0,avg:0,best:0},
+    q:"Analyse ce verset du point de vue de l'information biologique : ADN, code génétique, hérédité, complexité informationnelle de la cellule. Quelle formule biologique devient possible ?" },
+  { id:'D2', code:'INFO_INTEGREE', lbl:'Information intégrée', status:'deep', p:{n:0,avg:0,best:0},
+    q:"Analyse ce verset du point de vue de l'information intégrée (IIT de Tononi). Mesure Φ (phi) : quel niveau d'intégration d'information le verset décrit-il ? Lien avec la conscience phénoménale." },
+  { id:'D3', code:'CONSCIENCE', lbl:'Conscience phénoménale', status:'deep', p:{n:0,avg:0,best:0},
+    q:"Analyse ce verset du point de vue de la conscience phénoménale. Y a-t-il auto-modèle, récursivité, expérience subjective ? Lien avec Orch-OR (Penrose-Hameroff), IIT, ou théorie de l'espace de travail global." },
+  { id:'D4', code:'LANGAGE', lbl:'Langage symbolique', status:'deep', p:{n:0,avg:0,best:0},
+    q:"Analyse ce verset du point de vue du langage symbolique et de la récursivité. Y a-t-il parole, nomination, référence ? Lien avec la théorie de la récursion de Chomsky, ou l'émergence du langage symbolique." }
+];
+
+const SEED_METHOD = [
+  { id:'R1', name:'Source textuelle', desc:'Chaque variable doit venir d\'un mot présent textuellement dans le verset ou un verset précédent.', w:1.0 },
+  { id:'R2', name:'Pas d\'anticipation', desc:'Aucun objet scientifique avant son mot-source textuel.', w:1.0 },
+  { id:'R3', name:'Pas de sur-simplification', desc:'« lumière » ≠ lumière visible, c\'est la constante c. Chaque mot doit être lu dans son registre scientifique.', w:1.0 },
+  { id:'R4', name:'Question obligatoire', desc:'Chaque verset doit révéler la question qu\'il pose au scientifique.', w:1.0 },
+  { id:'R5', name:'Cumul cohérent', desc:'Le cumul des variables présentes/absentes doit être respecté et mis à jour.', w:1.0 },
+  { id:'R6', name:'Anti-hallucination formelle', desc:'Toute formule citée doit être une formule publiée et identifiable ; toute similitude doit donner sa référence. Sinon « aucune ».', w:1.0 }
+];
+
+/* ═════════════════════════════════════════════════════════════════════
+   📝  PROMPTS
+   ═════════════════════════════════════════════════════════════════════ */
+const Prompts = {
+  bootstrap: {
+    system: `Tu es un analyste critique en histoire des textes et en sciences. Tu compares des interprétations symboliques à des concepts scientifiques sans présumer qu'elles les démontrent.
+
+PROTOCOLE DE TEST — aucune conclusion n'est validée d'avance :
+- Genèse 1:1-3 est un texte ancien dont le vocabulaire doit être distingué des définitions mathématiques modernes.
+- Ne transforme pas « création » en énergie, « terre » en masse, « mouvement » en quantité de mouvement ou « lumière » en constante c sans argument indépendant.
+- E=mc² est une relation physique moderne. Une ressemblance de vocabulaire ou d'ordre narratif n'est pas une dérivation de l'équation.
+- La relation énergie-impulsion est E²=(pc)²+(mc²)² ; E=mc² correspond au référentiel où l'impulsion est nulle.
+- Classe chaque proposition comme observation textuelle, analogie, hypothèse testable ou résultat vérifié.
+- Toute affirmation scientifique doit avoir une référence vérifiable ou être explicitement marquée « à vérifier ». Ne fabrique jamais de citation.
+
+JSON uniquement. Réponds avec des observations séparées des interprétations, une méthode de contrôle, les limites et des tests qui pourraient réfuter l'hypothèse.`,
+    user: `Examine Genèse 1:1-3 comme hypothèse d'interprétation, sans présupposer qu'une équation scientifique y est encodée. Distingue les mots effectivement présents, les analogies proposées, les inférences non justifiées et les tests réfutables.
+Retourne exactement ce schéma JSON :
+{
+  "etapes": [
+    {"v":1,"observations":[],"hypotheses":[],"limites":[],"formule_possible":"","question":""},
+    {"v":2,"observations":[],"hypotheses":[],"limites":[],"formule_possible":"","question":""},
+    {"v":3,"observations":[],"hypotheses":[],"limites":[],"formule_possible":"","question":""}
+  ],
+  "methode":[{"id":"R1","name":"Séparer observation et interprétation","desc":""},{"id":"R2","name":"Référence vérifiable","desc":""},{"id":"R3","name":"Hypothèse réfutable","desc":""}],
+  "direction":"progression interprétative à tester",
+  "verifie":false,
+  "conclusion":"analogie non équivalente à une démonstration scientifique"
+}`
+  },
+
+  books: {
+    system: 'Tu connais la Bible. JSON uniquement.',
+    user: `Liste des 39 livres de l'Ancien Testament dans l'ordre canonique avec nombre de chapitres.
+{"books":[{"name":"Genèse","chapters":50},...]}`
+  },
+
+  chapter: (book, chapter) => ({
+    system: 'Tu connais la Bible par cœur. Texte exact (Louis Segond). JSON uniquement.',
+    user: `Tous les versets de "${book}" chapitre ${chapter}.
+{"verses":[{"v":1,"txt":"..."},{"v":2,"txt":"..."}]}`
+  }),
+
+  verse: (verse, ref, lens, cumul, deep) => {
+    const methodRules = STATE.method.map(r => '- ' + r.id + ' ' + r.name + ' : ' + r.desc).join('\n');
+    const deepBlock = deep ? `
+
+MODE PROFOND ACTIVÉ — ce verset introduit un être complexe (humain, conscience, langage, âme).
+Analyse supplémentaire OBLIGATOIRE :
+- Distinction entre information biologique, information intégrée (IIT, Φ), et conscience phénoménale.
+- Lien explicite avec au moins une théorie actuelle : IIT (Tononi), Orch-OR (Penrose-Hameroff), espace de travail global, information quantique cérébrale.
+- Génération d'une hypothèse testable sur la conscience ou l'émergence.` : '';
+
+    return {
+      system: `Tu es un analyste scientifique adogmatique. Méthode validée sur Genèse 1:1-3.
+
+RÈGLES :
+${methodRules}
+
+Discipline stricte :
+1. Chaque variable vient d'un mot présent textuellement.
+2. Aucune variable avant son mot-source.
+3. Pas de sur-simplification.
+4. Chaque verset révèle SA question.
+5. Le cumul est respecté.
+6. AUCUNE formule inventée : toute formule citée doit exister publiquement ; toute similitude doit citer formule + référence (auteur, année). Si rien ne correspond, écris "aucune".
+
+SÉQUENCE OBLIGATOIRE dans ta réponse :
+Question fondamentale → Variables nouvelles → Cumul présent/absent → Formule émergente → Direction → Mystère actuel → Similitude → Invention testable.
+
+Direction globale : ${cumul.direction || 'à suivre'}.
+JSON uniquement.`,
+
+      user: `VERSET (${ref}) : « ${verse.txt} »
+
+CUMUL PRÉSENT : ${JSON.stringify(cumul.present)}
+CUMUL ABSENT : ${JSON.stringify(cumul.absent || [])}
+DOMAINES OUVERTS : ${JSON.stringify(cumul.domains.slice(-15))}
+
+ANGLE (${lens.code}) — ${lens.lbl} :
+${lens.q}
+${deepBlock}
+
+{
+  "angle": "${lens.code}",
+  "question": "la question fondamentale que ce verset pose",
+  "reponse": "réponse 3-6 phrases",
+  "intention": "intention du verset dans la progression",
+  "domaine": "domaine scientifique ouvert",
+  "formule": "formule LaTeX ou chaîne vide",
+  "present": ["variables présentes APRÈS ce verset"],
+  "absent": ["variables encore absentes APRÈS ce verset"],
+  "mystere": "grand mystère scientifique actuel",
+  "piste": "piste de recherche",
+  "similitude": {
+    "formule": "formule scientifique EXISTANTE dont le cumul reproduit la structure, ou chaîne vide",
+    "reference": "auteur, année, publication — vide si aucune",
+    "correspondance": "correspondance terme à terme variable → symbole, ou vide",
+    "confiance": 0-10,
+    "texte": "explication de la similitude, ou vide"
+  },
+  "invention": {
+    "formule": "formule mathématique du dispositif ou principe",
+    "texte": "description claire de l'invention",
+    "pourquoi": "pourquoi elle découle de cette lecture",
+    "lien": "lien précis avec la recherche scientifique actuelle",
+    "protocole": "expérience ou protocole testable"
+  },
+  "decouverte": true|false,
+  "desc_decouverte": "description autonome",
+  "rigueur": 0-10,
+  "risque": "faible|moyen|eleve",
+  "coherence": 0-10,
+  "sci": 0-10,
+  "txt_fid": 0-10,
+  "novelty": 0-10,
+  "question_clarity": 0-10,
+  "reasoning": "2-4 phrases de justification",
+  "image_prompt": "prompt visuel en anglais, 30-60 mots"
+}`
+    };
+  },
+
+  evolveLenses: (top, bot, count) => ({
+    system: 'JSON uniquement.',
+    user: `Angles actuels (${count}) :
+MEILLEURS : ${top.map(l => l.code + ' avg ' + (l.p?.avg || 0)).join(' | ')}
+FAIBLES : ${bot.map(l => l.code + ' avg ' + (l.p?.avg || 0)).join(' | ')}
+
+Crée 3 NOUVEAUX angles d'analyse INÉDITS qui croisent les meilleurs OU explorent des domaines non couverts. Chaque angle doit être une question précise applicable à n'importe quel verset.
+
+{"lenses":[{"code":"XXX","lbl":"Nom","q":"question précise","reason":"pourquoi cet angle est utile"}]}`
+  }),
+
+  evolveMethod: (method) => ({
+    system: 'JSON uniquement.',
+    user: `Méthode actuelle :
+${method.map(r => '- ' + r.id + ' ' + r.name + ' : ' + r.desc).join('\n')}
+
+Propose 2 nouvelles règles méthodologiques TESTABLES pour améliorer la rigueur de l'analyse adogmatique.
+
+{"rules":[{"id":"R11","name":"...","desc":"..."}]}`
+  })
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🔬  ANALYZER
+   ═════════════════════════════════════════════════════════════════════ */
+const Analyzer = {
+  async bootstrap() {
+    UI.say('Genesis·Decoder',
+      'Je démarre par un test critique de l’hypothèse reliant Genèse 1:1-3 à E=mc². ' +
+      'Je distingue le texte, l’analogie moderne et les éléments qui exigeraient une preuve indépendante.',
+      'verse');
+    UI.log('Bootstrap — examen critique de l’hypothèse E=mc²', 'gold', 'BOOT');
+
+    const raw = await API.text(Prompts.bootstrap.system, Prompts.bootstrap.user, 2200, 0.3);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.etapes)) throw new Error('Bootstrap JSON invalide');
+
+    if (!j.etapes.some(x => x.v === 1) || !j.etapes.some(x => x.v === 3)) throw new Error('Analyse de référence incomplète');
+
+    if (Array.isArray(j.methode)) {
+      j.methode.forEach(r => {
+        if (r.id && r.name && !STATE.method.find(m => m.id === r.id)) {
+          STATE.method.push({ id: r.id, name: String(r.name), desc: String(r.desc || '').slice(0, 300), w: 1.0 });
+        }
+      });
+    }
+    if (j.direction) STATE.cumul.direction = String(j.direction);
+    STATE.bootstrapped = true;
+
+    UI.log('Bootstrap OK — ' + STATE.method.length + ' règles', 'lock', 'BOOT');
+    UI.say('Genesis·Decoder',
+      '<strong>✓ Méthode établie.</strong> À chaque verset : identifier les variables, vérifier le cumul, voir quelle formule devient possible, chercher les similitudes, suivre la direction.',
+      'valid');
+    UI.say('', 'E² = (pc)² + (mc²)² — relation énergie-impulsion, à ne pas confondre avec une dérivation depuis le texte.', 'formula');
+    UI.say('Genesis·Decoder', 'Cette grille critique est maintenant appliquée aux analyses suivantes. Les textes et références doivent être vérifiés indépendamment ; je demande la liste des livres.', 'verse');
+
+    await DB.put('kv', { id: 'method', method: STATE.method, direction: STATE.cumul.direction }).catch(() => {});
+    return true;
+  },
+
+  async fetchBooks() {
+    const raw = await API.text(Prompts.books.system, Prompts.books.user, 1500, 0.2);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.books) || j.books.length < 30) throw new Error('Liste livres invalide');
+    UI.log(j.books.length + ' livres reçus', 'lock', 'BOOKS');
+    UI.say('Genesis·Decoder', '✓ Liste reçue : <strong>' + j.books.length + ' livres.</strong> Je commence la lecture.', 'valid');
+    return j.books.map(b => ({ name: String(b.name), chapters: U.clamp(b.chapters, 1, 200) }));
+  },
+
+  async fetchChapter(book, chapter) {
+    const key = book + ' ' + chapter;
+    try {
+      const cached = await DB.get('chapters', key);
+      if (cached && cached.verses && cached.verses.length) return cached.verses;
+    } catch {}
+    const p = Prompts.chapter(book, chapter);
+    const raw = await API.text(p.system, p.user, 3500, 0.2);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.verses) || !j.verses.length) throw new Error('Chapitre invalide');
+    const verses = j.verses
+      .map(v => ({ v: U.clamp(v.v, 1, 200), txt: String(v.txt || '').trim() }))
+      .filter(v => v.txt.length > 5);
+    try { await DB.put('chapters', { id: key, book, chapter, verses }); } catch {}
+    return verses;
+  },
+
+  isDeepVerse(verse) {
+    const txt = (verse.txt || '').toLowerCase();
+    return CONFIG.DEEP_TRIGGERS.some(t => txt.includes(t.toLowerCase()));
+  },
+
+  async readVerse(book, chapter, verse, lens) {
+    const ref = book + ' ' + chapter + ':' + verse.v;
+    const deep = Analyzer.isDeepVerse(verse);
+    const p = Prompts.verse(verse, ref, lens, STATE.cumul, deep);
+    const raw = await API.text(p.system, p.user, 2600, 0.75);
+    const j = Parser.json(raw);
+    if (!j) throw new Error('JSON invalide');
+
+    const sim = j.similitude || {};
+    const r = {
+      book, chapter, v: verse.v, ref,
+      verseTxt: verse.txt,
+      deep,
+      lens: lens.code, lensLbl: lens.lbl, lensId: lens.id,
+      question: String(j.question || '').slice(0, 400),
+      reponse: String(j.reponse || '').slice(0, 800),
+      intention: String(j.intention || '').slice(0, 400),
+      domaine: String(j.domaine || '').slice(0, 200),
+      formule: String(j.formule || '').slice(0, 300),
+      present: Array.isArray(j.present) ? j.present : [],
+      absent: Array.isArray(j.absent) ? j.absent : [],
+      mystere: String(j.mystere || '').slice(0, 250),
+      piste: String(j.piste || '').slice(0, 250),
+      similitude: {
+        formule: String(sim.formule || '').slice(0, 300),
+        reference: String(sim.reference || '').slice(0, 250),
+        correspondance: String(sim.correspondance || '').slice(0, 400),
+        confiance: U.clamp(sim.confiance, 0, 10),
+        texte: String(sim.texte || '').slice(0, 500)
+      },
+      invention: j.invention ? {
+        formule: String(j.invention.formule || '').slice(0, 300),
+        texte: String(j.invention.texte || '').slice(0, 500),
+        pourquoi: String(j.invention.pourquoi || '').slice(0, 400),
+        lien: String(j.invention.lien || '').slice(0, 300),
+        protocole: String(j.invention.protocole || '').slice(0, 400)
+      } : null,
+      decouverte: !!j.decouverte,
+      desc_decouverte: String(j.desc_decouverte || '').slice(0, 500),
+      rigueur: U.clamp(j.rigueur, 0, 10),
+      risque: String(j.risque || 'moyen').toLowerCase(),
+      coherence: U.clamp(j.coherence, 0, 10),
+      sci: U.clamp(j.sci, 0, 10),
+      txt_fid: U.clamp(j.txt_fid, 0, 10),
+      novelty: U.clamp(j.novelty, 0, 10),
+      question_clarity: U.clamp(j.question_clarity, 0, 10),
+      reasoning: String(j.reasoning || '').slice(0, 600),
+      image_prompt: String(j.image_prompt || '').slice(0, 400),
+      time: Date.now()
+    };
+
+    const pen = r.risque === 'eleve' ? 0.7 : r.risque === 'moyen' ? 0.9 : 1;
+    r.method_score = +((r.rigueur * 0.20 + r.coherence * 0.20 + r.question_clarity * 0.25 + r.sci * 0.20 + r.txt_fid * 0.15) * pen).toFixed(2);
+    r.score = +((r.method_score * 0.6 + r.novelty * 0.25 + r.txt_fid * 0.15)).toFixed(2);
+    return r;
+  },
+
+  isDiscovery(r) {
+    return (r.method_score >= CONFIG.DISCOVERY_MIN_METHOD &&
+            r.question_clarity >= CONFIG.DISCOVERY_MIN_QUESTION &&
+            r.novelty >= CONFIG.DISCOVERY_MIN_NOVELTY) ||
+           (r.decouverte && r.method_score >= 7);
+  },
+
+  /* Similitude valide = formule existante citée + référence + confiance */
+  isSimilitude(r) {
+    const s = r.similitude || {};
+    return !!(s.formule && s.formule.toLowerCase() !== 'aucune' && s.reference && s.confiance >= CONFIG.SIM_MIN_SCORE);
+  },
+
+  async process(r) {
+    STATE.readings.push(r);
+    STATE.readCount++;
+    UI.bump('sRead');
+    UI.setText('sRead', String(STATE.readings.length));
+
+    const lens = STATE.lenses.find(l => l.id === r.lensId);
+    if (lens) {
+      lens.p.n++;
+      lens.p.avg = +(((lens.p.avg * (lens.p.n - 1)) + r.score) / lens.p.n).toFixed(2);
+      lens.p.best = Math.max(lens.p.best, r.score);
+    }
+
+    if (r.present.length) STATE.cumul.present = Array.from(new Set([...STATE.cumul.present, ...r.present]));
+    if (r.absent.length) STATE.cumul.absent = Array.from(new Set(r.absent));
+    if (r.domaine && !STATE.cumul.domains.includes(r.domaine)) STATE.cumul.domains.push(r.domaine);
+
+    DB.add('readings', r).catch(() => {});
+
+    if (r.deep && r.lens !== 'D1' && r.lens !== 'D2' && r.lens !== 'D3' && r.lens !== 'D4') {
+      UI.log('🧠 Mode profond détecté · ' + r.ref, 'ai', 'DEEP');
+    }
+
+    /* Similitude */
+    if (Analyzer.isSimilitude(r)) {
+      STATE.similitudes.push(r);
+      DB.add('similitudes', { ref: r.ref, lens: r.lens, formule: r.similitude.formule, reference: r.similitude.reference, correspondance: r.similitude.correspondance, confiance: r.similitude.confiance, texte: r.similitude.texte, score: r.score, time: Date.now() }).catch(() => {});
+      UI.setText('sSim', String(STATE.similitudes.length));
+      UI.bump('sSim');
+      UI.markDirty('sim','sum');
+      UI.say('Genesis·Decoder',
+        '≅ <strong>Similitude</strong> [' + r.lens + '] ' + U.esc(r.ref) +
+        '<div class="sim"><b>' + U.esc(r.similitude.formule) + '</b>' + U.esc(r.similitude.texte.slice(0, 220)) +
+        '<br><span style="color:#888">Réf : ' + U.esc(r.similitude.reference) + ' · confiance ' + r.similitude.confiance + '/10</span></div>',
+        'disc');
+      UI.log('≅ ' + r.ref + ' [' + r.lens + '] — ' + r.similitude.formule, 'disc', 'SIM');
+    }
+
+    /* Découverte */
+    if (Analyzer.isDiscovery(r)) {
+      STATE.discoveries.push(r);
+      DB.add('discoveries', r).catch(() => {});
+      UI.setText('sDisc', String(STATE.discoveries.length));
+      UI.bump('sDisc');
+
+      let discHtml = '💎 <strong>Découverte</strong> [' + r.lens + '] ' + U.esc(r.ref) + '<br>' +
+                     U.esc(r.desc_decouverte || r.reponse.slice(0, 200));
+
+      if (r.invention && (r.invention.texte || r.invention.formule)) {
+        STATE.inventions.push({ ...r.invention, ref: r.ref, lens: r.lens, time: Date.now() });
+        DB.add('inventions', { ...r.invention, ref: r.ref, lens: r.lens, time: Date.now() }).catch(() => {});
+        UI.setText('sInv', String(STATE.inventions.length));
+        UI.bump('sInv');
+        discHtml += '<div class="inv">' +
+          (r.invention.formule ? '<b>Formule</b>' + U.esc(r.invention.formule) + '<br>' : '') +
+          (r.invention.texte ? '<b>Invention</b>' + U.esc(r.invention.texte) + '<br>' : '') +
+          (r.invention.protocole ? '<b>Protocole</b>' + U.esc(r.invention.protocole) : '') +
+          '</div>';
+      }
+      UI.say('Genesis·Decoder', discHtml, 'disc');
+      if (r.formule) UI.say('', U.esc(r.formule), 'formula');
+      UI.log('💎 ' + r.ref + ' [' + r.lens + '] — ' + (r.desc_decouverte || r.reponse.slice(0, 120)), 'disc', 'DISC');
+      UI.markDirty('disc','inv','sum');
+      Journal.add('HYPOTHÈSE', 'Résultat candidat — '+r.ref, 'Une analyse a franchi les seuils internes. Ce statut n’est pas une validation scientifique ; mise en file d’une recherche LBD dédiée, suivie d’une fiche de thèse provisoire.', {score:r.score,method_score:r.method_score,question:r.question,formule:r.formule});
+      LBD.autoFor(r).catch(e=>UI.log('LBD auto : '+e.message,'warn','LBD'));
+    }
+
+    const cls = r.score >= 7.5 ? 'ok' : (r.score >= 5 ? 'warn' : '');
+    UI.log('★' + r.score.toFixed(1) + ' [méth ' + r.method_score.toFixed(1) + '] ' + r.ref + ' · ' + r.lens, cls, 'READ');
+    if (r.question) UI.say('  ❓ Question', U.esc(r.question.slice(0, 180)) + ' <span style="color:#39d0d8">[cliquer « Meilleures » pour lecture intégrale]</span>');
+    if (r.formule) UI.say('', U.esc(r.formule), 'formula');
+
+    /* Image — anti-hallucination : le prompt est reconstruit uniquement
+       depuis les champs validés de l'analyse, jamais du texte libre du modèle. */
+    if (r.score >= CONFIG.IMG_MIN_SCORE) {
+      const cap = Analyzer.buildImageCaption(r);
+      if (cap) Queue.push({ type: 'image', reading: r, caption: cap });
+    }
+
+    UI.setText('sVerse', String(STATE.verseCount));
+    Renderer.conv();
+    UI.markDirty('best','sum');
+
+    if (STATE.readCount % 10 === 0) UI.markDirty('self');
+
+    if (STATE.readCount > 0 && STATE.readCount % CONFIG.EVOLVE_LENS_EVERY === 0) Queue.push({ type: 'evolve_lens' });
+    if (STATE.readCount > 0 && STATE.readCount % CONFIG.EVOLVE_METHOD_EVERY === 0) Queue.push({ type: 'evolve_method' });
+  },
+
+  /* Construit un prompt d'image STRICTEMENT à partir des champs de l'analyse.
+     Aucun contenu ne peut venir d'ailleurs : pas d'hallucination visuelle possible. */
+  buildImageCaption(r) {
+    const parts = [];
+    if (CONFIG.IMG_GUARD) {
+      if (r.domaine) parts.push('scientific visualization of: ' + r.domaine);
+      if (r.formule) parts.push('featuring the formula ' + r.formule);
+      if (r.mystere) parts.push('evoking ' + r.mystere);
+      if (r.invention && r.invention.texte) parts.push('depicting the concept: ' + r.invention.texte.slice(0, 120));
+      parts.push('dark cosmic abstract style, precise, no text other than the formula, reference ' + r.ref);
+    } else {
+      const ip = (r.image_prompt || '').trim();
+      if (!ip) return null;
+      parts.push(ip + ' — context: ' + r.domaine + ', ' + r.ref);
+    }
+    if (!parts.length) return null;
+    return parts.join(', ').slice(0, 1800);
+  }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🧬  EVOLVER
+   ═════════════════════════════════════════════════════════════════════ */
+const Evolver = {
+  async lenses() {
+    if (!Keys.anyActive()) return;
+    UI.log('Évolution des angles', 'evo', 'EVO');
+    UI.say('Genesis·Decoder', '🧬 J\'analyse les performances de mes angles et j\'en crée de nouveaux.', 'verse');
+
+    const top = STATE.lenses.slice().sort((a, b) => (b.p?.avg || 0) - (a.p?.avg || 0)).slice(0, 6);
+    const bot = STATE.lenses.slice().sort((a, b) => (a.p?.avg || 0) - (b.p?.avg || 0)).slice(0, 3);
+
+    const p = Prompts.evolveLenses(top, bot, STATE.lenses.length);
+    const raw = await API.text(p.system, p.user, 1200, 0.9);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.lenses)) throw new Error('Format');
+
+    let added = 0;
+    for (const nl of j.lenses) {
+      if (!nl.code || !nl.lbl || !nl.q) continue;
+      const id = 'LE_' + U.uid();
+      const l = {
+        id, code: String(nl.code).slice(0, 14), lbl: String(nl.lbl).slice(0, 40),
+        q: String(nl.q).slice(0, 500), reason: String(nl.reason || '').slice(0, 200),
+        status: 'exp', p: { n: 0, avg: 0, best: 0 }, born: Date.now()
+      };
+      STATE.lenses.push(l);
+      DB.put('lenses', l).catch(() => {});
+      UI.log('+ ' + l.code + ' · ' + l.lbl, 'ai', 'EVO');
+      added++;
+    }
+
+    STATE.lenses.forEach(l => {
+      if (l.status === 'exp' && l.p.n >= 3) {
+        if (l.p.avg >= 8) l.status = 'spec';
+        else if (l.p.avg < 5) l.status = 'pru';
+      }
+    });
+
+    UI.say('Genesis·Decoder', '✓ <strong>' + added + ' nouveaux angles.</strong> Total : ' + STATE.lenses.length + ' angles.', 'valid');
+    UI.setText('sLens', String(STATE.lenses.length));
+    UI.bump('sLens');
+    UI.markDirty('self','sum');
+  },
+
+  async method() {
+    if (!Keys.anyActive()) return;
+    UI.log('Évolution de la méthode', 'evo', 'EVO');
+    UI.say('Genesis·Decoder', '📐 J\'affine ma méthodologie.', 'verse');
+
+    const p = Prompts.evolveMethod(STATE.method);
+    const raw = await API.text(p.system, p.user, 800, 0.9);
+    const j = Parser.json(raw);
+    if (!j || !Array.isArray(j.rules)) throw new Error('Format');
+
+    let added = 0;
+    for (const nr of j.rules) {
+      if (!nr.id || !nr.name || STATE.method.find(m => m.id === nr.id)) continue;
+      const r = { id: nr.id, name: String(nr.name), desc: String(nr.desc || '').slice(0, 300), w: 0.8 };
+      STATE.method.push(r);
+      DB.put('method', r).catch(() => {});
+      UI.log('+ ' + r.id + ' ' + r.name, 'ai', 'EVO');
+      added++;
+    }
+    UI.say('Genesis·Decoder', '✓ <strong>' + added + ' nouvelles règles.</strong> Total : ' + STATE.method.length + ' règles.', 'valid');
+    UI.markDirty('self','sum');
+  },
+
+  async image(task) {
+    try {
+      UI.log('IMG ' + task.reading.lens + ' ' + task.reading.ref, 'ai', 'IMG');
+      const url = await API.image(task.caption);
+      const e = { url, verse: task.reading.ref, lens: task.reading.lens,
+                  formule: task.reading.formule || task.reading.similitude.formule,
+                  caption: CONFIG.IMG_GUARD ? 'Prompt construit depuis l\'analyse (garde anti-hallucination active)' : 'Prompt libre du modèle',
+                  domaine: task.reading.domaine, time: Date.now() };
+      STATE.images.push(e);
+      DB.add('images', e).catch(() => {});
+      UI.setText('sImg', String(STATE.images.length));
+      UI.bump('sImg');
+      UI.markDirty('img');
+      UI.log('IMG ✓', 'ok', 'IMG');
+    } catch (e) { UI.log('IMG échec : ' + e.message, 'err', 'IMG'); }
+  }
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   🚦  QUEUE / WORKERS / COORDINATEUR
+   ═════════════════════════════════════════════════════════════════════ */
+const Queue = {
+  async push(task) {
+    while (STATE.queue.length >= CONFIG.MAX_QUEUE && !STATE.stopped) await U.sleep(200);
+    STATE.queue.push(task);
+  },
+  async pop() {
+    while (!STATE.queue.length && !STATE.stopped) await U.sleep(150);
+    return STATE.queue.shift();
+  }
+};
+
+function selectLenses(deep) {
+  const base = STATE.lenses.filter(l => l.status !== 'pru' && l.status !== 'deep');
+  const deepL = STATE.lenses.filter(l => l.status === 'deep');
+  const all = deep ? base.concat(deepL) : base;
+  return all.sort((a, b) => (b.p?.avg || 0) - (a.p?.avg || 0)).slice(0, deep ? 9 : 6);
+}
+
+async function workerLoop() {
+  while (!STATE.stopped) {
+    if (STATE.paused) { await U.sleep(300); continue; }
+    if (!Keys.anyActive()) { await U.sleep(2000); continue; }
+    const task = await Queue.pop();
+    if (!task) continue;
+    STATE.inFlight++;
+    try {
+      if (task.type === 'read') {
+        const r = await Analyzer.readVerse(task.book, task.chapter, task.verse, task.lens);
+        await Analyzer.process(r);
+      } else if (task.type === 'image') {
+        await Evolver.image(task);
+      } else if (task.type === 'evolve_lens') {
+        await Evolver.lenses();
+      } else if (task.type === 'evolve_method') {
+        await Evolver.method();
+      }
+    } catch (e) {
+      if (e.message !== 'Arrêt') UI.log('Task ' + task.type + ' : ' + e.message, 'err', 'TASK');
+    } finally {
+      STATE.inFlight--;
+    }
+  }
+}
+
+function startWorkers() {
+  const n = Math.max(1, STATE.keys.filter(k => k.active).length);
+  for (let i = 0; i < n; i++) workerLoop();
+  UI.log(n + ' workers démarrés (un par clé)', 'lock', 'POOL');
+}
+
+async function coordinator() {
+  while (!STATE.stopped) {
+    if (STATE.paused) { await U.sleep(500); continue; }
+    try {
+      if (!STATE.bootstrapped) {
+        const ok = await Analyzer.bootstrap();
+        if (!ok) { await U.sleep(5000); continue; }
+      }
+      if (!STATE.books.length) {
+        try {
+          STATE.books = await Analyzer.fetchBooks();
+          STATE.pos.book = 0; STATE.pos.chapter = 1;
+        } catch (e) {
+          UI.log('BOOKS échec : ' + e.message, 'err', 'BOOKS');
+          await U.sleep(5000); continue;
+        }
+      }
+
+      const bk = STATE.books[STATE.pos.book];
+      if (!bk) { STATE.pos.book = 0; STATE.pos.chapter = 1; continue; }
+
+      UI.setText('posBook', bk.name);
+      UI.setText('posVerse', 'Chapitre ' + STATE.pos.chapter + ' / ' + bk.chapters);
+      const pct = Math.round(100 * (STATE.pos.chapter - 1) / Math.max(1, bk.chapters));
+      const pb = U.$('posBar'); if (pb) pb.style.width = pct + '%';
+
+      let verses = [];
+      try {
+        verses = await Analyzer.fetchChapter(bk.name, STATE.pos.chapter);
+      } catch (e) {
+        UI.log('CHAPITRE ' + bk.name + ' ' + STATE.pos.chapter + ' : ' + e.message, 'err', 'CHAP');
+        STATE.pos.chapter++;
+        if (STATE.pos.chapter > bk.chapters) { STATE.pos.chapter = 1; STATE.pos.book++; }
+        continue;
+      }
+
+      UI.say('Genesis·Decoder',
+        '<span class="verse-ref">📖 ' + bk.name + ' ' + STATE.pos.chapter + '</span> — ' + verses.length + ' versets',
+        'verse');
+
+      for (const v of verses) {
+        const deep = Analyzer.isDeepVerse(v);
+        const lenses = selectLenses(deep);
+        if (deep) UI.log('🧠 ' + bk.name + ' ' + STATE.pos.chapter + ':' + v.v + ' — mode profond', 'ai', 'DEEP');
+        for (const l of lenses) {
+          if (STATE.stopped) break;
+          await Queue.push({ type: 'read', book: bk.name, chapter: STATE.pos.chapter, verse: v, lens: l });
+        }
+      }
+      STATE.verseCount += verses.length;
+      UI.setText('sVerse', String(STATE.verseCount));
+      UI.bump('sVerse');
+
+      STATE.pos.chapter++;
+      if (STATE.pos.chapter > bk.chapters) { STATE.pos.chapter = 1; STATE.pos.book++; }
+      if (STATE.pos.book >= STATE.books.length) {
+        STATE.pos.book = 0;
+        STATE.cycle++;
+        UI.setText('sCycle', String(STATE.cycle));
+        UI.bump('sCycle');
+        UI.log('✓ Cycle ' + STATE.cycle + ' terminé — redémarrage avec angles évolués', 'gold', 'CYCLE');
+        UI.say('Genesis·Decoder',
+          '🔄 <strong>Cycle ' + STATE.cycle + ' terminé.</strong> Je repars avec mes angles et ma méthode évolués.',
+          'valid');
+      }
+      UI.markDirty('sum');
+      await U.sleep(500);
+    } catch (e) {
+      if (e.message === 'Arrêt') break;
+      UI.log('Coord erreur : ' + e.message + ' — reprise 5 s', 'err', 'COORD');
+      await U.sleep(5000);
+    }
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   🎨  RENDERER — rend uniquement l'onglet actif ; jamais de rafraîchissement
+       automatique pendant la lecture (rendu sur changement d'onglet ou
+       bouton Actualiser). Chaque carte est cliquable pour lecture intégrale.
+   ═════════════════════════════════════════════════════════════════════ */
+const Renderer = {
+  findReading(ref, lens, time) {
+    return STATE.readings.find(r => r.ref === ref && r.lens === lens && (!time || r.time === time));
+  },
+
+  best() {
+    const v = U.$('bestView'); if (!v) return;
+    const top = STATE.readings.slice().sort((a, b) => b.score - a.score).slice(0, 50);
+    if (!top.length) { v.innerHTML = '<div class="hint">Aucune analyse encore. Les résultats apparaîtront ici — cet onglet ne se rafraîchit pas tout seul : utilise le bouton Actualiser.</div>'; return; }
+    v.innerHTML = '<div class="hint" style="margin-bottom:8px">Clique sur une analyse pour la lire en entier. <button class="ghost" onclick="Renderer.best()">↻ Actualiser</button></div>' +
+      top.map((r, i) => {
+        const cls = r.score >= 7.5 ? 'sh' : r.score >= 5 ? 'sm' : 'sl';
+        const disc = Analyzer.isDiscovery(r);
+        return '<div class="ritem' + (i < 3 ? ' best' : '') + (disc ? ' disc' : '') + '" onclick="Modal.reading(\'' + U.esc(r.ref) + '\',\'' + U.esc(r.lens) + '\',' + r.time + ')">' +
+          '<div class="h"><span class="lens">' + U.esc(r.lens) + '</span><span class="ref">' + U.esc(r.ref) + '</span><span class="sc ' + cls + '">★ ' + r.score.toFixed(1) + '</span></div>' +
+          (r.question ? '<div class="intent">❓ ' + U.esc(r.question.slice(0, 200)) + '</div>' : '') +
+          (r.domaine ? '<div class="dom">🔬 ' + U.esc(r.domaine) + '</div>' : '') +
+          (r.formule ? '<div class="f">' + U.esc(r.formule) + '</div>' : '') +
+          (r.reponse ? '<div class="w">' + U.esc(r.reponse.slice(0, 220)) + '</div>' : '') +
+          (r.invention && r.invention.texte ? '<div class="inv"><b>⚗ Invention</b>' + U.esc(r.invention.texte.slice(0, 180)) + '</div>' : '') +
+          '<div class="m"><span>méth ' + r.method_score.toFixed(1) + '</span><span>q ' + r.question_clarity + '</span><span>coh ' + r.coherence + '</span><span>sci ' + r.sci + '</span><span>nov ' + r.novelty + '</span></div>' +
+          '<div class="readmore">▸ Lire en entier</div>' +
+          '</div>';
+      }).join('');
+  },
+
+  disc() {
+    const v = U.$('discView'); if (!v) return;
+    if (!STATE.discoveries.length) { v.innerHTML = '<div class="hint">Aucune découverte encore. Le moteur cherche.</div>'; return; }
+    v.innerHTML = '<div class="hint" style="margin-bottom:8px"><button class="ghost" onclick="Renderer.disc()">↻ Actualiser</button></div>' +
+      STATE.discoveries.slice().reverse().map(r =>
+        '<div class="ritem disc" onclick="Modal.reading(\'' + U.esc(r.ref) + '\',\'' + U.esc(r.lens) + '\',' + r.time + ')">' +
+        '<div class="h"><span class="lens">' + U.esc(r.lens) + '</span><span class="ref">' + U.esc(r.ref) + '</span><span class="sc sh">★ ' + r.score.toFixed(1) + '</span></div>' +
+        (r.question ? '<div class="intent">❓ ' + U.esc(r.question) + '</div>' : '') +
+        (r.formule ? '<div class="f">' + U.esc(r.formule) + '</div>' : '') +
+        (r.desc_decouverte ? '<div class="w" style="color:#ff64d0;font-weight:600">💎 ' + U.esc(r.desc_decouverte) + '</div>' : '') +
+        (r.mystere ? '<div class="w">🔭 ' + U.esc(r.mystere) + '</div>' : '') +
+        (r.piste ? '<div class="w">🧪 ' + U.esc(r.piste) + '</div>' : '') +
+        '<div class="readmore">▸ Lire en entier</div>' +
+        '</div>'
+      ).join('');
+  },
+
+  sim() {
+    const v = U.$('simView'); if (!v) return;
+    if (!STATE.similitudes.length) {
+      v.innerHTML = '<div class="hint">Aucune similitude validée encore. Une similitude n\'est retenue que si le modèle cite une formule existante avec sa référence (règle anti-hallucination).</div>';
+      return;
+    }
+    v.innerHTML = '<div class="hint" style="margin-bottom:8px"><button class="ghost" onclick="Renderer.sim()">↻ Actualiser</button></div>' +
+      STATE.similitudes.slice().reverse().map(r =>
+        '<div class="ritem" onclick="Modal.reading(\'' + U.esc(r.ref) + '\',\'' + U.esc(r.lens) + '\',' + r.time + ')">' +
+        '<div class="h"><span class="lens">' + U.esc(r.lens) + '</span><span class="ref">' + U.esc(r.ref) + '</span><span class="sc sh">conf ' + (r.similitude.confiance || 0) + '/10</span></div>' +
+        '<div class="f">' + U.esc(r.similitude.formule) + '</div>' +
+        (r.similitude.texte ? '<div class="w">' + U.esc(r.similitude.texte.slice(0, 260)) + '</div>' : '') +
+        '<div class="simb"><b>Correspondance</b>' + U.esc(r.similitude.correspondance || '—') + '</div>' +
+        '<div class="w">📚 ' + U.esc(r.similitude.reference) + '</div>' +
+        '<div class="readmore">▸ Lire en entier</div>' +
+        '</div>'
+      ).join('');
+  },
+
+  inv() {
+    const v = U.$('invView'); if (!v) return;
+    if (!STATE.inventions.length) { v.innerHTML = '<div class="hint">Aucune invention extraite encore.</div>'; return; }
+    v.innerHTML = '<div class="hint" style="margin-bottom:8px"><button class="ghost" onclick="Renderer.inv()">↻ Actualiser</button></div>' +
+      STATE.inventions.slice().reverse().map((inv, i) =>
+        '<div class="ritem disc">' +
+        '<div class="h"><span class="lens">' + U.esc(inv.lens) + '</span><span class="ref">' + U.esc(inv.ref) + '</span></div>' +
+        (inv.formule ? '<div class="f">' + U.esc(inv.formule) + '</div>' : '') +
+        (inv.texte ? '<div class="w" style="color:#ff64d0;font-weight:600">⚗ ' + U.esc(inv.texte) + '</div>' : '') +
+        (inv.pourquoi ? '<div class="w">🎯 ' + U.esc(inv.pourquoi) + '</div>' : '') +
+        (inv.lien ? '<div class="w">🔗 ' + U.esc(inv.lien) + '</div>' : '') +
+        (inv.protocole ? '<div class="w">🧪 ' + U.esc(inv.protocole) + '</div>' : '') +
+        '</div>'
+      ).join('');
+  },
+
+  gallery() {
+    const g = U.$('gallery'); if (!g) return;
+    if (!STATE.images.length) {
+      g.innerHTML = '<div class="hint" style="padding:20px;text-align:center;grid-column:1/-1">Les images apparaîtront ici quand le score dépasse ' + CONFIG.IMG_MIN_SCORE + '. En garde anti-hallucination, le prompt est construit uniquement depuis les champs de l\'analyse validée.</div>';
+      return;
+    }
+    g.innerHTML = '<div class="hint" style="grid-column:1/-1;margin-bottom:6px"><button class="ghost" onclick="Renderer.gallery()">↻ Actualiser</button></div>' +
+      STATE.images.slice().reverse().map(im =>
+        '<div class="g"><img src="' + U.esc(im.url) + '" loading="lazy" onclick="window.open(this.src)">' +
+        '<div class="c"><b>' + U.esc(im.verse || '') + '</b>' + U.esc(im.lens || '') +
+        '<div class="cap">' + U.esc(im.caption || '') + (im.domaine ? ' · ' + U.esc(im.domaine) : '') + '</div></div></div>'
+      ).join('');
+  },
+
+  self() {
+    const v = U.$('selfView'); if (!v) return;
+    const sorted = STATE.lenses.slice().sort((a, b) => (b.p?.avg || 0) - (a.p?.avg || 0));
+    v.innerHTML = '<div class="hint" style="margin-bottom:8px"><button class="ghost" onclick="Renderer.self()">↻ Actualiser</button></div>' +
+      '<h2>🧬 Angles (' + STATE.lenses.length + ')</h2>' +
+      sorted.slice(0, 30).map(l => {
+        const cls = l.status === 'core' ? '' : l.status === 'spec' ? 'spec' : l.status === 'pru' ? 'pru' : l.status === 'deep' ? 'exp' : 'exp';
+        return '<div class="lc ' + cls + '">' +
+          '<div class="h"><span class="code">' + U.esc(l.code) + '</span><span class="lbl">' + U.esc(l.lbl) + '</span>' +
+          '<span class="badge ' + l.status + '">' + l.status + '</span>' +
+          '<span class="perf">avg ' + (l.p?.avg || 0) + ' · n=' + (l.p?.n || 0) + (l.p?.best ? ' · best ' + l.p.best : '') + '</span></div>' +
+          '<div class="q">' + U.esc(l.q.slice(0, 180)) + '</div>' +
+          (l.reason ? '<div class="q" style="color:#c8a0ff">💡 ' + U.esc(l.reason) + '</div>' : '') +
+          '</div>';
+      }).join('') +
+      '<h2 style="margin-top:14px">📐 Méthode (' + STATE.method.length + ')</h2>' +
+      STATE.method.map(r =>
+        '<div class="lc"><div class="h"><span class="code">' + U.esc(r.id) + '</span><span class="lbl">' + U.esc(r.name) + '</span></div>' +
+        '<div class="q">' + U.esc(r.desc) + '</div></div>'
+      ).join('');
+  },
+
+  /* ══ SYNTHÈSE — où on en est, sans rafraîchissement auto ══ */
+  sum() {
+    const v = U.$('sumView'); if (!v) return;
+    const bk = STATE.books[STATE.pos.book];
+    const top10 = STATE.readings.map(r => r.method_score).sort((a, b) => b - a).slice(0, 10);
+    const avgTop = top10.length ? (top10.reduce((a, b) => a + b, 0) / top10.length) : 0;
+    const conv = top10.length >= 3 ? Math.min(1, Math.max(0, (avgTop - 6) / 3)) : 0;
+
+    /* Similitudes groupées par formule */
+    const byFormula = {};
+    STATE.similitudes.forEach(r => {
+      const k = r.similitude.formule;
+      if (!byFormula[k]) byFormula[k] = { formule: k, reference: r.similitude.reference, refs: [], conf: [] };
+      byFormula[k].refs.push(r.ref);
+      byFormula[k].conf.push(r.similitude.confiance);
+    });
+    const sims = Object.values(byFormula).sort((a, b) => b.refs.length - a.refs.length);
+
+    /* Domaines les plus fréquents */
+    const byDom = {};
+    STATE.readings.forEach(r => { if (r.domaine) byDom[r.domaine] = (byDom[r.domaine] || 0) + 1; });
+    const doms = Object.entries(byDom).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+    v.innerHTML =
+      '<div class="hint" style="margin-bottom:8px">État des connaissances au moment de l\'ouverture de l\'onglet. <button class="ghost" onclick="Renderer.sum()">↻ Actualiser</button></div>' +
+
+      '<div class="sumgrid">' +
+        '<div class="sumbox"><h3>Position de lecture</h3><div class="big" style="font-size:17px">' + U.esc(bk ? bk.name : '—') + '</div><div class="sub">' + (bk ? 'chapitre ' + STATE.pos.chapter + ' / ' + bk.chapters + ' · cycle ' + STATE.cycle : 'en attente') + '</div></div>' +
+        '<div class="sumbox"><h3>Analyses</h3><div class="big">' + STATE.readings.length + '</div><div class="sub">' + STATE.verseCount + ' versets · ' + STATE.lenses.length + ' angles</div></div>' +
+        '<div class="sumbox"><h3>Découvertes</h3><div class="big" style="color:#ff64d0">' + STATE.discoveries.length + '</div><div class="sub">' + STATE.inventions.length + ' inventions extraites</div></div>' +
+        '<div class="sumbox"><h3>Similitudes validées</h3><div class="big" style="color:#39d0d8">' + STATE.similitudes.length + '</div><div class="sub">' + sims.length + ' formules distinctes</div></div>' +
+        '<div class="sumbox"><h3>Convergence méthode</h3><div class="big" style="color:#4cc38a">' + Math.round(conv * 100) + ' %</div><div class="sub">top10 : ' + avgTop.toFixed(2) + '/10</div></div>' +
+        '<div class="sumbox"><h3>Images</h3><div class="big">' + STATE.images.length + '</div><div class="sub">garde : ' + (CONFIG.IMG_GUARD ? 'active' : 'désactivée') + '</div></div>' +
+      '</div>' +
+
+      '<div class="sumbox" style="margin-bottom:10px"><h3>≅ Similitudes — formules existantes reproduites par le texte (classées par fréquence)</h3>' +
+        (sims.length ? '<div class="sumlist">' + sims.map(s =>
+          '<div class="row0"><span class="r">' + U.esc(s.formule) + '</span><span style="color:#888">' + U.esc(s.reference || '—') + '</span><span class="s">' + s.refs.length + '× · conf moy ' + (s.conf.reduce((a, b) => a + b, 0) / s.conf.length).toFixed(1) + '</span></div>' +
+          '<div class="row0" style="border:0;color:#666;font-size:10.5px">' + s.refs.slice(0, 12).map(U.esc).join(' · ') + '</div>'
+        ).join('') + '</div>' : '<div class="sub">Aucune similitude validée encore.</div>') +
+      '</div>' +
+
+      '<div class="sumbox" style="margin-bottom:10px"><h3>💎 Dernières découvertes</h3>' +
+        (STATE.discoveries.length ? '<div class="sumlist">' + STATE.discoveries.slice(-8).reverse().map(r =>
+          '<div class="row0"><span class="r">' + U.esc(r.ref) + '</span><span style="flex:1">' + U.esc((r.desc_decouverte || r.reponse).slice(0, 110)) + '</span><span class="s">★' + r.score.toFixed(1) + '</span></div>'
+        ).join('') + '</div>' : '<div class="sub">Aucune découverte encore.</div>') +
+      '</div>' +
+
+      '<div class="sumbox"><h3>🔬 Domaines scientifiques les plus sollicités</h3>' +
+        (doms.length ? '<div class="sumlist">' + doms.map(([d, n]) =>
+          '<div class="row0"><span class="r" style="min-width:0;flex:1">' + U.esc(d) + '</span><span class="s">' + n + '</span></div>'
+        ).join('') + '</div>' : '<div class="sub">Aucun domaine encore.</div>') +
+      '</div>' +
+
+      '<div class="sumbox" style="margin-top:10px"><h3>🧭 Direction suivie</h3><div style="color:#999;font-size:12.5px">' + U.esc(STATE.cumul.direction || '—') + '</div>' +
+      '<div class="sub" style="margin-top:6px">Variables cumulées (' + STATE.cumul.present.length + ') : ' + U.esc(STATE.cumul.present.slice(0, 40).join(', ')) + '</div></div>';
+  },
+
+  conv() {
+    const top = STATE.readings.map(r => r.method_score).sort((a, b) => b - a).slice(0, 10);
+    if (top.length < 3) {
+      UI.setText('convVal', '0 %');
+      UI.setText('convTxt', 'collecte en cours');
+      const b = U.$('convBar'); if (b) b.style.width = '0%';
+      return;
+    }
+    const avg = top.reduce((a, b) => a + b, 0) / top.length;
+    const conv = Math.min(1, Math.max(0, (avg - 6) / 3));
+    UI.setText('convVal', (conv * 100).toFixed(0) + ' %');
+    UI.setText('convTxt', 'méth. moyenne top10 : ' + avg.toFixed(2) + '/10');
+    const b = U.$('convBar'); if (b) b.style.width = (conv * 100).toFixed(0) + '%';
+  }
+};
+window.Renderer = Renderer;
+
+/* ═════════════════════════════════════════════════════════════════════
+   📖  MODAL — lecture intégrale
+   ═════════════════════════════════════════════════════════════════════ */
+const Modal = {
+  open(title, fieldsHtml, verseTxt) {
+    U.$('modalTitle').textContent = title;
+    U.$('modalBody').innerHTML =
+      (verseTxt ? '<div class="versefull">' + U.esc(verseTxt) + '</div>' : '') + fieldsHtml;
+    U.$('modalBk').classList.add('on');
+  },
+  close() { U.$('modalBk').classList.remove('on'); },
+  field(label, value, mono) {
+    if (!value) return '';
+    return '<div class="field"><div class="lab">' + U.esc(label) + '</div><div class="val' + (mono ? ' vf' : '') + '">' + U.esc(value) + '</div></div>';
+  },
+  reading(ref, lens, time) {
+    const r = Renderer.findReading(ref, lens, time) || STATE.readings.find(x => x.ref === ref && x.lens === lens);
+    if (!r) { toast('Analyse introuvable', 'err'); return; }
+    let h = '';
+    h += Modal.field('Question fondamentale', r.question);
+    h += Modal.field('Réponse', r.reponse);
+    h += Modal.field('Intention dans la progression', r.intention);
+    h += Modal.field('Domaine scientifique', r.domaine);
+    h += Modal.field('Formule émergente', r.formule, true);
+    h += Modal.field('Variables présentes (cumul)', (r.present || []).join(', '), true);
+    h += Modal.field('Variables encore absentes', (r.absent || []).join(', ') || '—', true);
+    h += Modal.field('Mystère scientifique actuel', r.mystere);
+    h += Modal.field('Piste de recherche', r.piste);
+    if (r.similitude && r.similitude.formule) {
+      h += '<div class="field"><div class="lab">≅ Similitude avec formule existante</div><div class="val vf">' + U.esc(r.similitude.formule) + '</div></div>';
+      h += Modal.field('Référence', r.similitude.reference);
+      h += Modal.field('Correspondance terme à terme', r.similitude.correspondance, true);
+      h += Modal.field('Explication', r.similitude.texte);
+      h += Modal.field('Confiance', String(r.similitude.confiance) + ' / 10');
+    }
+    if (r.invention && (r.invention.texte || r.invention.formule)) {
+      h += '<div class="field"><div class="lab">⚗ Invention testable</div>';
+      h += Modal.field('Formule du dispositif', r.invention.formule, true);
+      h += Modal.field('Description', r.invention.texte);
+      h += Modal.field('Pourquoi elle découle de cette lecture', r.invention.pourquoi);
+      h += Modal.field('Lien avec la recherche actuelle', r.invention.lien);
+      h += Modal.field('Protocole expérimental', r.invention.protocole) + '</div>';
+    }
+    if (r.desc_decouverte) h += Modal.field('💎 Découverte', r.desc_decouverte);
+    h += Modal.field('Justification', r.reasoning);
+    h += '<div class="field"><div class="lab">Scores</div><div class="val">méthode ' + r.method_score.toFixed(1) +
+      ' · clarté question ' + r.question_clarity + ' · cohérence ' + r.coherence + ' · science ' + r.sci +
+      ' · fidélité texte ' + r.txt_fid + ' · nouveauté ' + r.novelty + ' · risque ' + U.esc(r.risque) + '</div></div>';
+    Modal.open('Lecture intégrale — ' + r.ref + ' [' + r.lens + ']', h, r.verseTxt);
+  }
+};
+window.Modal = Modal;
+
+/* ═════════════════════════════════════════════════════════════════════
+   🚀  ENGINE / FREEZE / TABS / ÉVÉNEMENTS
+   ═════════════════════════════════════════════════════════════════════ */
+function startEngine() {
+  if (STATE.running) return;
+  if (!STATE.keys.length) { toast('Valide d\'abord tes clés', 'err'); return; }
+  STATE.running = true;
+  STATE.paused = false;
+  STATE.stopped = false;
+  updateCtl();
+  UI.say('Genesis·Decoder',
+    '🚀 <strong>Moteur lancé.</strong> Lecture perpétuelle de l\'Ancien Testament avec ' +
+    STATE.keys.length + ' clés en parallèle (' + (STATE.keys.length * CONFIG.RPM_PER_KEY) + ' req/min cumulées).',
+    'valid');
+  UI.log('Engine démarré avec ' + STATE.keys.length + ' clés', 'lock', 'SYS');
+  startWorkers();
+  coordinator().catch(e => UI.log('Coord fatal : ' + e.message, 'err', 'SYS'));
+}
+
+function stopEngine() {
+  STATE.stopped = true;
+  STATE.running = false;
+  updateCtl();
+  UI.say('Système', 'Moteur arrêté.', 'verse');
+}
+
+/* Gel de l'affichage : le moteur continue de collecter, plus rien ne défile. */
+function toggleFreeze() {
+  STATE.freezeUI = !STATE.freezeUI;
+  updateFreeze();
+  toast(STATE.freezeUI ? 'Affichage gelé — lis tranquillement, le moteur continue' : 'Affichage réactivé', 'ok');
+  if (!STATE.freezeUI) UI.say('Système', '▶ Affichage réactivé.', 'valid');
+}
+function updateFreeze() {
+  const fb = U.$('freezeBtn'), fb2 = U.$('freezeBtn2');
+  const label = STATE.freezeUI ? '🌊 Dégeler l\'affichage' : '🧊 Geler l\'affichage';
+  if (fb) fb.textContent = label;
+  if (fb2) fb2.textContent = STATE.freezeUI ? 'Dégeler l\'affichage' : 'Geler / dégeler l\'affichage';
+  UI.setText('freezeStatus', STATE.freezeUI ? '🧊 Gelé — lecture stable' : 'Flux actif');
+  const hb = U.$('hb');
+  if (hb) hb.className = STATE.running ? (STATE.paused ? 'pause' : (STATE.freezeUI ? 'freeze' : '')) : 'stop';
+  updateCtl();
+}
+
+function updateCtl() {
+  const pb = U.$('pauseBtn'), sb = U.$('stopBtn'), st = U.$('startBtn');
+  if (pb) { pb.style.display = STATE.running ? '' : 'none'; pb.textContent = STATE.paused ? '▶ Reprendre moteur' : '⏸ Pause moteur'; }
+  if (sb) sb.style.display = STATE.running ? '' : 'none';
+  if (st) st.disabled = STATE.running;
+  const hb = U.$('hb'), hbT = U.$('hbTxt');
+  if (hb) {
+    hb.className = STATE.running ? (STATE.paused ? 'pause' : (STATE.freezeUI ? 'freeze' : '')) : 'stop';
+    hbT.textContent = STATE.running
+      ? (STATE.paused ? 'Pause moteur' : (STATE.freezeUI ? 'Affichage gelé · moteur en cours' : 'En cours · ' + STATE.keys.filter(k => k.active).length + ' clés'))
+      : 'Inactif';
+  }
+}
+
+/* TABS — rendu à l'ouverture uniquement, jamais de rafraîchissement auto */
+const TAB_RENDER = {
+  live: null, best: () => Renderer.best(), disc: () => Renderer.disc(),
+  sim: () => Renderer.sim(), inv: () => Renderer.inv(), sum: () => Renderer.sum(),
+  img: () => Renderer.gallery(), self: () => Renderer.self(), lbd: () => LBD.render(), journal: () => Journal.render(), cons: null, set: null
+};
+document.querySelectorAll('#tabs button').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('#tabs button').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    STATE.activeTab = t.dataset.t;
+    const map = { live:'pLive', best:'pBest', disc:'pDisc', sim:'pSim', inv:'pInv', sum:'pSum', img:'pImg', self:'pSelf', lbd:'pLbd', journal:'pJournal', cons:'pCons', set:'pSet' };
+    Object.values(map).forEach(id => { const e = U.$(id); if (e) e.classList.add('hide'); });
+    U.$(map[t.dataset.t]).classList.remove('hide');
+    if (TAB_RENDER[t.dataset.t]) TAB_RENDER[t.dataset.t]();
+  };
+});
+
+/* Badge dynamiques sur les onglets (compteurs seulement, pas de re-rendu) */
+function updateTabBadges() {
+  const map = { disc: STATE.discoveries.length, sim: STATE.similitudes.length, inv: STATE.inventions.length, img: STATE.images.length };
+  document.querySelectorAll('#tabs button').forEach(t => {
+    const k = t.dataset.t;
+    if (!(k in map)) return;
+    let b = t.querySelector('.bdg');
+    if (map[k] > 0) {
+      if (!b) { b = document.createElement('span'); b.className = 'bdg'; t.appendChild(b); }
+      b.textContent = map[k];
+    } else if (b) b.remove();
+  });
+}
+
+/* ══ Événements ══ */
+U.$('startBtn').onclick = startEngine;
+U.$('pauseBtn').onclick = () => {
+  STATE.paused = !STATE.paused;
+  updateCtl();
+  UI.say('Système', STATE.paused ? '⏸ Moteur en pause — l\'affichage est stable.' : '▶ Moteur relancé.', 'verse');
+};
+U.$('stopBtn').onclick = stopEngine;
+U.$('freezeBtn').onclick = toggleFreeze;
+U.$('freezeBtn2').onclick = toggleFreeze;
+U.$('keysHead').onclick = () => {
+  const c = U.$('keysCard');
+  c.classList.toggle('closed');
+  UI.setText('keyInfo', c.classList.contains('closed') ? (STATE.keys.length + ' clé(s) · panneau fermé (masqué)') : (STATE.keys.length + ' clé(s)'));
+};
+U.$('validateKeysBtn').onclick = () => {
+  Keys.validate();
+  if (STATE.keys.length) U.$('keysCard').classList.add('closed');
+};
+U.$('editKeysBtn').onclick = e => { e.stopPropagation(); Keys.edit(); };
+U.$('clearKeysBtn').onclick = () => {
+  U.$('keysIn').value = '';
+  STATE.keys = [];
+  Keys.save([]);
+  Keys.render();
+  U.$('keyMask').classList.add('hide');
+  U.$('keysIn').classList.remove('hide');
+  UI.setText('keyStatus', 'Aucune clé');
+  UI.setText('keyInfo', '—');
+  U.$('keyInfo').style.color = '#666';
+};
+U.$('modalClose').onclick = Modal.close;
+U.$('modalBk').onclick = e => { if (e.target.id === 'modalBk') Modal.close(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') Modal.close(); });
+
+/* Paramètres */
+function loadSettingsUI() {
+  U.$('setApi').value = CONFIG.API;
+  U.$('setModelText').value = CONFIG.MODEL_TEXT;
+  U.$('setModelImg').value = CONFIG.MODEL_IMG;
+  U.$('setRpm').value = CONFIG.RPM_PER_KEY;
+  U.$('setMinMethod').value = CONFIG.DISCOVERY_MIN_METHOD;
+  U.$('setMinQuestion').value = CONFIG.DISCOVERY_MIN_QUESTION;
+  U.$('setMinNovelty').value = CONFIG.DISCOVERY_MIN_NOVELTY;
+  U.$('setImgMin').value = CONFIG.IMG_MIN_SCORE;
+  U.$('setImgGuard').value = CONFIG.IMG_GUARD ? '1' : '0';
+  U.$('setEvolveLens').value = CONFIG.EVOLVE_LENS_EVERY;
+  U.$('setEvolveMethod').value = CONFIG.EVOLVE_METHOD_EVERY;
+}
+U.$('saveSetBtn').onclick = () => {
+  CONFIG.API = U.$('setApi').value.trim() || DEFAULTS.API;
+  CONFIG.MODEL_TEXT = U.$('setModelText').value.trim() || DEFAULTS.MODEL_TEXT;
+  CONFIG.MODEL_IMG = U.$('setModelImg').value.trim() || DEFAULTS.MODEL_IMG;
+  CONFIG.RPM_PER_KEY = U.clamp(U.$('setRpm').value, 1, 60);
+  CONFIG.DISCOVERY_MIN_METHOD = U.clamp(U.$('setMinMethod').value, 0, 10);
+  CONFIG.DISCOVERY_MIN_QUESTION = U.clamp(U.$('setMinQuestion').value, 0, 10);
+  CONFIG.DISCOVERY_MIN_NOVELTY = U.clamp(U.$('setMinNovelty').value, 0, 10);
+  CONFIG.IMG_MIN_SCORE = U.clamp(U.$('setImgMin').value, 0, 10);
+  CONFIG.IMG_GUARD = U.$('setImgGuard').value === '1';
+  CONFIG.EVOLVE_LENS_EVERY = U.clamp(U.$('setEvolveLens').value, 5, 200);
+  CONFIG.EVOLVE_METHOD_EVERY = U.clamp(U.$('setEvolveMethod').value, 10, 500);
+  try { localStorage.setItem(DEFAULTS.LS_SET, JSON.stringify(CONFIG)); } catch {}
+  toast('Paramètres enregistrés', 'ok');
+};
+
+/* ═════════════════════════════════════════════════════════════════════
+   📚 LBD + JOURNAL OPÉRATIONNEL + AMÉLIORATION CONTRÔLÉE
+   ═════════════════════════════════════════════════════════════════════ */
+const LBD = {
+  results: [], busy: false, lastAutoAt: 0, autoQueue: [], autoWorker: false, theses: [],
+  clean(s) { return String(s || '').replace(/\s+/g,' ').trim().slice(0,220); },
+  async get(url) {
+    const ctl = new AbortController(); const timer = setTimeout(()=>ctl.abort(), 16000);
+    try { const r = await fetch(url, {signal:ctl.signal, headers:{'Accept':'application/json'}}); if(!r.ok) throw new Error('HTTP '+r.status); return await r.json(); }
+    finally { clearTimeout(timer); }
+  },
+  async search(q, automatic=false) {
+    q = this.clean(q);
+    if (!q || this.busy) return;
+    this.busy = true;
+    const status=U.$('lbdStatus'); if(status) status.textContent='Recherche en cours dans les index disponibles…';
+    UI.log('LBD : recherche bibliographique — '+q,'ai','LBD');
+    const out=[]; const jobs=[];
+    // OpenAlex : index académique multidisciplinaire, API publique
+    jobs.push((async()=>{ try {
+      const u='https://api.openalex.org/works?search='+encodeURIComponent(q)+'&per-page=8&sort=relevance_score:desc&select=id,doi,title,publication_year,cited_by_count,authorships,primary_location,open_access,abstract_inverted_index';
+      const d=await this.get(u); (d.results||[]).forEach(x=>out.push({source:'OpenAlex',title:x.title||'Sans titre',year:x.publication_year||null,doi:x.doi||'',url:x.doi||x.id||'',citations:x.cited_by_count||0,venue:x.primary_location?.source?.display_name||'',abstract:this.abstract(x.abstract_inverted_index),oa:!!x.open_access?.is_oa}));
+    } catch(e){UI.log('OpenAlex indisponible : '+e.message,'warn','LBD');} })());
+    // Crossref : métadonnées et DOI
+    jobs.push((async()=>{ try {
+      const u='https://api.crossref.org/works?query.bibliographic='+encodeURIComponent(q)+'&rows=8&select=DOI,title,author,published,container-title,is-referenced-by-count,URL,abstract';
+      const d=await this.get(u); (d.message?.items||[]).forEach(x=>out.push({source:'Crossref',title:(x.title||['Sans titre'])[0],year:x.published?.['date-parts']?.[0]?.[0]||null,doi:x.DOI||'',url:x.URL||'',citations:x['is-referenced-by-count']||0,venue:(x['container-title']||[])[0]||'',abstract:this.strip(x.abstract||''),oa:false}));
+    } catch(e){UI.log('Crossref indisponible : '+e.message,'warn','LBD');} })());
+    // arXiv Atom endpoint; some browser origins block cross-origin requests
+    jobs.push((async()=>{ try {
+      const u='https://export.arxiv.org/api/query?search_query=all:'+encodeURIComponent(q)+'&start=0&max_results=8&sortBy=relevance';
+      const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),16000);
+      try { const r=await fetch(u,{signal:ctl.signal}); if(!r.ok) throw new Error('HTTP '+r.status); const xml=new DOMParser().parseFromString(await r.text(),'text/xml');
+        xml.querySelectorAll('entry').forEach(x=>out.push({source:'arXiv',title:this.clean(x.querySelector('title')?.textContent),year:(x.querySelector('published')?.textContent||'').slice(0,4),doi:'',url:x.querySelector('id')?.textContent||'',citations:0,venue:'arXiv preprint',abstract:this.clean(x.querySelector('summary')?.textContent),oa:true}));
+      } finally {clearTimeout(t);} 
+    } catch(e){UI.log('arXiv non accessible depuis ce navigateur (CORS/réseau possible) : '+e.message,'warn','LBD');} })());
+    await Promise.allSettled(jobs);
+    const seen=new Set(); this.results=out.filter(x=>x.title&&!seen.has(x.title.toLowerCase())&&seen.add(x.title.toLowerCase())).sort((a,b)=>(b.citations||0)-(a.citations||0)).slice(0,24);
+    this.results.forEach(x=>{x.query=q;x.retrievedAt=new Date().toISOString();});
+    try { await DB.put('kv',{id:'lbd_results',results:this.results,query:q}); } catch {}
+    if(status) status.textContent='Terminé : '+this.results.length+' références collectées. Index consultés : OpenAlex, Crossref, arXiv (selon accessibilité réseau/CORS).';
+    UI.log('LBD terminé : '+this.results.length+' références candidates','ok','LBD');
+    this.render(); this.busy=false;
+  },
+  abstract(inv){ if(!inv)return ''; const words=[]; Object.entries(inv).forEach(([w,idx])=>{idx.forEach(i=>words[i]=w)}); return words.join(' ').slice(0,900); },
+  strip(s){const d=document.createElement('div');d.innerHTML=s;return this.clean(d.textContent||'').slice(0,900);},
+  render(){ const el=U.$('lbdResults'); if(!el)return; if(!this.results.length){el.innerHTML='<p class="hint">Aucun résultat pour le moment. Lance une recherche ou vérifie la console si les API publiques sont bloquées.</p>';return;}
+    el.innerHTML=this.results.map((r,i)=>'<article class="ritem"><div class="h"><span class="lens">'+U.esc(r.source)+'</span><span class="ref">'+U.esc(String(r.year||'année inconnue'))+'</span><span class="sc sm">'+U.esc(String(r.citations||0))+' citations</span></div><div style="font-weight:700;color:#e6b45a">'+U.esc(r.title)+'</div><div class="w">'+U.esc(r.venue||'Source non précisée')+(r.doi?' · DOI : '+U.esc(r.doi):'')+'</div>'+(r.abstract?'<div class="w">'+U.esc(r.abstract.slice(0,480))+'</div>':'')+'<div class="readmore"><a href="'+U.esc(r.url||'#')+'" target="_blank" rel="noopener" style="color:#39d0d8">Ouvrir la source ↗</a></div><div class="hint">À vérifier : pertinence réelle, méthode, résultats, limites et éventuelles contradictions.</div></article>').join('');
+  },
+  async autoFor(r){
+    // Chaque découverte est mise en file. Aucune découverte n'est écartée par un délai global.
+    const q=[r.desc_decouverte,r.question,r.domaine,r.piste,r.formule,r.reponse].filter(Boolean).join(' ').slice(0,220);
+    if(q.replace(/\s/g,'').length<12) return;
+    const id='TH-'+new Date().toISOString().replace(/[-:.TZ]/g,'').slice(0,14)+'-'+Math.random().toString(36).slice(2,7);
+    this.autoQueue.push({id, discovery:r, query:q, queuedAt:new Date().toISOString()});
+    Journal.add('LBD EN FILE','Recherche automatique '+id,'Cette découverte attend sa recherche bibliographique dédiée.',{query:q});
+    if(this.autoWorker) return;
+    this.autoWorker=true;
+    try {
+      while(this.autoQueue.length){
+        const job=this.autoQueue.shift();
+        const status=U.$('lbdStatus'); if(status) status.textContent='LBD automatique : '+job.id+' · reste '+this.autoQueue.length+' découverte(s) dans la file.';
+        let found=[];
+        try {
+          // Attend une recherche manuelle déjà lancée au lieu de perdre cette découverte.
+          while(this.busy) await U.sleep(250);
+          // search() agrège les index; snapshot dédié pour la thèse liée à cette découverte.
+          await this.search(job.query,true);
+          found=this.results.map(x=>({...x}));
+        } catch(e){ UI.log('LBD '+job.id+' : '+e.message,'warn','LBD'); }
+        const thesis={id:job.id,createdAt:new Date().toISOString(),discovery:{ref:job.discovery.ref||'',lens:job.discovery.lens||'',description:job.discovery.desc_decouverte||job.discovery.reponse||'',question:job.discovery.question||'',formula:job.discovery.formule||'',score:job.discovery.score??null,methodScore:job.discovery.method_score??null},query:job.query,bibliography:found,assessment:{status:found.length?'À ÉVALUER — références candidates collectées':'INCOMPLET — aucune référence récupérée',supportedClaims:[],counterarguments:[],limitations:['Les résultats de recherche ne prouvent pas la découverte.','Les références candidates doivent être ouvertes et vérifiées.','Une absence de résultat ne prouve pas la nouveauté.'],nextSteps:['Lire les textes intégraux accessibles.','Comparer méthodes, données et conclusions.','Chercher explicitement les résultats contradictoires.','Formuler une prédiction falsifiable et un protocole indépendant.']},fullThesis:''};
+        try {
+          const bib=found.slice(0,18).map((b,i)=>({n:i+1,source:b.source,title:b.title,year:b.year,doi:b.doi,url:b.url,abstract:b.abstract,citations:b.citations}));
+          thesis.fullThesis=await API.text('Tu es un rapporteur scientifique exigeant. Rédige en français une thèse de travail structurée, jamais une validation automatique. Sépare explicitement : 1) question et définition opérationnelle, 2) hypothèse centrale, 3) état de la littérature réellement soutenu par les références fournies, 4) arguments favorables, 5) objections et explications alternatives, 6) ce que les sources ne permettent pas d’affirmer, 7) prédictions testables, 8) protocole de falsification reproductible, 9) conclusion graduée (établi / plausible / spéculatif / réfuté / indéterminé), 10) bibliographie à vérifier. N’invente ni citation, ni DOI, ni résultats. Les notices et résumés peuvent être incomplets ; signale toute limite. Une similitude de texte n’est pas une preuve causale ou mathématique. Si la découverte relie Genèse et physique, traite cela comme une interprétation à tester, pas comme un fait acquis.', JSON.stringify({discovery:thesis.discovery,searchQuery:job.query,searchResults:bib,sourceCount:found.length}), 2600, 0.25);
+        } catch(e) { thesis.fullThesis='Rédaction automatique indisponible : '+(e.message||String(e))+'. Le dossier bibliographique et le protocole de vérification restent disponibles.'; UI.log('Synthèse de thèse '+job.id+' indisponible : '+(e.message||e),'warn','THÈSE'); }
+        this.theses.unshift(thesis); if(this.theses.length>500)this.theses.length=500;
+        try { await DB.put('kv',{id:'theses',items:this.theses}); } catch(e) { UI.log('Impossible de sauvegarder la thèse '+job.id,'warn','LBD'); }
+        Journal.add('THÈSE CONSTITUÉE',job.id,thesis.assessment.status,{sources:found.length,query:job.query,discoveryRef:thesis.discovery.ref});
+        this.renderTheses();
+      }
+    } finally { this.autoWorker=false; }
+  },
+  renderTheses(){
+    let host=U.$('lbdTheses'); if(!host){const parent=U.$('pLbd'); if(!parent)return; host=document.createElement('div');host.id='lbdTheses';host.className='card';host.innerHTML='<h2>Thèses liées aux découvertes</h2><p class="hint">Chaque thèse relie une découverte à sa requête, aux références candidates et aux vérifications encore nécessaires.</p><div id="lbdThesesList"></div>';parent.appendChild(host);}
+    const list=U.$('lbdThesesList'); if(!list)return;
+    list.innerHTML=this.theses.map(t=>'<article class="ritem"><div class="h"><span class="lens">'+U.esc(t.id)+'</span><span class="ref">'+U.esc(new Date(t.createdAt).toLocaleString('fr-FR'))+'</span></div><strong>'+U.esc(t.discovery.description.slice(0,350))+'</strong><p class="w"><b>Question :</b> '+U.esc(t.discovery.question||'Non précisée')+'</p><p class="w"><b>Requête LBD :</b> '+U.esc(t.query)+'</p><p class="w"><b>État :</b> '+U.esc(t.assessment.status)+' · '+t.bibliography.length+' référence(s)</p><details><summary>Lire la thèse de travail complète</summary><div class="w" style="white-space:pre-wrap;line-height:1.6">'+U.esc(t.fullThesis||'Synthèse non disponible.')+'</div><h3>Références candidates</h3>'+t.bibliography.map(b=>'<p class="w">• '+U.esc(b.title)+' ('+U.esc(String(b.year||'s.d.'))+') — '+U.esc(b.source)+' · '+U.esc(b.url||'URL absente')+'</p>').join('')+'<h3>Étapes de vérification</h3><ul>'+t.assessment.nextSteps.map(x=>'<li>'+U.esc(x)+'</li>').join('')+'</ul><p class="hint">Limites : '+U.esc(t.assessment.limitations.join(' '))+'</p></details></article>').join('')||'<p class="hint">Aucune thèse pour le moment. Elle sera créée automatiquement après chaque découverte.</p>';
+  }
+};
+const Journal = {
+  entries: [],
+  add(type, title, body, evidence={}) { this.entries.push({time:new Date().toISOString(),type,title,body,evidence}); if(this.entries.length>1000)this.entries.shift(); try{DB.put('kv',{id:'journal',entries:this.entries}).catch(()=>{});}catch{} },
+  render(){ const pages=U.$('journalPages'); if(!pages)return; const data=this.entries.slice().reverse();
+    const pageSize=8, count=Math.max(1,Math.ceil(data.length/pageSize)); let html='';
+    for(let p=0;p<count;p++){ const chunk=data.slice(p*pageSize,(p+1)*pageSize); html+='<section class="card"><h2>Chapitre '+(p+1)+' / '+count+' — '+(p===0?'État présent':'Historique des opérations')+'</h2><p class="hint">Page '+(p+1)+' · '+chunk.length+' événements · du journal opérationnel</p>';
+      if(!chunk.length) html+='<p>Aucune opération enregistrée. Démarre le moteur ou lance une recherche bibliographique.</p>';
+      chunk.forEach(e=>{html+='<article class="ritem"><div class="h"><span class="lens">'+U.esc(e.type)+'</span><span class="ref">'+U.esc(new Date(e.time).toLocaleString('fr-FR'))+'</span></div><strong style="color:#e6b45a">'+U.esc(e.title)+'</strong><p class="w">'+U.esc(e.body)+'</p>'+(Object.keys(e.evidence||{}).length?'<pre style="white-space:pre-wrap;color:#888;font-size:10px">'+U.esc(JSON.stringify(e.evidence,null,2).slice(0,1200))+'</pre>':'')+'</article>';}); html+='</section>'; }
+    pages.innerHTML=html; const status=U.$('journalStatus'); if(status)status.textContent='État : '+(STATE.running?'moteur actif':STATE.paused?'en pause':'moteur arrêté')+' · analyses '+STATE.readCount+' · hypothèses/découvertes candidates '+STATE.discoveries.length+' · articles LBD '+LBD.results.length+'.';
+  },
+  report(){return {generatedAt:new Date().toISOString(),operationalState:{running:STATE.running,paused:STATE.paused,stopped:STATE.stopped,cycle:STATE.cycle,readCount:STATE.readCount,verseCount:STATE.verseCount,inFlight:STATE.inFlight,queue:STATE.queue.length},limitations:['Le statut opérationnel ne constitue pas une preuve de conscience subjective.','Une similitude textuelle ou bibliographique ne valide pas une découverte scientifique.','Les résultats LBD doivent être lus et évalués selon leur méthode et leurs limites.'],metrics:{readings:STATE.readings.length,discoveries:STATE.discoveries.length,similarities:STATE.similitudes.length,inventions:STATE.inventions.length,lenses:STATE.lenses.length,methodRules:STATE.method.length},recent:this.entries.slice(-100),bibliography:LBD.results};}
+};
+function downloadJSON(name,obj){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+U.$('lbdSearchBtn').onclick=()=>LBD.search(U.$('lbdQuery').value);
+U.$('lbdExportBtn').onclick=()=>downloadJSON('genesis-decoder-lbd.json',LBD.results);
+// Exporter les dossiers de thèse avec leurs références et étapes de vérification.
+const thesisExportBtn=document.createElement('button'); thesisExportBtn.className='sec'; thesisExportBtn.textContent='Exporter les thèses JSON'; thesisExportBtn.onclick=()=>downloadJSON('genesis-decoder-theses-v13.json',LBD.theses); U.$('lbdExportBtn').parentElement.appendChild(thesisExportBtn);
+U.$('journalRefresh').onclick=()=>Journal.render();
+U.$('journalExport').onclick=()=>downloadJSON('genesis-decoder-journal.json',Journal.report());
+
+/* ═════════════════════════════════════════════════════════════════════
+   🚀  INIT
+   ═════════════════════════════════════════════════════════════════════ */
+(async function init() {
+  loadSettingsUI();
+
+  const ks = Keys.load();
+  if (ks.length) {
+    STATE.keys = ks.map(k => ({ key: k, cool: 0, last: 0, n: 0, busy: 0, errors: 0, active: true }));
+    U.$('keysIn').classList.add('hide');
+    U.$('keyMask').classList.remove('hide');
+    U.$('keyMaskTxt').textContent = ks.map(k => k.slice(0, 6) + '…' + k.slice(-3)).join('  ·  ');
+    UI.setText('keyInfo', ks.length + ' clé(s)');
+    U.$('keyInfo').style.color = '#4cc38a';
+    UI.setText('keyStatus', ks.length + ' clé(s) restaurée(s), masquée(s) · ' + (ks.length * CONFIG.RPM_PER_KEY) + ' req/min. Panneau fermable pour les tutoriels.');
+  }
+  Keys.render();
+  updateFreeze();
+
+  try {
+    const lens = await DB.all('lenses');
+    STATE.lenses = [...SEED_LENSES, ...DEEP_LENSES];
+    lens.forEach(l => { if (!STATE.lenses.find(x => x.id === l.id)) STATE.lenses.push(l); });
+
+    const meth = await DB.all('method');
+    STATE.method = [...SEED_METHOD];
+    meth.forEach(m => { if (!STATE.method.find(x => x.id === m.id)) STATE.method.push(m); });
+
+    const kv = await DB.get('kv', 'method').catch(() => null);
+    if (kv && kv.direction) STATE.cumul.direction = kv.direction;
+
+    const rs = await DB.all('readings');
+    if (rs.length) { STATE.readings = rs; UI.log(rs.length + ' analyses restaurées', 'ok', 'INIT'); }
+    const dc = await DB.all('discoveries');
+    if (dc.length) { STATE.discoveries = dc; UI.log(dc.length + ' découvertes restaurées', 'ok', 'INIT'); }
+    const sm = await DB.all('similitudes');
+    if (sm.length) { sm.forEach(s => { STATE.similitudes.push({ ref: s.ref, lens: s.lens, similitude: { formule: s.formule, reference: s.reference, correspondance: s.correspondance, confiance: s.confiance, texte: s.texte }, score: s.score, time: s.time }); }); UI.log(sm.length + ' similitudes restaurées', 'ok', 'INIT'); }
+    const iv = await DB.all('inventions');
+    if (iv.length) { STATE.inventions = iv; UI.log(iv.length + ' inventions restaurées', 'ok', 'INIT'); }
+    const im = await DB.all('images');
+    if (im.length) { STATE.images = im; UI.log(im.length + ' images restaurées', 'ok', 'INIT'); }
+  } catch {
+    STATE.lenses = [...SEED_LENSES, ...DEEP_LENSES];
+    STATE.method = [...SEED_METHOD];
+  }
+
+  UI.setText('sRead', String(STATE.readings.length));
+  UI.setText('sDisc', String(STATE.discoveries.length));
+  UI.setText('sSim', String(STATE.similitudes.length));
+  UI.setText('sInv', String(STATE.inventions.length));
+  UI.setText('sLens', String(STATE.lenses.length));
+  UI.setText('sImg', String(STATE.images.length));
+
+  updateTabBadges();
+  const savedJournal = await DB.get('kv','journal').catch(()=>null); if(savedJournal && Array.isArray(savedJournal.entries)) Journal.entries=savedJournal.entries;
+  const savedLbd = await DB.get('kv','lbd_results').catch(()=>null); if(savedLbd && Array.isArray(savedLbd.results)){LBD.results=savedLbd.results; if(U.$('lbdQuery'))U.$('lbdQuery').value=savedLbd.query||'';}
+  const savedTheses = await DB.get('kv','theses').catch(()=>null); if(savedTheses && Array.isArray(savedTheses.items)) LBD.theses=savedTheses.items; LBD.renderTheses();
+  Journal.add('INIT','Application initialisée','Genesis·Decoder est prêt. Les états, métriques et limites seront consignés dans le journal.');
+  updateCtl();
+
+  UI.say('Genesis·Decoder', 'Prêt. Valide tes clés API (elles seront masquées), ferme le panneau, puis clique sur <strong>DÉMARRER LE MOTEUR</strong>.', 'valid');
+  UI.say('Genesis·Decoder',
+    'Le moteur va : (1) examiner l’hypothèse d’interprétation de Genèse 1:1-3 sans la présumer démontrée, (2) obtenir la liste des livres, ' +
+    '(3) lire chaque verset sous 8 angles (+ 4 angles profonds pour les êtres complexes), ' +
+    '(4) détecter découvertes, similitudes avec formules existantes, et inventions testables, ' +
+    '(5) évoluer ses angles et sa méthode, (6) tourner indéfiniment. ' +
+    'Onglet Synthèse pour l\'état d\'avancement ; bouton Geler l\'affichage pour lire sans défilement.',
+    'verse');
+
+  if (STATE.keys.length) {
+    UI.say('Genesis·Decoder', 'Clés détectées. Démarrage automatique dans 2 s.', 'valid');
+    setTimeout(() => startEngine(), 2000);
+  }
+
+  /* Boucle légère : compteurs et badges uniquement. Aucun re-rendu de contenu. */
+  setInterval(() => {
+    if (STATE.freezeUI) return;
+    Keys.render();
+    Renderer.conv();
+    updateTabBadges();
+  }, 2000);
+})();
+</script>
+</body>
+</html>
