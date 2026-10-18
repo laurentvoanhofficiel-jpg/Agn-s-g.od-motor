@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Genesis·Decoder v15</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:14px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#08080e;color:#d0d0dc;max-width:1280px;margin:0 auto;padding:12px}
+h1{font:800 20px system-ui;color:#e6b45a;letter-spacing:-.02em}
+h1 span{color:#39d0d8;font-size:11px;font-weight:400;margin-left:6px}
+h2{font:700 11px system-ui;color:#39d0d8;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.08em}
+.hint{font:11px ui-monospace;color:#555;margin-top:3px}
+.card{background:#111118;border:1px solid #222230;border-radius:8px;padding:12px;margin-bottom:10px}
+input,textarea,select{width:100%;padding:8px;background:#08080e;border:1px solid #222230;color:#d0d0dc;border-radius:5px;font:12px ui-monospace}
+input:focus,textarea:focus,select:focus{outline:0;border-color:#e6b45a}
+textarea{min-height:56px;resize:vertical}
+button{padding:8px 14px;background:#e6b45a;color:#000;border:0;border-radius:5px;font:700 12px system-ui;cursor:pointer;transition:.15s}
+button:hover:not(:disabled){filter:brightness(1.1)}
+button:disabled{opacity:.35;cursor:not-allowed}
+button.sec{background:#222230;color:#d0d0dc}
+button.cyan{background:#39d0d8;color:#000}
+button.green{background:#4cc38a;color:#000}
+button.red{background:#c04040;color:#fff}
+button.ghost{background:transparent;color:#888;border:1px solid #222230;padding:4px 10px;font-size:11px}
+button.ghost:hover{color:#e6b45a;border-color:#e6b45a}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.row button{flex:1;min-width:90px}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:6px;margin-bottom:10px}
+.stat .s{background:#111118;border:1px solid #222230;border-radius:5px;padding:8px;text-align:center;transition:.3s}
+.stat .s.bump{background:#1a1a28;border-color:#e6b45a;transform:scale(1.04)}
+.stat .s b{display:block;font:800 22px ui-monospace;color:#e6b45a}
+.stat .s.pink b{color:#ff64d0}.stat .s.cyan b{color:#39d0d8}.stat .s.green b{color:#4cc38a}
+.stat .s span{font:9px ui-monospace;color:#666;text-transform:uppercase;letter-spacing:.05em}
+.tabs{display:flex;gap:4px;overflow-x:auto;margin:10px 0 8px;padding-bottom:2px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{background:#111118;color:#888;border:1px solid #222230;border-radius:100px;font:700 12px system-ui;padding:7px 14px;white-space:nowrap;flex-shrink:0}
+.tabs button:hover{color:#d0d0dc}
+.tabs button.on{background:#e6b45a;color:#000;border-color:#e6b45a}
+.tabs button .bdg{display:inline-block;min-width:16px;padding:0 4px;margin-left:5px;border-radius:100px;background:#2a2a3a;color:#9fd8b0;font:700 10px ui-monospace}
+.tabs button.on .bdg{background:#000;color:#e6b45a}
+.live{display:grid;grid-template-columns:1fr 270px;gap:10px}
+@media(max-width:820px){.live{grid-template-columns:1fr}}
+#narration{background:#0c0c14;border:1px solid #1a1a28;border-radius:8px;padding:14px;height:600px;overflow-y:auto;scroll-behavior:smooth}
+#narration .n{padding:8px 0;border-bottom:1px solid #1a1a28;opacity:0;transform:translateY(6px);animation:in .35s forwards}
+#narration .n:last-child{border-bottom:0}
+@keyframes in{to{opacity:1;transform:translateY(0)}}
+#narration .n .t{font:10px ui-monospace;color:#444}
+#narration .n .s{color:#e6b45a;font:700 11px system-ui;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+#narration .n .x{margin-top:4px;color:#d0d0dc;line-height:1.6}
+#narration .n .x em{color:#39d0d8;font-style:normal}
+#narration .n .x strong{color:#e6b45a;font-weight:700}
+#narration .f{display:block;font:13px ui-monospace;color:#4cc38a;background:#0a1a0f;border-left:3px solid #4cc38a;padding:8px 12px;border-radius:5px;margin:6px 0;word-break:break-word}
+#narration .disc{background:#1a0a1a;border-left:3px solid #ff64d0;padding:12px 16px;border-radius:5px;margin:8px 0;color:#ff64d0;font-weight:600}
+#narration .valid{background:#0a1a0f;border-left:3px solid #4cc38a;padding:8px 12px;border-radius:5px;margin:6px 0;color:#4cc38a}
+#narration .meta{background:#0a1424;border-left:3px solid #39d0d8;padding:10px 14px;border-radius:5px;margin:8px 0;color:#39d0d8;font-weight:600}
+#narration .verse-ref{color:#39d0d8;font:700 12px ui-monospace}
+#narration .disc .inv{margin-top:6px;padding:8px 10px;background:#0a0a14;border-left:2px solid #39d0d8;color:#39d0d8;font-size:12px;font-weight:400;border-radius:3px}
+#narration .disc .inv b{color:#e6b45a;display:block;margin-bottom:3px;font-size:10px;text-transform:uppercase}
+#side{display:flex;flex-direction:column;gap:10px}
+#side .box{background:#0c0c14;border:1px solid #1a1a28;border-radius:8px;padding:10px}
+#side .box h3{font:700 10px system-ui;color:#666;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+#side .pos{font:700 13px ui-monospace;color:#39d0d8}
+#side .pos-sub{font:11px ui-monospace;color:#666;margin-top:2px}
+#side .bar{height:4px;background:#1a1a28;border-radius:2px;overflow:hidden;margin-top:6px}
+#side .bar i{display:block;height:100%;background:linear-gradient(90deg,#39d0d8,#e6b45a);transition:width .5s}
+#side .keylist{max-height:180px;overflow-y:auto}
+#side .k{display:flex;align-items:center;gap:5px;padding:4px 0;font:10px ui-monospace;border-bottom:1px solid #1a1a28}
+#side .k:last-child{border:0}
+#side .k .id{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888}
+#side .k .st{font:8px ui-monospace;padding:1px 5px;border-radius:3px;font-weight:700;text-transform:uppercase}
+#side .k .st.ok{background:#0a2a1a;color:#4cc38a}
+#side .k .st.cool{background:#2a1a0a;color:#d8983f}
+#side .k .st.dead{background:#2a0a0a;color:#e05555}
+.ritem{padding:10px;background:#0c0c14;border:1px solid #1a1a28;border-radius:6px;margin-bottom:6px;font-size:12px;cursor:pointer;transition:.15s}
+.ritem:hover{border-color:#39d0d8}
+.ritem .h{display:flex;gap:5px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
+.ritem .lens{font:9px ui-monospace;padding:2px 6px;background:#3a2a5a;color:#c8a0ff;border-radius:3px;font-weight:700;text-transform:uppercase}
+.ritem .ref{font:10px ui-monospace;color:#888}
+.ritem .sc{font:700 11px ui-monospace;margin-left:auto;padding:2px 7px;border-radius:100px}
+.ritem .f{font:12px ui-monospace;color:#e6b45a;margin:5px 0;word-break:break-word}
+.ritem .w{color:#888;margin-top:4px;line-height:1.5}
+.ritem .readmore{margin-top:5px;font:700 10px system-ui;color:#39d0d8;text-transform:uppercase}
+.ritem.best{border-color:#e6b45a;background:#1a1408}
+.ritem.disc{border-color:#ff64d0;background:#1a0a1a}
+.ritem.confirm{border-left:3px solid #4cc38a}
+.ritem.partial{border-left:3px solid #d8983f}
+.ritem.contradicted{border-left:3px solid #e05555}
+.sh{background:#4cc38a;color:#000}.sm{background:#d8983f;color:#000}.sl{background:#e05555;color:#fff}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.gal .g{background:#0c0c14;border:1px solid #1a1a28;border-radius:6px;overflow:hidden}
+.gal img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:pointer}
+.gal .c{padding:6px 8px;font:10px ui-monospace;color:#777;line-height:1.35}
+.gal .c b{color:#e6b45a;display:block;margin-bottom:2px}
+#console{background:#040408;border:1px solid #1a1a28;border-radius:6px;height:500px;overflow-y:auto;padding:8px;font:11px/1.5 ui-monospace}
+#console .e{padding:2px 0;border-bottom:1px solid #0a0a10;word-break:break-word}
+#console .e .t{color:#333;margin-right:6px}
+#console .e .g{color:#c8a0ff;margin-right:5px;font-weight:700}
+#console .ok{color:#4cc38a}#console .err{color:#e05555}#console .warn{color:#d8983f}
+#console .gold{color:#e6b45a}#console .lock{color:#39d0d8}#console .ai{color:#c8a0ff}
+#console .disc{color:#ff64d0;font-weight:700}#console .evo{color:#4cc38a;font-weight:700}
+.lc{padding:10px;background:#0c0c14;border:1px solid #1a1a28;border-left:3px solid #39d0d8;border-radius:5px;margin-bottom:6px;font-size:11.5px}
+.lc .h{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:5px}
+.lc .code{font:700 11px ui-monospace;color:#c8a0ff}
+.lc .lbl{color:#e6b45a;font-weight:700;font-size:12px}
+.lc .perf{margin-left:auto;font:10px ui-monospace;color:#888}
+.lc .q{color:#999;line-height:1.45;margin-top:4px}
+#keysCard .keyshead{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+#keysCard .keyshead h2{margin:0}
+#keysCard .keyshead .kinfo{margin-left:auto;font:11px ui-monospace;color:#4cc38a}
+#keysCard.closed .keysbody{display:none}
+#keysCard.closed{padding:10px 12px}
+.keysvalid{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.keysvalid button{flex:1;min-width:100px}
+.masked{display:flex;align-items:center;gap:10px;padding:10px;background:#08080e;border:1px dashed #2a2a3a;border-radius:6px;font:12px ui-monospace;color:#4cc38a}
+.masked .keymask{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#keyStatus{font:11px ui-monospace;margin-top:8px;padding:8px 10px;border-radius:5px;background:#08080e;border-left:2px solid #222230;color:#888;min-height:18px}
+#keyStatus.ok{border-left-color:#4cc38a;color:#4cc38a}
+#keyStatus.err{border-left-color:#e05555;color:#e05555}
+#keyStatus.warn{border-left-color:#d8983f;color:#d8983f}
+#modalBk{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:120;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+#modalBk.on{display:flex}
+#modal{background:#0e0e16;border:1px solid #2a2a3a;border-radius:10px;max-width:760px;width:100%;max-height:82vh;display:flex;flex-direction:column}
+#modal .mh{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #1a1a28}
+#modal .mh .mt{font:700 13px system-ui;color:#e6b45a;flex:1}
+#modal .mh button{padding:4px 10px;font-size:11px}
+#modal .mb{padding:16px;overflow-y:auto;font-size:13px;line-height:1.65}
+#modal .mb .field{margin-bottom:12px}
+#modal .mb .field .lab{font:700 10px system-ui;color:#39d0d8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+#modal .mb .field .val{color:#c8c8d4;word-break:break-word}
+#modal .mb .field .val.vf{font:14px ui-monospace;color:#4cc38a}
+#modal .mb .versefull{font-style:italic;color:#a8a8b8;border-left:3px solid #e6b45a;padding:8px 12px;background:#12121c;border-radius:5px;margin-bottom:12px}
+.sumbox{background:#0c0c14;border:1px solid #1a1a28;border-radius:8px;padding:12px}
+.sumbox h3{font:700 10px system-ui;color:#666;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.sumbox .big{font:800 24px ui-monospace;color:#e6b45a}
+.sumlist{margin-top:6px}
+.sumlist .row0{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #14141f;font:11.5px ui-monospace;color:#999}
+.sumlist .row0:last-child{border:0}
+.sumlist .row0 .r{color:#39d0d8;min-width:110px}
+.sumlist .row0 .s{margin-left:auto;color:#e6b45a;font-weight:700}
+.sing-card{background:#0c0c14;border:1px solid #1a1a28;border-left:3px solid #e6b45a;border-radius:6px;padding:12px;margin-bottom:8px;font-size:12px}
+.sing-card .st{font:700 12px system-ui;color:#e6b45a;margin-bottom:4px}
+.sing-card .ref{font:11px ui-monospace;color:#888}
+.sing-card .map{font:11px ui-monospace;color:#4cc38a;background:#0a1a0f;padding:6px 10px;border-radius:4px;margin-top:6px;white-space:pre-wrap}
+.exp-card{background:#0c0c14;border:1px solid #1a1a28;border-left:3px solid #39d0d8;border-radius:6px;padding:12px;margin-bottom:8px;font-size:12px}
+.exp-card.open{border-left-color:#d8983f}
+.exp-card.supported{border-left-color:#4cc38a}
+.exp-card.rejected{border-left-color:#e05555}
+.exp-card.stale{border-left-color:#666;opacity:.7}
+.exp-card .st{font:700 12px system-ui;color:#e6b45a;margin-bottom:4px}
+.exp-card .meta{font:10px ui-monospace;color:#666}
+.src-status{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;margin-bottom:10px}
+.src-status .s{background:#0c0c14;border:1px solid #1a1a28;border-radius:5px;padding:8px;font:10px ui-monospace;text-align:center}
+.src-status .s.healthy{border-color:#4cc38a;color:#4cc38a}
+.src-status .s.dead{border-color:#e05555;color:#e05555}
+.src-status .s.unknown{border-color:#666;color:#888}
+.novel-sec{background:#0c0c14;border:1px solid #1a1a28;border-radius:8px;margin-bottom:12px;overflow:hidden}
+.novel-sec h3{background:#0a0a14;color:#e6b45a;padding:10px 16px;margin:0;font:700 13px system-ui;border-bottom:1px solid #1a1a28}
+.novel-sec .body{padding:16px 20px;font:14px/1.75 Georgia,'Times New Roman',serif;color:#c8c8d4}
+.novel-sec .body p{margin-bottom:12px}
+.novel-fact{padding:8px 10px;border-left:2px solid #39d0d8;background:#0a0a14;margin:6px 0;cursor:pointer;font:11px ui-monospace;color:#a8a8b8;border-radius:3px}
+.novel-fact:hover{border-left-color:#e6b45a;color:#e6b45a}
+.setrow{display:grid;grid-template-columns:210px 1fr;gap:10px;align-items:center;margin-bottom:8px;font-size:12px}
+@media(max-width:700px){.setrow{grid-template-columns:1fr}}
+.setrow .lab{color:#888}
+.setrow input,.setrow select{max-width:340px}
+.setrow textarea{max-width:340px;min-height:70px}
+#hb{position:fixed;bottom:12px;right:12px;background:rgba(12,12,20,.95);border:1px solid #222230;border-radius:100px;padding:6px 14px;font:11px ui-monospace;color:#4cc38a;display:flex;gap:8px;align-items:center;z-index:90;backdrop-filter:blur(8px);box-shadow:0 4px 20px rgba(0,0,0,.5)}
+#hb .d{width:8px;height:8px;border-radius:50%;background:#4cc38a;animation:pulse-dot 1.5s infinite}
+#hb.pause .d{background:#d8983f;animation:none}
+#hb.freeze .d{background:#39d0d8;animation:none}
+#hb.stop .d{background:#e05555;animation:none}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:.8}}
+#toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-120px);background:#e6b45a;color:#000;padding:10px 20px;border-radius:100px;font:700 13px system-ui;z-index:130;transition:.3s;max-width:90%;text-align:center}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#toast.err{background:#e05555;color:#fff}
+#toast.ok{background:#4cc38a;color:#000}
+#jsBanner{background:#4cc38a;color:#000;padding:6px 10px;text-align:center;font:700 11px ui-monospace;border-radius:4px;margin-bottom:8px}
+#jsBanner.err{background:#e05555;color:#fff}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="jsBanner">⏳ Initialisation…</div>
+
+<h1>Genesis·Decoder <span>v15 · conscience opérationnelle + LBD multi-source + roman assemblé</span></h1>
+<div class="hint">Documentation d'hypothèses · validation externe obligatoire · journal opérationnel · motifs de singularité</div>
+
+<div class="card" id="keysCard">
+  <div class="keyshead" id="keysHead">
+    <h2>🔑 Clés API</h2>
+    <span class="kinfo" id="keyInfo">—</span>
+  </div>
+  <div class="keysbody" id="keysBody">
+    <textarea id="keysIn" placeholder="Colle tes clés API (une par ligne, min 8 caractères chacune)&#10;sk-...&#10;sk-..." spellcheck="false" rows="3"></textarea>
+    <div class="keysvalid">
+      <button class="green" id="validateKeysBtn" type="button">✓ Valider les clés</button>
+      <button class="cyan" id="testKeysBtn" type="button">🔌 Tester</button>
+      <button class="sec" id="clearKeysBtn" type="button" style="flex:0 0 auto;min-width:70px">Effacer</button>
+    </div>
+    <div id="keyStatus">Colle tes clés, valide, puis ferme le panneau.</div>
+    <div class="masked hide" id="keyMask" style="margin-top:8px">
+      <span>🔒</span><span class="keymask" id="keyMaskTxt"></span>
+      <button class="ghost" id="editKeysBtn" type="button">Modifier</button>
+    </div>
+  </div>
+</div>
+
+<div class="row" style="margin-bottom:10px">
+  <button class="green" id="startBtn" type="button">▶ DÉMARRER LE MOTEUR</button>
+  <button class="sec" id="pauseBtn" type="button" style="display:none">⏸ Pause moteur</button>
+  <button class="cyan" id="freezeBtn" type="button">🧊 Geler l'affichage</button>
+  <button class="red" id="stopBtn" type="button" style="display:none">⏹ Stop</button>
+</div>
+
+<div class="stat">
+  <div class="s"><b id="sKeys">0</b><span>Clés</span></div>
+  <div class="s cyan"><b id="sRead">0</b><span>Analyses</span></div>
+  <div class="s pink"><b id="sDisc">0</b><span>Découvertes</span></div>
+  <div class="s"><b id="sSim">0</b><span>Similitudes</span></div>
+  <div class="s cyan"><b id="sLens">0</b><span>Angles</span></div>
+  <div class="s"><b id="sImg">0</b><span>Images</span></div>
+  <div class="s"><b id="sVerse">0</b><span>Versets</span></div>
+  <div class="s cyan"><b id="sCycle">0</b><span>Cycle</span></div>
+  <div class="s pink"><b id="sInv">0</b><span>Inventions</span></div>
+  <div class="s green"><b id="sTheses">0</b><span>Thèses</span></div>
+  <div class="s green"><b id="sExp">0</b><span>Expériences</span></div>
+  <div class="s"><b id="sSing">0</b><span>Singularités</span></div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="on" data-t="live" type="button">📡 En direct</button>
+  <button data-t="best" type="button">★ Meilleures</button>
+  <button data-t="disc" type="button">💎 Découvertes</button>
+  <button data-t="sim" type="button">≅ Similitudes</button>
+  <button data-t="lbd" type="button">📚 LBD</button>
+  <button data-t="theses" type="button">📄 Thèses</button>
+  <button data-t="exp" type="button">🧪 Expériences</button>
+  <button data-t="sing" type="button">✦ Singularité</button>
+  <button data-t="meta" type="button">🧠 Méta</button>
+  <button data-t="novel" type="button">📖 Roman</button>
+  <button data-t="inv" type="button">⚗ Inventions</button>
+  <button data-t="img" type="button">🖼 Images</button>
+  <button data-t="self" type="button">🧬 Auto-org</button>
+  <button data-t="cons" type="button">⌨ Console</button>
+  <button data-t="set" type="button">⚙ Paramètres</button>
+</div>
+
+<div id="pLive">
+  <div class="live">
+    <div id="narration">
+      <div class="n"><div class="t">—</div><div class="s">Genesis·Decoder</div><div class="x">En attente. Valide tes clés API et clique sur <strong>DÉMARRER LE MOTEUR</strong>. Cadrage critique : Gen 1:1-3 est traité comme hypothèse interprétative, pas comme preuve.</div></div>
+    </div>
+    <div id="side">
+      <div class="box"><h3>Position</h3><div class="pos" id="posBook">—</div><div class="pos-sub" id="posVerse">En attente</div><div class="bar"><i id="posBar" style="width:0%"></i></div></div>
+      <div class="box"><h3>Convergence</h3><div class="pos" id="convVal">0 %</div><div class="pos-sub" id="convTxt">en attente</div><div class="bar"><i id="convBar" style="width:0%"></i></div></div>
+      <div class="box"><h3>Clés actives</h3><div class="keylist" id="keyList"></div></div>
+      <div class="box"><h3>Affichage</h3><div class="pos-sub" id="freezeStatus">Flux actif</div><button class="ghost" id="freezeBtn2" type="button" style="margin-top:6px;width:100%">Geler / dégeler</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="pBest" class="hide"><div id="bestView"></div></div>
+<div id="pDisc" class="hide"><div id="discView"></div></div>
+<div id="pSim" class="hide"><div id="simView"></div></div>
+<div id="pLBD" class="hide"><div id="lbdView"></div></div>
+<div id="pTheses" class="hide"><div id="thesesView"></div></div>
+<div id="pExp" class="hide"><div id="expView"></div></div>
+<div id="pSing" class="hide"><div id="singView"></div></div>
+<div id="pMeta" class="hide"><div id="metaView"></div></div>
+<div id="pNovel" class="hide"><div id="novelView"></div></div>
+<div id="pInv" class="hide"><div id="invView"></div></div>
+<div id="pImg" class="hide"><div class="gal" id="gallery"></div></div>
+<div id="pSelf" class="hide"><div id="selfView"></div></div>
+<div id="pCons" class="hide"><div id="console"></div></div>
+<div id="pSet" class="hide"><div class="card">
+  <h2>API</h2>
+  <div class="setrow"><span class="lab">Endpoint chat</span><input id="setApi"></div>
+  <div class="setrow"><span class="lab">Modèle texte</span><input id="setModelText"></div>
+  <div class="setrow"><span class="lab">Modèle images</span><input id="setModelImg"></div>
+  <div class="setrow"><span class="lab">Req/min par clé</span><input id="setRpm" type="number" min="1" max="60"></div>
+  <h2>Découverte</h2>
+  <div class="setrow"><span class="lab">Score méthode min</span><input id="setMinMethod" type="number" min="0" max="10" step="0.5"></div>
+  <div class="setrow"><span class="lab">Clarté question min</span><input id="setMinQuestion" type="number" min="0" max="10" step="0.5"></div>
+  <div class="setrow"><span class="lab">Novelty min</span><input id="setMinNovelty" type="number" min="0" max="10" step="0.5"></div>
+  <h2>Images</h2>
+  <div class="setrow"><span class="lab">Score min</span><input id="setImgMin" type="number" min="0" max="10" step="0.5"></div>
+  <h2>LBD</h2>
+  <div class="setrow"><span class="lab">LBD activé</span><select id="setLbdEnabled"><option value="1">Oui</option><option value="0">Non</option></select></div>
+  <div class="setrow"><span class="lab">Résultats max par source</span><input id="setLbdMax" type="number" min="5" max="50"></div>
+  <div class="setrow"><span class="lab">Email OpenAlex/Crossref</span><input id="setLbdEmail" placeholder="ton@email.org"></div>
+  <h2>Méta</h2>
+  <div class="setrow"><span class="lab">Réflexion méta / N analyses</span><input id="setMetaEvery" type="number" min="5" max="200"></div>
+  <div class="setrow"><span class="lab">Échantillons A/B</span><input id="setMetaSamples" type="number" min="3" max="50"></div>
+  <div class="setrow"><span class="lab">Delta promotion</span><input id="setMetaDelta" type="number" min="0" max="2" step="0.05"></div>
+  <div class="setrow"><span class="lab">Poids auto / externe</span>
+    <div style="display:flex;gap:6px;max-width:340px">
+      <input id="setMetaAutoW" type="number" min="0" max="1" step="0.05">
+      <input id="setMetaExtW" type="number" min="0" max="1" step="0.05">
+    </div>
+  </div>
+  <h2>Stockage</h2>
+  <div class="setrow"><span class="lab">Persistance</span><select id="setPersist"><option value="1">Oui</option><option value="0">Non</option></select></div>
+  <div id="storageInfo" class="hint" style="margin:8px 0"></div>
+  <h2>Export</h2>
+  <div class="row">
+    <button class="cyan" id="btnExportAll" type="button">⬇ Export complet</button>
+    <button class="sec" id="btnExportTheses" type="button">Thèses</button>
+    <button class="sec" id="btnExportJournal" type="button">Journal</button>
+  </div>
+  <div style="margin-top:10px"><button class="cyan" id="saveSetBtn" type="button">💾 Enregistrer</button></div>
+</div></div>
+
+<div id="modalBk"><div id="modal">
+  <div class="mh"><span class="mt" id="modalTitle">Lecture</span><button class="red" id="modalClose" type="button">✕ Fermer</button></div>
+  <div class="mb" id="modalBody"></div>
+</div></div>
+
+<div id="hb" class="stop"><span class="d"></span><span id="hbTxt">Inactif</span></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+var DEFAULTS = {
+  API: 'https://apihub.agnes-ai.com/v1',
+  MODEL_TEXT: 'agnes-2.5-flash',
+  MODEL_IMG: 'agnes-image-2.1-flash',
+  LS_KEYS: 'gd15_keys',
+  LS_SET: 'gd15_settings',
+  DB_NAME: 'gd15',
+  DB_VERSION: 1,
+  MAX_LOG: 400,
+  MAX_NARRATION: 300,
+  MAX_QUEUE: 80,
+  RPM_PER_KEY: 10,
+  COOLDOWN_429_MS: 65000,
+  FETCH_TIMEOUT_MS: 60000,
+  LBD_TIMEOUT_MS: 15000,
+  LBD_PROBE_TIMEOUT_MS: 5000,
+  LBD_DEAD_TTL_MS: 21600000,
+  LBD_CACHE_TTL_MS: 604800000,
+  EVOLVE_LENS_EVERY: 20,
+  EVOLVE_METHOD_EVERY: 60,
+  IMG_MIN_SCORE: 8.5,
+  DISCOVERY_MIN_METHOD: 8.0,
+  DISCOVERY_MIN_QUESTION: 7.5,
+  DISCOVERY_MIN_NOVELTY: 6.5,
+  SIM_MIN_SCORE: 6.5,
+  META_EVERY: 20,
+  META_MIN_SAMPLES: 6,
+  META_PROMOTE_DELTA: 0.15,
+  META_AUTO_WEIGHT: 0.5,
+  META_EXT_WEIGHT: 0.5,
+  LBD_ENABLED: true,
+  LBD_ARXIV_MAX: 20,
+  LBD_EMAIL: '',
+  PERSIST: true,
+  DEEP_TRIGGERS: ['homme','femme','âme','esprit','souffle','image','ressemblance','conscience','pensée','connais','volonté','être vivant','langage','parole','nom','cœur','vie éternelle','arbre de vie','dieu dit','faisons']
+};
+var CONFIG = {};
+(function(){ for (var k in DEFAULTS) CONFIG[k] = DEFAULTS[k]; })();
+try {
+  var _s = JSON.parse(localStorage.getItem(DEFAULTS.LS_SET) || 'null');
+  if (_s) for (var _k in _s) CONFIG[_k] = _s[_k];
+} catch(_e){}
+
+var STATE = {
+  keys: [], running: false, paused: false, stopped: false, freezeUI: false,
+  activeTab: 'live',
+  lenses: [], method: [], readings: [], discoveries: [], similitudes: [], inventions: [],
+  images: [], theses: [], experiences: [], metaJournal: [], singularityRegistry: [],
+  books: [], pos: { book: 0, chapter: 1 },
+  cumul: { present: [], absent: [], domains: [], direction: '' },
+  cycle: 0, bootstrapped: false, readCount: 0, verseCount: 0,
+  queue: [], inFlight: 0, lbdCache: {}, novelSections: null,
+  experienceCounter: 0
+};
+
+var U = {
+  $: function(id){ return document.getElementById(id); },
+  sleep: function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); },
+  esc: function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); },
+  now: function(){ return new Date().toLocaleTimeString('fr-FR', { hour12: false }); },
+  iso: function(){ return new Date().toISOString(); },
+  clamp: function(v, a, b){ return Math.max(a, Math.min(b, Number(v) || 0)); },
+  uid: function(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); },
+  hash: function(s){ var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return 'h' + (h >>> 0).toString(16); },
+  nearBottom: function(el, tol){ tol = tol || 60; return el.scrollHeight - el.scrollTop - el.clientHeight < tol; }
+};
+
+var _toastT;
+function toast(msg, type){
+  var el = U.$('toast'); if (!el) return;
+  el.textContent = msg;
+  el.className = 'on ' + (type || '');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(function(){ el.className = ''; }, 3000);
+}
+function safeOn(id, event, handler){
+  var el = U.$(id);
+  if (!el){ console.warn('[safeOn] #' + id); return; }
+  el.addEventListener(event, function(e){
+    try { handler(e); } catch(err){
+      console.error('[safeOn] #' + id, err);
+      try { toast('Erreur : ' + (err && err.message ? err.message : String(err)), 'err'); } catch(_){}
+    }
+  });
+}
+function setBanner(msg, kind){
+  var b = U.$('jsBanner'); if (!b) return;
+  b.textContent = msg; b.className = kind || '';
+}
+window.addEventListener('error', function(e){
+  console.error('[Global]', e.error || e.message);
+  setBanner('❌ Erreur JS : ' + (e.message || 'inconnue') + ' — F12', 'err');
+});
+function downloadJSON(name, obj){
+  var blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+}
+
+var UI = {
+  log: function(msg, cls, group){
+    if (STATE.freezeUI) return;
+    var c = U.$('console'); if (!c) return;
+    var d = document.createElement('div');
+    d.className = 'e ' + (cls || '');
+    d.innerHTML = '<span class="t">' + U.now() + '</span>' + (group ? '<span class="g">[' + U.esc(group) + ']</span>' : '') + U.esc(msg);
+    c.appendChild(d);
+    while (c.children.length > CONFIG.MAX_LOG) c.removeChild(c.firstChild);
+    c.scrollTop = c.scrollHeight;
+    console.log('[GD]', group || '', msg);
+  },
+  say: function(speaker, html, cls){
+    if (STATE.freezeUI) return;
+    var n = U.$('narration'); if (!n) return;
+    var stick = U.nearBottom(n);
+    var d = document.createElement('div');
+    d.className = 'n';
+    if (cls === 'disc') d.innerHTML = '<div class="disc">' + html + '</div>';
+    else if (cls === 'valid') d.innerHTML = '<div class="valid">' + html + '</div>';
+    else if (cls === 'meta') d.innerHTML = '<div class="meta">' + html + '</div>';
+    else if (cls === 'formula') d.innerHTML = '<span class="f">' + html + '</span>';
+    else if (cls === 'verse') d.innerHTML = html;
+    else d.innerHTML = '<div class="t">' + U.now() + '</div><div class="s">' + U.esc(speaker) + '</div><div class="x">' + html + '</div>';
+    n.appendChild(d);
+    while (n.children.length > CONFIG.MAX_NARRATION) n.removeChild(n.firstChild);
+    if (stick) n.scrollTop = n.scrollHeight;
+  },
+  bump: function(id){
+    var el = U.$(id); if (!el) return;
+    var card = el.closest ? el.closest('.s') : null;
+    if (card){ card.classList.add('bump'); setTimeout(function(){ card.classList.remove('bump'); }, 300); }
+  },
+  setText: function(id, txt){ var e = U.$(id); if (e) e.textContent = txt; }
+};
+function setKeyStatus(msg, kind){
+  var el = U.$('keyStatus'); if (!el) return;
+  el.textContent = msg; el.className = kind || '';
+}
+
+var DB = (function(){
+  var _db = null;
+  function open(){
+    return new Promise(function(res, rej){
+      if (_db) return res(_db);
+      if (!window.indexedDB) return rej(new Error('IndexedDB indisponible'));
+      var rq = indexedDB.open(CONFIG.DB_NAME, CONFIG.DB_VERSION);
+      rq.onupgradeneeded = function(e){
+        var d = e.target.result;
+        var stores = ['readings','images','discoveries','similitudes','inventions','chapters','theses','experiences','metaJournal','singularityRegistry','novel','lbdCache'];
+        stores.forEach(function(s){
+          if (!d.objectStoreNames.contains(s)){
+            var opts = (s === 'singularityRegistry' || s === 'lbdCache') ? { keyPath:'id' } : { keyPath:'id', autoIncrement:true };
+            d.createObjectStore(s, opts);
+          }
+        });
+        ['lenses','method','kv','prompts'].forEach(function(s){
+          if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath:'id' });
+        });
+      };
+      rq.onsuccess = function(e){ _db = e.target.result; res(_db); };
+      rq.onerror = function(){ rej(rq.error); };
+    });
+  }
+  function add(s, v){ return open().then(function(d){ return new Promise(function(res, rej){ var tx = d.transaction(s, 'readwrite'); var rq = tx.objectStore(s).add(v); rq.onsuccess = function(){ res(rq.result); }; tx.onerror = function(){ rej(tx.error); }; }); }); }
+  function put(s, v, k){ return open().then(function(d){ return new Promise(function(res, rej){ var tx = d.transaction(s, 'readwrite'); if (k !== undefined) tx.objectStore(s).put(v, k); else tx.objectStore(s).put(v); tx.oncomplete = function(){ res(true); }; tx.onerror = function(){ rej(tx.error); }; }); }); }
+  function all(s){ return open().then(function(d){ return new Promise(function(res, rej){ var rq = d.transaction(s).objectStore(s).getAll(); rq.onsuccess = function(){ res(rq.result || []); }; rq.onerror = function(){ rej(rq.error); }; }); }); }
+  function get(s, k){ return open().then(function(d){ return new Promise(function(res, rej){ var rq = d.transaction(s).objectStore(s).get(k); rq.onsuccess = function(){ res(rq.result); }; rq.onerror = function(){ rej(rq.error); }; }); }); }
+  return { open: open, add: add, put: put, all: all, get: get };
+})();
+
+var Storage = {
+  persistRequested: false,
+  requestPersist: async function(){
+    if (!CONFIG.PERSIST || this.persistRequested) return;
+    this.persistRequested = true;
+    try {
+      if (navigator.storage && navigator.storage.persist){
+        var granted = await navigator.storage.persist();
+        UI.log('Persistance ' + (granted ? 'accordée' : 'refusée'), granted ? 'ok' : 'warn', 'STORAGE');
+      }
+    } catch(e){ UI.log('Persist : ' + e.message, 'warn', 'STORAGE'); }
+  },
+  estimate: async function(){
+    try { if (!navigator.storage || !navigator.storage.estimate) return null; return await navigator.storage.estimate(); } catch(e){ return null; }
+  },
+  infoText: async function(){
+    var est = await this.estimate();
+    if (!est) return 'Quota non disponible';
+    var used = est.usage || 0, quota = est.quota || 0;
+    var pct = quota ? (used / quota * 100).toFixed(2) : '?';
+    return 'Utilisé : ' + this.fmt(used) + ' / ' + this.fmt(quota) + ' (' + pct + '%)';
+  },
+  fmt: function(b){
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB';
+    return (b / 1073741824).toFixed(2) + ' GB';
+  }
+};
+
+var Keys = {
+  load: function(){
+    try {
+      var r = localStorage.getItem(CONFIG.LS_KEYS);
+      if (!r) return [];
+      var arr = JSON.parse(r);
+      if (!Array.isArray(arr)) return [];
+      return arr.filter(function(k){ return typeof k === 'string' && k.trim().length >= 8; });
+    } catch(e){ return []; }
+  },
+  save: function(keys){ try { localStorage.setItem(CONFIG.LS_KEYS, JSON.stringify(keys)); } catch(e){} },
+  parseInput: function(raw){
+    if (!raw) return [];
+    var parts = String(raw).split(/[\s,;]+/);
+    var out = [];
+    for (var i = 0; i < parts.length; i++){
+      var x = parts[i].trim();
+      x = x.replace(/^["'`\[\]<>]+/, '').replace(/["'`\[\]<>]+$/, '');
+      if (x.length > 0) out.push(x);
+    }
+    return out;
+  },
+  validate: function(){
+    console.log('[Keys.validate] start');
+    var ta = U.$('keysIn');
+    if (!ta){ setKeyStatus('⚠ Champ introuvable', 'err'); return; }
+    var raw = (ta.value || '').trim();
+    if (!raw){ setKeyStatus('⚠ Aucune clé saisie', 'err'); toast('Aucune clé', 'err'); return; }
+    var cands = Keys.parseInput(raw);
+    if (!cands.length){ setKeyStatus('⚠ Aucune clé détectée', 'err'); return; }
+    var seen = {}, valid = [], rejected = [];
+    for (var i = 0; i < cands.length; i++){
+      var k = cands[i];
+      if (k.length < 8){ rejected.push(k); continue; }
+      if (seen[k]) continue;
+      seen[k] = true;
+      valid.push(k);
+    }
+    if (!valid.length){
+      setKeyStatus('⚠ ' + rejected.length + ' clé(s) rejetée(s) (min 8 caractères).', 'err');
+      toast('Aucune clé valide', 'err');
+      return;
+    }
+    var old = {};
+    for (var j = 0; j < STATE.keys.length; j++) old[STATE.keys[j].key] = STATE.keys[j];
+    var newKeys = [];
+    for (var m = 0; m < valid.length; m++){
+      var kk = valid[m];
+      newKeys.push(old[kk] || { key: kk, cool: 0, last: 0, n: 0, busy: 0, errors: 0, active: true });
+    }
+    STATE.keys = newKeys;
+    Keys.save(valid);
+    ta.value = '';
+    ta.classList.add('hide');
+    var km = U.$('keyMask'); if (km) km.classList.remove('hide');
+    var kmt = U.$('keyMaskTxt');
+    if (kmt){
+      var masked = [];
+      for (var n = 0; n < valid.length; n++) masked.push(valid[n].slice(0, 6) + '…' + valid[n].slice(-3));
+      kmt.textContent = masked.join('  ·  ');
+    }
+    var ki = U.$('keyInfo');
+    if (ki){ ki.textContent = valid.length + ' clé(s) validée(s)'; ki.style.color = '#4cc38a'; }
+    var summary = '✓ ' + valid.length + ' clé(s) · ' + (valid.length * CONFIG.RPM_PER_KEY) + ' req/min';
+    if (rejected.length) summary += ' · ' + rejected.length + ' rejetée(s)';
+    setKeyStatus(summary, 'ok');
+    toast(valid.length + ' clé(s) validée(s)', 'ok');
+    UI.log('Clés validées : ' + valid.length, 'ok', 'KEYS');
+    Keys.render();
+  },
+  edit: function(){
+    var ta = U.$('keysIn'); if (!ta) return;
+    ta.classList.remove('hide');
+    ta.value = Keys.load().join('\n');
+    var km = U.$('keyMask'); if (km) km.classList.add('hide');
+    setKeyStatus('Modifie puis valide.', 'warn');
+  },
+  render: function(){
+    var el = U.$('keyList'); if (!el) return;
+    var now = Date.now(), active = 0;
+    if (!STATE.keys.length){ el.innerHTML = '<div style="color:#555;font-size:10px;padding:4px">Aucune clé</div>'; UI.setText('sKeys', '0'); return; }
+    var html = '';
+    for (var i = 0; i < STATE.keys.length; i++){
+      var k = STATE.keys[i];
+      var cls = 'ok', tx = 'OK';
+      if (!k.active){ cls = 'dead'; tx = 'morte'; }
+      else if (k.cool > now){ cls = 'cool'; tx = Math.ceil((k.cool - now) / 1000) + 's'; }
+      else active++;
+      html += '<div class="k"><span class="id">#' + (i+1) + ' ' + U.esc(k.key.slice(0,6)) + '…' + U.esc(k.key.slice(-3)) + '</span>' +
+        '<span style="color:#555">' + (k.n || 0) + '</span><span class="st ' + cls + '">' + tx + '</span></div>';
+    }
+    el.innerHTML = html;
+    UI.setText('sKeys', String(active));
+    var hb = U.$('hbTxt');
+    if (STATE.running && hb) hb.textContent = STATE.paused ? 'Pause' : (STATE.freezeUI ? 'Affichage gelé' : 'En cours · ' + active + ' clés');
+  },
+  anyActive: function(){ for (var i = 0; i < STATE.keys.length; i++) if (STATE.keys[i].active) return true; return false; },
+  pick: function(){
+    var now = Date.now();
+    var minInt = Math.ceil(60000 / CONFIG.RPM_PER_KEY);
+    var ready = [];
+    for (var i = 0; i < STATE.keys.length; i++){
+      var k = STATE.keys[i];
+      if (k.active && k.cool < now && now - k.last >= minInt && k.busy < 1) ready.push(k);
+    }
+    if (!ready.length) return null;
+    ready.sort(function(a, b){ return (a.n - b.n) || (a.last - b.last); });
+    return ready[0];
+  },
+  acquire: function(){
+    return new Promise(function(res, rej){
+      var t0 = Date.now();
+      (function loop(){
+        if (STATE.stopped) return rej(new Error('Arrêt'));
+        var k = Keys.pick();
+        if (k){ k.busy++; k.last = Date.now(); k.n++; return res(k); }
+        if (!Keys.anyActive()) return rej(new Error('Aucune clé active'));
+        if (Date.now() - t0 > 300000) return rej(new Error('Timeout clés'));
+        setTimeout(loop, 250);
+      })();
+    });
+  },
+  release: function(k){ if (k) k.busy = Math.max(0, k.busy - 1); }
+};
+
+var API = {
+  call: function(url, opts, tries){
+    tries = tries || 4;
+    var last;
+    function attempt(a){
+      if (a >= tries) return Promise.reject(last || new Error('Échec API'));
+      if (STATE.stopped) return Promise.reject(new Error('Arrêt'));
+      var k = null;
+      return Keys.acquire().then(function(key){
+        k = key;
+        var ctl = new AbortController();
+        var t = setTimeout(function(){ ctl.abort(); }, CONFIG.FETCH_TIMEOUT_MS);
+        var headers = {};
+        if (opts.headers) for (var h in opts.headers) headers[h] = opts.headers[h];
+        headers['Authorization'] = 'Bearer ' + k.key;
+        var fo = { method: opts.method || 'GET', headers: headers, signal: ctl.signal };
+        if (opts.body) fo.body = opts.body;
+        return fetch(url, fo).then(function(res){
+          clearTimeout(t);
+          var ra = parseInt(res.headers.get('Retry-After') || '0', 10) || 0;
+          if (res.ok){ k.errors = 0; Keys.release(k); return res; }
+          return res.clone().text().then(function(txt){
+            if (res.status === 401 || res.status === 403){
+              k.errors++; if (k.errors >= 3) k.active = false;
+              Keys.release(k);
+              var e1 = new Error('HTTP ' + res.status); e1.status = res.status; throw e1;
+            }
+            if (res.status === 429){
+              var w = ra ? ra * 1000 : CONFIG.COOLDOWN_429_MS;
+              k.cool = Date.now() + w; Keys.release(k);
+              UI.log('429 · clé …' + k.key.slice(-4) + ' → ' + Math.round(w/1000) + 's', 'warn', 'RATE');
+              return U.sleep(Math.min(w, 5000)).then(function(){ return attempt(a+1); });
+            }
+            if (res.status === 400 || res.status === 404){
+              Keys.release(k);
+              var e2 = new Error('HTTP ' + res.status + ' — ' + String(txt).slice(0,140)); e2.status = res.status; throw e2;
+            }
+            Keys.release(k);
+            last = new Error('HTTP ' + res.status);
+            return U.sleep(1500 + a*1000).then(function(){ return attempt(a+1); });
+          });
+        }).catch(function(e){
+          if (k) Keys.release(k);
+          if (e && e.message === 'Arrêt') throw e;
+          if (e && (e.status === 400 || e.status === 401 || e.status === 403 || e.status === 404)) throw e;
+          if (e && e.name === 'AbortError'){ last = new Error('Timeout'); return U.sleep(1500).then(function(){ return attempt(a+1); }); }
+          last = e;
+          return U.sleep(1500 + a*800).then(function(){ return attempt(a+1); });
+        });
+      });
+    }
+    return attempt(0);
+  },
+  text: function(sys, usr, max, temp){
+    max = max || 2400; temp = (temp == null) ? 0.75 : temp;
+    var body = {
+      model: CONFIG.MODEL_TEXT,
+      messages: [{ role:'system', content:sys }, { role:'user', content:usr }],
+      temperature: temp, max_tokens: max,
+      reasoning_effort: 'none',
+      chat_template_kwargs: { enable_thinking: false }
+    };
+    return API.call(CONFIG.API + '/chat/completions', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    }, 3).then(function(r){ return r.json(); }).then(function(d){
+      var c = d.choices && d.choices[0] && d.choices[0].message;
+      return (c && c.content) || (c && c.reasoning_content) || '';
+    });
+  },
+  image: function(prompt){
+    var body = { model: CONFIG.MODEL_IMG, prompt: String(prompt).slice(0, 1900), n: 1, size: '1K', ratio: '1:1' };
+    return API.call(CONFIG.API + '/images/generations', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    }, 3).then(function(r){ return r.json(); }).then(function(d){
+      var it = d.data && d.data[0];
+      if (!it) throw new Error('Pas d\'image');
+      if (it.url) return it.url;
+      if (it.b64_json) return 'data:image/png;base64,' + it.b64_json;
+      throw new Error('Format image inconnu');
+    });
+  },
+  testKey: function(key){
+    var body = { model: CONFIG.MODEL_TEXT, messages:[{role:'user', content:'ping'}], max_tokens:5, temperature:0 };
+    var ctl = new AbortController();
+    var t = setTimeout(function(){ ctl.abort(); }, 20000);
+    return fetch(CONFIG.API + '/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer ' + key},
+      body: JSON.stringify(body), signal: ctl.signal
+    }).then(function(res){
+      clearTimeout(t);
+      if (res.ok) return { ok: true, status: res.status };
+      return res.text().then(function(txt){ return { ok:false, status: res.status, body: String(txt).slice(0,200) }; });
+    }).catch(function(e){ clearTimeout(t); return { ok:false, status:0, error: e.message }; });
+  }
+};
+
+var Parser = {
+  json: function(text){
+    if (!text) return null;
+    var c = String(text).trim();
+    var fm = c.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fm) c = fm[1].trim();
+    var fb = c.indexOf('{'); if (fb < 0) return null;
+    c = c.slice(fb);
+    var lb = c.lastIndexOf('}'); if (lb > 0) c = c.slice(0, lb + 1);
+    var out = '', inS = false, escF = false;
+    for (var i = 0; i < c.length; i++){
+      var ch = c[i];
+      if (escF){ out += ch; escF = false; continue; }
+      if (ch === '\\'){ out += ch; escF = true; continue; }
+      if (ch === '"'){ inS = !inS; out += ch; continue; }
+      if (inS){
+        if (ch === '\n'){ out += '\\n'; continue; }
+        if (ch === '\r'){ out += '\\r'; continue; }
+        if (ch === '\t'){ out += '\\t'; continue; }
+        if (ch.charCodeAt(0) < 32){ out += '\\u' + ch.charCodeAt(0).toString(16).padStart(4,'0'); continue; }
+      }
+      out += ch;
+    }
+    out = out.replace(/,\s*([}\]])/g, '$1');
+    try { return JSON.parse(out); } catch(e1){}
+    var ob = 0, ok = 0, iS = false, eF = false;
+    for (var j = 0; j < out.length; j++){
+      var c2 = out[j];
+      if (eF){ eF = false; continue; }
+      if (c2 === '\\'){ eF = true; continue; }
+      if (c2 === '"'){ iS = !iS; continue; }
+      if (iS) continue;
+      if (c2 === '{') ob++; else if (c2 === '}') ob--;
+      else if (c2 === '[') ok++; else if (c2 === ']') ok--;
+    }
+    var r = out;
+    if (iS) r += '"';
+    while (ok > 0){ r += ']'; ok--; }
+    while (ob > 0){ r += '}'; ob--; }
+    try { return JSON.parse(r); } catch(e2){ return null; }
+  }
+};
+
+var SEED_LENSES = [
+  { id:'L1', code:'QUESTION', lbl:'Question fondamentale', status:'core', p:{n:0,avg:0,best:0}, q:"Quelle question scientifique précise ce verset pose-t-il ? Formule-la en une phrase." },
+  { id:'L2', code:'VARIABLES', lbl:'Variables textuelles', status:'core', p:{n:0,avg:0,best:0}, q:"Quels mots correspondent à des objets scientifiques ? Chaque variable vient d'un mot présent." },
+  { id:'L3', code:'CUMUL', lbl:'Cumul présents/absents', status:'core', p:{n:0,avg:0,best:0}, q:"Quelles variables présentes, lesquelles absentes ? Qu'est-ce que cela rend possible ?" },
+  { id:'L4', code:'FORMULE', lbl:'Formule émergente', status:'core', p:{n:0,avg:0,best:0}, q:"Quelle formule devient EXPRIMABLE avec les variables présentes ?" },
+  { id:'L5', code:'DIRECTION', lbl:'Direction', status:'core', p:{n:0,avg:0,best:0}, q:"Où ce verset nous emmène-t-il dans la direction globale ?" },
+  { id:'L6', code:'MYSTERE', lbl:'Mystère scientifique', status:'core', p:{n:0,avg:0,best:0}, q:"À quel mystère scientifique ACTUEL ce verset fait-il écho ?" },
+  { id:'L7', code:'INVENTION', lbl:'Piste d\'invention', status:'core', p:{n:0,avg:0,best:0}, q:"Quelle invention ou protocole expérimental concret découle de cette lecture ?" },
+  { id:'L8', code:'SIMILITUDE', lbl:'Similitude existante', status:'core', p:{n:0,avg:0,best:0}, q:"Le cumul reproduit-il une formule EXISTANTE IDENTIFIÉE ? Si oui : formule, référence complète (auteur, année, revue, DOI/arXiv), correspondance. Sinon 'aucune'." },
+  { id:'L9', code:'SINGULARITY', lbl:'Complétion relation connue', status:'core', p:{n:0,avg:0,best:0}, q:"Ce verset fournit-il le DERNIER TERME MANQUANT qui rend exprimable une relation DÉJÀ NOMMÉE et RÉFÉRENCÉE ? Si oui : nom, référence complète, correspondance terme-symbole, terme apporté. Sans référence → 'aucune'." }
+];
+var DEEP_LENSES = [
+  { id:'D1', code:'BIOL_INFO', lbl:'Information biologique', status:'deep', p:{n:0,avg:0,best:0}, q:"Information biologique : ADN, code génétique, hérédité." },
+  { id:'D2', code:'INFO_INTEGREE', lbl:'IIT', status:'deep', p:{n:0,avg:0,best:0}, q:"Information intégrée (Tononi), Φ, conscience." },
+  { id:'D3', code:'CONSCIENCE', lbl:'Conscience phénoménale', status:'deep', p:{n:0,avg:0,best:0}, q:"Conscience phénoménale, auto-modèle, Orch-OR/IIT/GWT." },
+  { id:'D4', code:'LANGAGE', lbl:'Langage symbolique', status:'deep', p:{n:0,avg:0,best:0}, q:"Langage symbolique, récursivité, Chomsky." }
+];
+var SEED_METHOD = [
+  { id:'R1', name:'Source textuelle', desc:'Chaque variable vient d\'un mot présent textuellement.', w:1.0, externalHits:0, externalTotal:0 },
+  { id:'R2', name:'Pas d\'anticipation', desc:'Aucun objet scientifique avant son mot-source.', w:1.0, externalHits:0, externalTotal:0 },
+  { id:'R3', name:'Pas de sur-simplification', desc:'« lumière » n\'est pas « lumière visible » — c\'est la constante c dans le motif E=mc².', w:1.0, externalHits:0, externalTotal:0 },
+  { id:'R4', name:'Question obligatoire', desc:'Chaque verset révèle SA question.', w:1.0, externalHits:0, externalTotal:0 },
+  { id:'R5', name:'Cumul cohérent', desc:'Présents/absents respectés.', w:1.0, externalHits:0, externalTotal:0 },
+  { id:'R6', name:'Anti-hallucination', desc:'Toute formule citée DOIT exister publiquement avec référence complète (auteur, année, revue, DOI/arXiv). Sinon « aucune ».', w:1.0, externalHits:0, externalTotal:0, mandatory:true }
+];
+var SINGULARITY_PATTERN = {
+  id: 'SING-EMC2', name: 'Motif E=mc²', status: 'pattern',
+  description: 'E=mc² illustre une FORME : trois primitives dont la dernière, apportée par un verset, rend exprimable une relation publiée. Ce n\'est pas une preuve que le texte contient l\'équation.',
+  relation: 'E = mc²',
+  reference: 'Einstein, A. (1905), Annalen der Physik 18, 639-641. DOI: 10.1002/andp.19053231314',
+  rule: 'Le motif est reproductible : chercher des cas où le dernier terme apporté par un verset complète une relation déjà publiée. Le motif n\'établit PAS la vérité de la relation depuis le texte.'
+};
+
+var DEFAULT_VERSE_SYSTEM = 'Tu es un analyste critique en histoire des textes et en sciences. Tu compares interprétations symboliques et concepts scientifiques sans présumer qu\'elles les démontrent.\n\nRÈGLES :\n{rules}\n\nDiscipline :\n1. Chaque variable vient d\'un mot présent textuellement.\n2. Aucune variable avant son mot-source.\n3. Ne transforme pas un mot ancien en définition mathématique moderne sans argument indépendant.\n4. Chaque verset révèle SA question.\n5. Le cumul est respecté.\n6. AUCUNE formule inventée : toute formule citée DOIT être publiée et identifiable (auteur, année, revue, DOI/arXiv). Si tu ne peux pas fournir cette référence, écris "aucune".\n7. Classe chaque proposition : observation / analogie / hypothèse testable / résultat vérifié.\n\nSÉQUENCE : Question → Variables → Cumul → Formule → Direction → Mystère → Similitude → Invention.\n\nJSON uniquement.';
+
+var PromptStore = {
+  data: {},
+  load: function(){
+    var self = this;
+    return DB.all('prompts').catch(function(){ return []; }).then(function(rows){
+      rows.forEach(function(r){ if (r && r.id) self.data[r.id] = r.value; });
+      if (!self.data.verse_system){
+        self.data.verse_system = {
+          activeId: 'base', abId: null,
+          versions: { base: { text: DEFAULT_VERSE_SYSTEM, n: 0, sum: 0, createdAt: Date.now(), externalHits: 0, externalTotal: 0, humanScore: 0 } }
+        };
+      }
+    });
+  },
+  persist: function(){ return DB.put('prompts', { id: 'verse_system', value: this.data.verse_system }).catch(function(){}); },
+  getForCall: function(){
+    var d = this.data.verse_system;
+    if (!d) return { id: 'base', text: DEFAULT_VERSE_SYSTEM };
+    var id = d.activeId;
+    if (d.abId && d.versions[d.abId]) id = Math.random() < 0.5 ? d.activeId : d.abId;
+    return { id: id, text: d.versions[id].text };
+  },
+  record: function(id, methodScore, externalScore, humanScore){
+    var d = this.data.verse_system;
+    if (!d || !d.versions[id]) return;
+    var v = d.versions[id];
+    v.n++;
+    v.sum += methodScore;
+    if (externalScore != null){ v.externalTotal++; if (externalScore > 0.3) v.externalHits++; }
+    if (humanScore != null) v.humanScore += humanScore;
+    this.persist();
+    this.maybePromote();
+  },
+  combinedScore: function(v){
+    var auto = v.n ? v.sum / v.n : 0;
+    var ext = v.externalTotal ? v.externalHits / v.externalTotal : null;
+    var extContribution = ext == null ? null : (ext * 10);
+    var human = v.humanScore || 0;
+    if (extContribution == null) return { score: auto, auto: auto, ext: null, human: human, hasExternal: false };
+    var combined = (CONFIG.META_AUTO_WEIGHT * auto) + (CONFIG.META_EXT_WEIGHT * extContribution);
+    return { score: combined, auto: auto, ext: extContribution / 10, human: human, hasExternal: true };
+  },
+  propose: function(newText, rationale){
+    var d = this.data.verse_system;
+    if (!d || !newText) return null;
+    if (newText === d.versions[d.activeId].text) return null;
+    if (newText.indexOf('{rules}') < 0) newText += '\n\nRÈGLES :\n{rules}';
+    var id = 'cand_' + U.uid();
+    d.versions[id] = { text: String(newText).slice(0, 6000), n: 0, sum: 0, externalHits: 0, externalTotal: 0, humanScore: 0, createdAt: Date.now(), rationale: rationale || '' };
+    d.abId = id;
+    this.persist();
+    return id;
+  },
+  maybePromote: function(){
+    var d = this.data.verse_system;
+    if (!d || !d.abId) return;
+    var cand = d.versions[d.abId];
+    var base = d.versions[d.activeId];
+    if (!cand || !base) return;
+    if (cand.n < CONFIG.META_MIN_SAMPLES || base.n < CONFIG.META_MIN_SAMPLES) return;
+    var cs = this.combinedScore(cand);
+    var bs = this.combinedScore(base);
+    if (cs.hasExternal && bs.hasExternal){
+      if (cs.score > bs.score + CONFIG.META_PROMOTE_DELTA){
+        d.activeId = d.abId; d.abId = null; this.persist();
+        STATE.metaJournal.push({ time: Date.now(), type:'promotion', text: 'Prompt promu: ' + bs.score.toFixed(2) + ' → ' + cs.score.toFixed(2) });
+        UI.log('Prompt promu', 'evo', 'META');
+        addExperience('Auto', 'Promotion prompt', 'supportée', 'Score combiné amélioré');
+      } else if (cand.n >= CONFIG.META_MIN_SAMPLES * 2){
+        delete d.versions[d.abId]; d.abId = null; this.persist();
+        STATE.metaJournal.push({ time: Date.now(), type:'rejet', text: 'Rejet: ' + cs.score.toFixed(2) + ' ≤ ' + bs.score.toFixed(2) });
+        addExperience('Auto', 'Rejet prompt', 'rejetée', 'Score combiné inférieur');
+      }
+    }
+  },
+  stats: function(){
+    var d = this.data.verse_system;
+    if (!d) return [];
+    var out = [];
+    for (var id in d.versions){
+      var v = d.versions[id];
+      var cs = this.combinedScore(v);
+      out.push({ id: id, active: id === d.activeId, isAB: id === d.abId, n: v.n, auto: cs.auto, ext: cs.ext, human: cs.human, combined: cs.score, hasExternal: cs.hasExternal, rationale: v.rationale || '' });
+    }
+    return out;
+  }
+};
+
+function addExperience(axis, hypothesis, status, evidence){
+  STATE.experienceCounter++;
+  var e = { id: 'EXP-' + String(STATE.experienceCounter).padStart(4, '0'), time: Date.now(), axis: axis, hypothesis: hypothesis, status: status, evidence: evidence || '', updatedAt: Date.now() };
+  STATE.experiences.push(e);
+  if (STATE.experiences.length > 500) STATE.experiences.shift();
+  DB.add('experiences', e).catch(function(){});
+  return e;
+}
+function updateExperienceStatus(id, status, evidence){
+  for (var i = 0; i < STATE.experiences.length; i++){
+    if (STATE.experiences[i].id === id){
+      STATE.experiences[i].status = status;
+      STATE.experiences[i].evidence = evidence || STATE.experiences[i].evidence;
+      STATE.experiences[i].updatedAt = Date.now();
+      DB.put('experiences', STATE.experiences[i]).catch(function(){});
+      return;
+    }
+  }
+}
+function staleCheckExperiences(){
+  var cutoff = Date.now() - 3600000;
+  for (var i = 0; i < STATE.experiences.length; i++){
+    var e = STATE.experiences[i];
+    if (e.status === 'ouverte' && e.time < cutoff){
+      e.status = 'stale';
+      e.evidence = (e.evidence || '') + ' [stale > 1h]';
+      DB.put('experiences', e).catch(function(){});
+    }
+  }
+}
+
+var Prompts = {
+  bootstrap: {
+    system: 'Tu es un analyste critique. Tu ne présumes aucune équation démontrée par un texte ancien. JSON uniquement.',
+    user: 'Examine Genèse 1:1-3 comme hypothèse interprétative. Distingue observation textuelle, analogie, hypothèse testable, résultat vérifié. Ne présume PAS que E=mc² est encodé.\n\n{"etapes":[{"v":1,"observations":[],"hypotheses":[],"limites":[],"question":""},{"v":2,"observations":[],"hypotheses":[],"limites":[],"question":""},{"v":3,"observations":[],"hypotheses":[],"limites":[],"question":""}],"methode":[{"id":"R1","name":"Séparer observation et interprétation","desc":""}],"direction":"à suivre","verifie":false}'
+  },
+  books: { system: 'Tu connais la Bible. JSON uniquement.', user: 'Les 39 livres de l\'AT avec chapitres.\n{"books":[{"name":"Genèse","chapters":50},...]}' },
+  chapter: function(book, chapter){ return { system: 'Tu connais la Bible par cœur (Louis Segond). JSON uniquement.', user: 'Tous les versets de "' + book + '" chapitre ' + chapter + '.\n{"verses":[{"v":1,"txt":"..."}]}' }; },
+  verse: function(verse, ref, lens, cumul, deep){
+    var ps = PromptStore.getForCall();
+    var sorted = STATE.method.slice().sort(function(a, b){
+      var ar = (a.externalTotal || 0) > 0 ? (a.externalHits / a.externalTotal) : (a.mandatory ? 1 : 0.5);
+      var br = (b.externalTotal || 0) > 0 ? (b.externalHits / b.externalTotal) : (b.mandatory ? 1 : 0.5);
+      return br - ar;
+    });
+    var picked = [];
+    for (var i = 0; i < sorted.length && picked.length < 7; i++) if (sorted[i].mandatory || i < 6) picked.push(sorted[i]);
+    var rules = [];
+    for (var j = 0; j < picked.length; j++) rules.push('- ' + picked[j].id + ' ' + picked[j].name + ' : ' + picked[j].desc);
+    var systemText = ps.text.split('{rules}').join(rules.join('\n'));
+    var deepBlock = deep ? '\n\nMODE PROFOND — distinguer info biologique / info intégrée (Φ) / conscience phénoménale. Lien IIT/Orch-OR/GWT.' : '';
+    var user = 'VERSET (' + ref + ') : « ' + verse.txt + ' »\n\nCUMUL PRÉSENT : ' + JSON.stringify(cumul.present) + '\nCUMUL ABSENT : ' + JSON.stringify(cumul.absent || []) + '\nDOMAINES : ' + JSON.stringify((cumul.domains || []).slice(-15)) + '\n\nANGLE (' + lens.code + ') — ' + lens.lbl + ' :\n' + lens.q + deepBlock +
+      '\n\n{"angle":"' + lens.code + '","question":"","reponse":"","domaine":"","formule":"","present":[],"absent":[],"mystere":"","piste":"","similitude":{"formule":"","reference":"","doi_or_arxiv":"","correspondance":"","confiance":0,"texte":""},"singularity":{"relation":"","reference":"","doi_or_arxiv":"","missing_term":"","terme_verse":"","correspondance":"","confiance":0},"invention":{"formule":"","texte":"","pourquoi":"","lien":"","protocole":""},"decouverte":false,"desc_decouverte":"","rigueur":0,"risque":"faible","coherence":0,"sci":0,"txt_fid":0,"novelty":0,"question_clarity":0,"reasoning":"","image_prompt":""}';
+    return { system: systemText, user: user, promptVersionId: ps.id };
+  },
+  keywordExtract: function(reading){
+    return { system: 'Tu extrais des mots-clés de recherche. JSON uniquement.', user: 'Analyse :\n- Verset: ' + reading.ref + '\n- Domaine: ' + (reading.domaine || '') + '\n- Mystère: ' + (reading.mystere || '') + '\n- Formule: ' + (reading.formule || '') + '\n- Piste: ' + (reading.piste || '') + '\n\nExtrais 5-8 mots-clés en anglais classés par spécificité. JSON : {"keywords":["..."],"primary_query":"phrase 5-12 mots"}' };
+  },
+  keywordGeneric: function(reading){
+    return { system: 'Reformule en termes génériques. JSON uniquement.', user: 'Analyse :\n' + (reading.desc_decouverte || reading.reponse || '') + '\n\nRequête bibliographique GÉNÉRIQUE. JSON : {"generic_query":"..."}' };
+  },
+  keywordContradict: function(reading){
+    return { system: 'Construis une requête pour chercher des CONTRADICTIONS. JSON uniquement.', user: 'Hypothèse :\n' + (reading.desc_decouverte || reading.reponse || '') + '\n\nRequête pour travaux CONTREDISANT. JSON : {"contradict_query":"..."}' };
+  },
+  lbdArbitrate: function(reading, papers){
+    var block = '';
+    for (var i = 0; i < papers.length; i++) block += '[' + i + '] ' + papers[i].source + ' · ' + papers[i].year + ' · ' + String(papers[i].title || '').slice(0, 140) + '\nRésumé: ' + String(papers[i].abstract || '(aucun)').slice(0, 350) + '\n\n';
+    return { system: 'Rapporteur scientifique exigeant. Ne fabrique JAMAIS de référence. JSON uniquement.', user: 'HYPOTHÈSE :\n- Réf: ' + reading.ref + '\n- Desc: ' + (reading.desc_decouverte || reading.reponse || '').slice(0, 400) + '\n- Formule: ' + (reading.formule || '—') + '\n\nARTICLES (' + papers.length + ') :\n' + block + '\n{"papers":[{"index":0,"relation":"confirme|etend|contredit|non-pertinent","confidence":0,"justification":""}],"verdict":"valide|partiel|aucun|contredit","confidence":0,"synthese":""}' };
+  },
+  thesis: function(reading, papers){
+    var bib = '';
+    for (var i = 0; i < papers.length && i < 15; i++){
+      var p = papers[i];
+      bib += '[' + (i+1) + '] ' + p.source + ' · ' + (p.year || 's.d.') + ' · ' + p.title + (p.doi ? ' · DOI:' + p.doi : '') + '\n    ' + String(p.abstract || '').slice(0, 400) + '\n';
+    }
+    return { system: 'Tu rédiges une thèse de travail rigoureuse. Ni citation ni DOI inventés. JSON uniquement.', user: 'DÉCOUVERTE :\n' + JSON.stringify({ ref: reading.ref, desc: reading.desc_decouverte || reading.reponse, formule: reading.formule, domaine: reading.domaine, score: reading.score }) + '\n\nBIBLIOGRAPHIE :\n' + bib + '\n\n{"question_operational":"","hypothesis":"","literature_state":"","arguments_for":"","objections":"","limits":"","predictions":"","falsification":"","conclusion_grade":"indéterminé","full_text":"","notes":""}' };
+  },
+  metaReflect: function(curText, stats){
+    return { system: 'Tu es une IA méta-cognitive. JSON uniquement.', user: 'PROMPT :\n---\n' + curText + '\n---\n\nPERF : ' + stats.avg + ' (min ' + stats.min + ', max ' + stats.max + ', n=' + stats.n + ')\nFAIBLESSES : ' + stats.weaknesses + '\n\nPropose une VERSION AMÉLIORÉE. Garde {rules} et la discipline anti-hallucination.\n\n{"nouveau_prompt":"...","rationale":"...","changements":["..."]}' };
+  },
+  evolveLenses: function(top, bot, count){
+    var tops = [], bots = [];
+    for (var i = 0; i < top.length; i++) tops.push(top[i].code + ' avg ' + ((top[i].p && top[i].p.avg) || 0));
+    for (var j = 0; j < bot.length; j++) bots.push(bot[j].code + ' avg ' + ((bot[j].p && bot[j].p.avg) || 0));
+    return { system: 'JSON uniquement.', user: 'MEILLEURS : ' + tops.join(' | ') + '\nFAIBLES : ' + bots.join(' | ') + '\n\nCrée 3 nouveaux angles.\n{"lenses":[{"code":"XXX","lbl":"Nom","q":"question","reason":"pourquoi"}]}' };
+  },
+  evolveMethod: function(method){
+    var rules = [];
+    for (var i = 0; i < method.length; i++) rules.push('- ' + method[i].id + ' ' + method[i].name + ' : ' + method[i].desc);
+    return { system: 'JSON uniquement.', user: 'Méthode :\n' + rules.join('\n') + '\n\nPropose 2 règles TESTABLES.\n{"rules":[{"id":"R11","name":"...","desc":"..."}]}' };
+  }
+};
+
+var LBD = {
+  sources: {
+    openalex: { name: 'OpenAlex', trust: 0.9,
+      probe: function(){ return 'https://api.openalex.org/works?per-page=1&search=energy'; },
+      search: function(kw, limit){ var email = CONFIG.LBD_EMAIL ? '&mailto=' + encodeURIComponent(CONFIG.LBD_EMAIL) : ''; return 'https://api.openalex.org/works?search=' + encodeURIComponent(kw) + '&per-page=' + limit + '&sort=relevance_score:desc&select=id,doi,title,publication_year,cited_by_count,authorships,primary_location,open_access,abstract_inverted_index' + email; },
+      parse: function(d){
+        var results = (d && d.results) ? d.results : [];
+        return results.map(function(x){ return { source: 'OpenAlex', title: x.title || '', year: x.publication_year || null, doi: x.doi ? x.doi.replace(/^https?:\/\/doi\.org\//, '') : '', url: x.doi || x.id || '', citations: x.cited_by_count || 0, venue: (x.primary_location && x.primary_location.source && x.primary_location.source.display_name) || '', abstract: LBD.abstractFromInverted(x.abstract_inverted_index), openAccess: !!(x.open_access && x.open_access.is_oa) }; });
+      }
+    },
+    crossref: { name: 'Crossref', trust: 0.85,
+      probe: function(){ return 'https://api.crossref.org/works?rows=1&query.bibliographic=energy'; },
+      search: function(kw, limit){ var email = CONFIG.LBD_EMAIL ? '&mailto=' + encodeURIComponent(CONFIG.LBD_EMAIL) : ''; return 'https://api.crossref.org/works?query.bibliographic=' + encodeURIComponent(kw) + '&rows=' + limit + '&select=DOI,title,author,published,container-title,is-referenced-by-count,URL,abstract' + email; },
+      parse: function(d){
+        var items = (d && d.message && d.message.items) ? d.message.items : [];
+        return items.map(function(x){ return { source: 'Crossref', title: (x.title && x.title[0]) || '', year: (x.published && x.published['date-parts'] && x.published['date-parts'][0] && x.published['date-parts'][0][0]) || null, doi: x.DOI || '', url: x.URL || '', citations: x['is-referenced-by-count'] || 0, venue: (x['container-title'] && x['container-title'][0]) || '', abstract: LBD.stripHtml(x.abstract || ''), openAccess: false }; });
+      }
+    },
+    semanticscholar: { name: 'Semantic Scholar', trust: 0.9,
+      probe: function(){ return 'https://api.semanticscholar.org/graph/v1/paper/search?query=energy&limit=1&fields=title'; },
+      search: function(kw, limit){ return 'https://api.semanticscholar.org/graph/v1/paper/search?query=' + encodeURIComponent(kw) + '&limit=' + limit + '&fields=title,authors,year,abstract,externalIds,citationCount,venue,url,openAccessPdf'; },
+      parse: function(d){
+        var data = (d && d.data) ? d.data : [];
+        return data.map(function(x){ return { source: 'Semantic Scholar', title: x.title || '', year: x.year || null, doi: (x.externalIds && x.externalIds.DOI) || '', url: x.url || ((x.externalIds && x.externalIds.DOI) ? 'https://doi.org/' + x.externalIds.DOI : ''), citations: x.citationCount || 0, venue: x.venue || '', abstract: x.abstract || '', openAccess: !!(x.openAccessPdf && x.openAccessPdf.url) }; });
+      }
+    },
+    pubmed: { name: 'PubMed', trust: 0.95,
+      probe: function(){ return 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=energy&retmode=json&retmax=1'; },
+      search: function(kw, limit){ return 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=' + encodeURIComponent(kw) + '&retmode=json&retmax=' + limit + '&sort=relevance'; },
+      parse: function(d){
+        var ids = (d && d.esearchresult && d.esearchresult.idlist) ? d.esearchresult.idlist : [];
+        return ids.map(function(id){ return { pmid: id, pending: true }; });
+      },
+      postFetch: function(papers){
+        var ids = papers.filter(function(p){ return p.pending; }).map(function(p){ return p.pmid; });
+        if (!ids.length) return Promise.resolve(papers.filter(function(p){ return !p.pending; }));
+        var url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=' + ids.join(',') + '&retmode=xml&rettype=abstract';
+        return fetch(url).then(function(r){ return r.text(); }).then(function(xml){
+          var doc = new DOMParser().parseFromString(xml, 'text/xml');
+          var articles = doc.getElementsByTagName('PubmedArticle');
+          var out = [];
+          for (var i = 0; i < articles.length; i++){
+            var a = articles[i];
+            var pmid = (a.getElementsByTagName('PMID')[0] || {}).textContent || '';
+            var title = (a.getElementsByTagName('ArticleTitle')[0] || {}).textContent || '';
+            var absText = '';
+            var absEls = a.getElementsByTagName('AbstractText');
+            for (var j = 0; j < absEls.length; j++) absText += absEls[j].textContent + ' ';
+            var yearEl = a.getElementsByTagName('PubDate')[0];
+            var year = yearEl ? parseInt((yearEl.getElementsByTagName('Year')[0] || {}).textContent || '0', 10) : null;
+            out.push({ source: 'PubMed', title: title, year: year, doi: '', url: 'https://pubmed.ncbi.nlm.nih.gov/' + pmid + '/', citations: 0, venue: 'PubMed', abstract: absText.trim().slice(0, 900), openAccess: false });
+          }
+          return out;
+        }).catch(function(){ return papers.filter(function(p){ return !p.pending; }); });
+      }
+    },
+    europepmc: { name: 'Europe PMC', trust: 0.9,
+      probe: function(){ return 'https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=energy&format=json&pageSize=1'; },
+      search: function(kw, limit){ return 'https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=' + encodeURIComponent(kw) + '&format=json&pageSize=' + limit + '&resultType=core'; },
+      parse: function(d){
+        var items = (d && d.resultList && d.resultList.result) ? d.resultList.result : [];
+        return items.map(function(x){ return { source: 'Europe PMC', title: x.title || '', year: x.pubYear ? parseInt(x.pubYear, 10) : null, doi: x.doi || '', url: x.doi ? 'https://doi.org/' + x.doi : 'https://europepmc.org/article/' + (x.source || 'MED') + '/' + (x.id || ''), citations: x.citedByCount || 0, venue: x.journalTitle || 'Europe PMC', abstract: x.abstractText || '', openAccess: x.isOpenAccess === 'Y' }; });
+      }
+    },
+    arxiv: { name: 'arXiv', trust: 0.8,
+      probe: function(){ return 'http://export.arxiv.org/api/query?search_query=all:energy&start=0&max_results=1'; },
+      search: function(kw, limit){ return 'http://export.arxiv.org/api/query?search_query=all:' + encodeURIComponent(kw) + '&start=0&max_results=' + limit + '&sortBy=relevance'; },
+      parseText: function(xml){
+        var doc = new DOMParser().parseFromString(xml, 'text/xml');
+        if (doc.querySelector('parsererror')) return [];
+        var entries = doc.getElementsByTagName('entry');
+        var out = [];
+        for (var i = 0; i < entries.length; i++){
+          var e = entries[i];
+          var get = function(tag){ var el = e.getElementsByTagName(tag)[0]; return el ? (el.textContent || '').trim() : ''; };
+          out.push({ source: 'arXiv', title: get('title').replace(/\s+/g, ' '), year: get('published').slice(0, 4), doi: '', url: get('id'), citations: 0, venue: 'arXiv', abstract: get('summary').replace(/\s+/g, ' '), openAccess: true });
+        }
+        return out;
+      }
+    }
+  },
+  health: {},
+  abstractFromInverted: function(inv){
+    if (!inv) return '';
+    var words = [];
+    var keys = Object.keys(inv);
+    for (var i = 0; i < keys.length; i++) for (var j = 0; j < inv[keys[i]].length; j++) words[inv[keys[i]][j]] = keys[i];
+    return words.join(' ').slice(0, 900);
+  },
+  stripHtml: function(s){ var d = document.createElement('div'); d.innerHTML = s || ''; return (d.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 900); },
+  probeSource: async function(key){
+    var src = this.sources[key];
+    if (!src) return { healthy: false };
+    if (this.health[key] && this.health[key].until > Date.now()) return this.health[key];
+    try {
+      var ctl = new AbortController();
+      var t = setTimeout(function(){ ctl.abort(); }, CONFIG.LBD_PROBE_TIMEOUT_MS);
+      var res = await fetch(src.probe(), { signal: ctl.signal });
+      clearTimeout(t);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      this.health[key] = { healthy: true, checkedAt: Date.now(), until: 0 };
+      return this.health[key];
+    } catch(e){
+      this.health[key] = { healthy: false, checkedAt: Date.now(), until: Date.now() + CONFIG.LBD_DEAD_TTL_MS, error: e.message };
+      UI.log('LBD probe ' + key + ' KO : ' + e.message, 'warn', 'LBD');
+      return this.health[key];
+    }
+  },
+  probeAll: async function(){
+    var keys = Object.keys(this.sources);
+    for (var i = 0; i < keys.length; i++) await this.probeSource(keys[i]);
+  },
+  healthySources: function(){
+    var out = [];
+    var keys = Object.keys(this.sources);
+    for (var i = 0; i < keys.length; i++) if (this.health[keys[i]] && this.health[keys[i]].healthy) out.push(keys[i]);
+    return out;
+  },
+  cacheGet: function(k){ var c = STATE.lbdCache[k]; if (!c) return null; if (c.expiresAt < Date.now()){ delete STATE.lbdCache[k]; return null; } return c.value; },
+  cacheSet: function(k, v){ STATE.lbdCache[k] = { value: v, expiresAt: Date.now() + CONFIG.LBD_CACHE_TTL_MS }; },
+  extractKeywords: async function(reading){
+    try {
+      var p = Prompts.keywordExtract(reading);
+      var raw = await API.text(p.system, p.user, 400, 0.3);
+      var j = Parser.json(raw);
+      if (j && j.keywords && Array.isArray(j.keywords)) return { keywords: j.keywords.slice(0, 8), primary: j.primary_query || j.keywords.join(' ') };
+    } catch(e){ UI.log('Keywords : ' + e.message, 'warn', 'LBD'); }
+    var text = (reading.domaine || '') + ' ' + (reading.mystere || '') + ' ' + (reading.formule || '');
+    var words = text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(function(w){ return w.length > 3 && ['the','and','for','with','from','this','that','dans','pour','avec'].indexOf(w) < 0; }).slice(0, 6);
+    return { keywords: words, primary: words.join(' ') };
+  },
+  buildGenericQuery: async function(reading){
+    try { var p = Prompts.keywordGeneric(reading); var raw = await API.text(p.system, p.user, 200, 0.3); var j = Parser.json(raw); if (j && j.generic_query) return j.generic_query; } catch(e){}
+    return null;
+  },
+  buildContradictQuery: async function(reading){
+    try { var p = Prompts.keywordContradict(reading); var raw = await API.text(p.system, p.user, 200, 0.3); var j = Parser.json(raw); if (j && j.contradict_query) return j.contradict_query; } catch(e){}
+    return null;
+  },
+  scoreRelevance: function(paper, keywords){
+    var kw = keywords.map(function(k){ return k.toLowerCase(); });
+    var title = (paper.title || '').toLowerCase();
+    var abs = (paper.abstract || '').toLowerCase();
+    var titleHits = 0, absHits = 0;
+    for (var i = 0; i < kw.length; i++){ if (title.indexOf(kw[i]) >= 0) titleHits++; if (abs.indexOf(kw[i]) >= 0) absHits++; }
+    var titleOverlap = kw.length ? titleHits / kw.length : 0;
+    var absOverlap = kw.length ? absHits / kw.length : 0;
+    var recency = paper.year ? Math.max(0, Math.min(1, (paper.year - 1990) / 35)) : 0.3;
+    var citationNorm = Math.min(1, Math.log(1 + (paper.citations || 0)) / Math.log(1 + 500));
+    var trust = (this.sources[paper.sourceKey] && this.sources[paper.sourceKey].trust) || 0.85;
+    return 0.35 * titleOverlap + 0.25 * absOverlap + 0.15 * recency + 0.15 * citationNorm + 0.10 * trust;
+  },
+  querySource: async function(sourceKey, query, limit){
+    var src = this.sources[sourceKey];
+    if (!src) return [];
+    var ck = U.hash(sourceKey + '|' + query);
+    var cached = this.cacheGet(ck); if (cached) return cached;
+    try {
+      var url = src.search(query, limit);
+      var ctl = new AbortController();
+      var t = setTimeout(function(){ ctl.abort(); }, CONFIG.LBD_TIMEOUT_MS);
+      var res = await fetch(url, { signal: ctl.signal });
+      clearTimeout(t);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var papers = [];
+      if (src.parseText){ var text = await res.text(); papers = src.parseText(text); }
+      else { var data = await res.json(); papers = src.parse(data); }
+      if (src.postFetch) papers = await src.postFetch(papers);
+      papers.forEach(function(p){ p.sourceKey = sourceKey; });
+      this.cacheSet(ck, papers);
+      return papers;
+    } catch(e){
+      UI.log('LBD ' + sourceKey + ' : ' + e.message, 'warn', 'LBD');
+      if (e.name === 'AbortError' || (e.message && e.message.indexOf('HTTP') === 0)) this.health[sourceKey] = { healthy: false, checkedAt: Date.now(), until: Date.now() + CONFIG.LBD_DEAD_TTL_MS, error: e.message };
+      return [];
+    }
+  },
+  searchAll: async function(query, budget){
+    var healthy = this.healthySources();
+    if (!healthy.length) return [];
+    var results = [];
+    var perSource = Math.ceil((budget || 20) / healthy.length);
+    for (var i = 0; i < healthy.length; i++){ var papers = await this.querySource(healthy[i], query, perSource); results.push.apply(results, papers); }
+    var seen = {}, deduped = [];
+    for (var j = 0; j < results.length; j++){
+      var p = results[j];
+      var key = p.doi ? 'doi:' + p.doi : 'ttl:' + (p.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 60);
+      if (!key || seen[key]) continue;
+      seen[key] = true;
+      deduped.push(p);
+    }
+    return deduped;
+  },
+  fullSearch: async function(reading){
+    var cacheKey = U.hash('full|' + reading.ref + '|' + (reading.lens || ''));
+    var cached = this.cacheGet(cacheKey); if (cached) return cached;
+    var kw = await this.extractKeywords(reading);
+    var generic = await this.buildGenericQuery(reading);
+    var contradict = await this.buildContradictQuery(reading);
+    var all = [];
+    all = all.concat(await this.searchAll(kw.primary, 25));
+    if (generic && generic !== kw.primary) all = all.concat(await this.searchAll(generic, 15));
+    if (contradict && contradict !== kw.primary) all = all.concat(await this.searchAll(contradict, 15));
+    var seen = {}, deduped = [];
+    for (var i = 0; i < all.length; i++){
+      var p = all[i];
+      var key = p.doi ? 'doi:' + p.doi : 'ttl:' + (p.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 60);
+      if (!key || seen[key]) continue;
+      seen[key] = true;
+      deduped.push(p);
+    }
+    deduped.forEach(function(p){ p.relevance = LBD.scoreRelevance(p, kw.keywords); });
+    deduped.sort(function(a, b){ return b.relevance - a.relevance; });
+    var top = deduped.slice(0, 12);
+    var result = { keywords: kw.keywords, primaryQuery: kw.primary, genericQuery: generic, contradictQuery: contradict, papers: top, totalFound: deduped.length, searchedAt: Date.now() };
+    this.cacheSet(cacheKey, result);
+    return result;
+  },
+  arbitrate: async function(reading, papers){
+    if (!papers.length) return { verdict: 'aucun', confidence: 0, synthese: 'Aucune référence.', papers: [] };
+    try {
+      var p = Prompts.lbdArbitrate(reading, papers);
+      var raw = await API.text(p.system, p.user, 1600, 0.4);
+      var j = Parser.json(raw);
+      if (j){
+        var mapped = [];
+        if (Array.isArray(j.papers)) for (var i = 0; i < j.papers.length; i++){ var pp = j.papers[i]; if (pp.index != null && papers[pp.index]) mapped.push({ index: pp.index, relation: pp.relation, confidence: U.clamp(pp.confidence, 0, 10), justification: pp.justification, paper: papers[pp.index] }); }
+        return { verdict: j.verdict || 'aucun', confidence: U.clamp(j.confidence, 0, 10), synthese: String(j.synthese || '').slice(0, 800), papers: mapped };
+      }
+    } catch(e){ UI.log('Arbitrate : ' + e.message, 'warn', 'LBD'); }
+    return { verdict: 'aucun', confidence: 0, synthese: 'Arbitrage indisponible.', papers: [] };
+  },
+  buildThesis: async function(reading, searchResult){
+    var p = Prompts.thesis(reading, searchResult.papers);
+    try {
+      var raw = await API.text(p.system, p.user, 2600, 0.3);
+      var j = Parser.json(raw);
+      if (j) return {
+        question_operational: String(j.question_operational || '').slice(0, 600),
+        hypothesis: String(j.hypothesis || '').slice(0, 600),
+        literature_state: String(j.literature_state || '').slice(0, 1200),
+        arguments_for: String(j.arguments_for || '').slice(0, 800),
+        objections: String(j.objections || '').slice(0, 800),
+        limits: String(j.limits || '').slice(0, 800),
+        predictions: String(j.predictions || '').slice(0, 800),
+        falsification: String(j.falsification || '').slice(0, 800),
+        conclusion_grade: String(j.conclusion_grade || 'indéterminé').toLowerCase(),
+        full_text: String(j.full_text || '').slice(0, 4000),
+        notes: String(j.notes || '').slice(0, 400)
+      };
+    } catch(e){ UI.log('Thesis : ' + e.message, 'warn', 'LBD'); }
+    return { conclusion_grade: 'indéterminé', full_text: 'Rédaction indisponible.' };
+  },
+  processDiscovery: async function(reading){
+    var cacheKey = 'proc|' + reading.ref + '|' + (reading.lens || '');
+    if (this.cacheGet(cacheKey)) return this.cacheGet(cacheKey);
+    var exp = addExperience('LBD', 'Recherche bibliographique ' + reading.ref + ' [' + reading.lens + ']', 'ouverte', 'En cours');
+    UI.log('LBD complet · ' + reading.ref, 'lock', 'LBD');
+    var searchResult = { keywords: [], papers: [], primaryQuery: '', totalFound: 0 };
+    try { searchResult = await this.fullSearch(reading); } catch(e){ UI.log('LBD search : ' + e.message, 'warn', 'LBD'); }
+    var arbitration = { verdict: 'aucun', confidence: 0, synthese: 'Aucune référence.', papers: [] };
+    if (searchResult.papers.length) arbitration = await this.arbitrate(reading, searchResult.papers);
+    var thesis = await this.buildThesis(reading, searchResult);
+    var result = {
+      ref: reading.ref, lens: reading.lens, time: Date.now(),
+      reading: { ref: reading.ref, desc: reading.desc_decouverte || reading.reponse, question: reading.question, formule: reading.formule, domaine: reading.domaine, mystere: reading.mystere, score: reading.score, method_score: reading.method_score },
+      keywords: searchResult.keywords, queries: { primary: searchResult.primaryQuery, generic: searchResult.genericQuery, contradict: searchResult.contradictQuery },
+      totalFound: searchResult.totalFound, papers: searchResult.papers, arbitration: arbitration, thesis: thesis
+    };
+    STATE.theses.push(result);
+    if (STATE.theses.length > 1000) STATE.theses.shift();
+    DB.add('theses', result).catch(function(){});
+    var extScore = arbitration.verdict === 'valide' ? 1 : arbitration.verdict === 'partiel' ? 0.5 : arbitration.verdict === 'contredit' ? -0.5 : 0;
+    PromptStore.record(reading.promptVersionId, reading.method_score / 10, extScore, null);
+    var status = arbitration.verdict === 'valide' ? 'supportée' : (arbitration.verdict === 'contredit' ? 'rejetée' : (searchResult.papers.length ? 'supportée' : 'rejetée'));
+    updateExperienceStatus(exp.id, status, 'Verdict ' + arbitration.verdict + ' · ' + searchResult.papers.length + ' réf.');
+    this.cacheSet(cacheKey, result);
+    UI.setText('sTheses', String(STATE.theses.length));
+    UI.log('Thèse ' + reading.ref + ' · ' + arbitration.verdict + ' · ' + searchResult.papers.length + ' réf.', 'ok', 'LBD');
+    return result;
+  },
+  autoFor: async function(reading){
+    if (!CONFIG.LBD_ENABLED) return;
+    if (!Keys.anyActive()) return;
+    try { await this.processDiscovery(reading); } catch(e){ UI.log('LBD auto : ' + e.message, 'warn', 'LBD'); }
+  }
+};
+
+var Novel = {
+  assemble: async function(){
+    var validTheses = [], partialTheses = [], contradictedTheses = [];
+    for (var i = 0; i < STATE.theses.length; i++){
+      var t = STATE.theses[i];
+      var v = t.arbitration && t.arbitration.verdict;
+      var confirmCount = 0;
+      if (t.arbitration && t.arbitration.papers) for (var j = 0; j < t.arbitration.papers.length; j++) if (t.arbitration.papers[j].relation === 'confirme') confirmCount++;
+      if (v === 'valide' && confirmCount >= 1) validTheses.push(t);
+      else if (v === 'contredit') contradictedTheses.push(t);
+      else partialTheses.push(t);
+    }
+    STATE.novelSections = {
+      whatIDid: { title: 'I — Ce que j\'ai fait', facts: [
+        { label: 'Analyses', value: STATE.readings.length },
+        { label: 'Versets lus', value: STATE.verseCount },
+        { label: 'Cycles', value: STATE.cycle },
+        { label: 'Découvertes', value: STATE.discoveries.length },
+        { label: 'Thèses', value: STATE.theses.length },
+        { label: 'Expériences ouvertes', value: STATE.experiences.filter(function(e){ return e.status === 'ouverte'; }).length },
+        { label: 'Supportées', value: STATE.experiences.filter(function(e){ return e.status === 'supportée'; }).length },
+        { label: 'Rejetées', value: STATE.experiences.filter(function(e){ return e.status === 'rejetée'; }).length }
+      ]},
+      whatIsSolid: { title: 'II — Ce qui est solide', description: 'Thèses "valide" confirmées par au moins une référence indépendante.', items: validTheses.slice(-10).reverse() },
+      whatIsInteresting: { title: 'III — Ce qui est intéressant mais non vérifié', description: 'Thèses "partiel" ou support limité.', items: partialTheses.slice(-10).reverse() },
+      whatWasContradicted: { title: 'IV — Ce qui a été contredit', description: 'Hypothèses réfutées par la littérature.', items: contradictedTheses.slice(-10).reverse() },
+      whatIneDontKnow: { title: 'V — Ce que je ne sais pas',
+        openQuestions: STATE.experiences.filter(function(e){ return e.status === 'ouverte' || e.status === 'stale'; }).slice(-15),
+        deadSources: Object.keys(LBD.sources).filter(function(k){ return LBD.health[k] && !LBD.health[k].healthy; }),
+        nextSteps: ['Vérifier manuellement les références citées', 'Chercher des réfutations supplémentaires', 'Formuler des prédictions falsifiables', 'Proposer des protocoles testables']
+      }
+    };
+    return STATE.novelSections;
+  },
+  render: function(){
+    var c = U.$('novelView'); if (!c) return;
+    if (!STATE.novelSections){ c.innerHTML = '<div class="card"><button class="cyan" id="btnGenNovel" type="button">📖 Régénérer</button> <span class="hint">Lance le moteur puis clique.</span></div>'; safeOn('btnGenNovel', 'click', function(){ Novel.assemble().then(function(){ Novel.render(); }); }); return; }
+    var s = STATE.novelSections;
+    var html = '<div class="row"><button class="ghost" id="btnRegenNovel" type="button">↻ Régénérer</button><button class="ghost" id="btnExportNovel" type="button">⬇ Exporter</button></div>';
+    html += '<div class="novel-sec"><h3>' + U.esc(s.whatIDid.title) + '</h3><div class="body">';
+    for (var i = 0; i < s.whatIDid.facts.length; i++) html += '<p><strong>' + U.esc(s.whatIDid.facts[i].label) + ' :</strong> ' + U.esc(String(s.whatIDid.facts[i].value)) + '</p>';
+    html += '</div></div>';
+    var sections = [
+      { sec: s.whatIsSolid },
+      { sec: s.whatIsInteresting },
+      { sec: s.whatWasContradicted }
+    ];
+    for (var k = 0; k < sections.length; k++){
+      var s2 = sections[k].sec;
+      html += '<div class="novel-sec"><h3>' + U.esc(s2.title) + '</h3><div class="body"><p>' + U.esc(s2.description) + '</p>';
+      if (!s2.items.length) html += '<p><em>Aucune entrée pour l\'instant.</em></p>';
+      else for (var j = 0; j < s2.items.length; j++){
+        var t = s2.items[j];
+        html += '<div class="novel-fact" data-thesis-idx="' + STATE.theses.indexOf(t) + '">' + U.esc(t.ref + ' [' + t.lens + '] · ' + String(t.reading.desc || '').slice(0, 130)) + '</div>';
+      }
+      html += '</div></div>';
+    }
+    html += '<div class="novel-sec"><h3>' + U.esc(s.whatIneDontKnow.title) + '</h3><div class="body">';
+    if (s.whatIneDontKnow.openQuestions.length){
+      html += '<p><strong>Expériences ouvertes :</strong></p>';
+      for (var m = 0; m < s.whatIneDontKnow.openQuestions.length; m++){
+        var e = s.whatIneDontKnow.openQuestions[m];
+        html += '<div class="novel-fact" data-exp-id="' + U.esc(e.id) + '">' + U.esc(e.id + ' · ' + e.hypothesis) + '</div>';
+      }
+    }
+    if (s.whatIneDontKnow.deadSources.length) html += '<p><strong>Sources mortes :</strong> ' + U.esc(s.whatIneDontKnow.deadSources.join(', ')) + '</p>';
+    html += '<p><strong>Prochaines étapes :</strong></p><ul>';
+    for (var n = 0; n < s.whatIneDontKnow.nextSteps.length; n++) html += '<li>' + U.esc(s.whatIneDontKnow.nextSteps[n]) + '</li>';
+    html += '</ul></div></div>';
+    c.innerHTML = html;
+    safeOn('btnRegenNovel', 'click', function(){ Novel.assemble().then(function(){ Novel.render(); }); });
+    safeOn('btnExportNovel', 'click', function(){ downloadJSON('genesis-v15-novel.json', STATE.novelSections || {}); });
+    var facts = c.querySelectorAll('.novel-fact');
+    for (var p = 0; p < facts.length; p++){
+      (function(el){
+        el.addEventListener('click', function(){
+          var tidx = el.getAttribute('data-thesis-idx');
+          var eid = el.getAttribute('data-exp-id');
+          if (tidx != null){ var th = STATE.theses[parseInt(tidx, 10)]; if (th) Modal.openThesis(th); }
+          else if (eid){ var exp = STATE.experiences.find(function(x){ return x.id === eid; }); if (exp) Modal.openExperience(exp); }
+        });
+      })(facts[p]);
+    }
+  }
+};
+
+var Analyzer = {
+  bootstrap: async function(){
+    UI.log('Bootstrap critique', 'gold', 'BOOT');
+    var raw = await API.text(Prompts.bootstrap.system, Prompts.bootstrap.user, 2000, 0.3);
+    var j = Parser.json(raw);
+    if (!j || !Array.isArray(j.etapes)) throw new Error('Bootstrap invalide');
+    if (Array.isArray(j.methode)) j.methode.forEach(function(r){ if (r.id && r.name && !STATE.method.find(function(m){ return m.id === r.id; })) STATE.method.push({ id: r.id, name: String(r.name), desc: String(r.desc || '').slice(0, 300), w: 1.0, externalHits: 0, externalTotal: 0 }); });
+    if (j.direction) STATE.cumul.direction = String(j.direction);
+    STATE.bootstrapped = true;
+    STATE.singularityRegistry.push(SINGULARITY_PATTERN);
+    try { await DB.put('singularityRegistry', SINGULARITY_PATTERN, SINGULARITY_PATTERN.id); } catch(e){}
+    addExperience('Bootstrap', 'Examen critique démonstration E=mc²', 'supportée', 'Motif enregistré comme FORME, pas comme résultat');
+    UI.log('Bootstrap OK', 'ok', 'BOOT');
+    return true;
+  },
+  fetchBooks: async function(){
+    var raw = await API.text(Prompts.books.system, Prompts.books.user, 1500, 0.2);
+    var j = Parser.json(raw);
+    if (!j || !Array.isArray(j.books) || j.books.length < 30) throw new Error('Livres invalides');
+    return j.books.map(function(b){ return { name: String(b.name), chapters: U.clamp(b.chapters, 1, 200) }; });
+  },
+  fetchChapter: async function(book, chapter){
+    var key = book + ' ' + chapter;
+    try { var cached = await DB.get('chapters', key); if (cached && cached.verses && cached.verses.length) return cached.verses; } catch(e){}
+    var p = Prompts.chapter(book, chapter);
+    var raw = await API.text(p.system, p.user, 3500, 0.2);
+    var j = Parser.json(raw);
+    if (!j || !Array.isArray(j.verses)) throw new Error('Chapitre invalide');
+    var verses = [];
+    for (var i = 0; i < j.verses.length; i++){ var v = j.verses[i]; var txt = String(v.txt || '').trim(); if (txt.length > 5) verses.push({ v: U.clamp(v.v, 1, 200), txt: txt }); }
+    try { await DB.put('chapters', { id: key, book: book, chapter: chapter, verses: verses }); } catch(e){}
+    return verses;
+  },
+  isDeepVerse: function(verse){
+    var txt = (verse.txt || '').toLowerCase();
+    for (var i = 0; i < CONFIG.DEEP_TRIGGERS.length; i++) if (txt.indexOf(CONFIG.DEEP_TRIGGERS[i].toLowerCase()) >= 0) return true;
+    return false;
+  },
+  readVerse: async function(book, chapter, verse, lens){
+    var ref = book + ' ' + chapter + ':' + verse.v;
+    var deep = this.isDeepVerse(verse);
+    var p = Prompts.verse(verse, ref, lens, STATE.cumul, deep);
+    var raw = await API.text(p.system, p.user, 2600, 0.75);
+    var j = Parser.json(raw);
+    if (!j) throw new Error('JSON invalide');
+    var sim = j.similitude || {};
+    var sing = j.singularity || {};
+    var inv = j.invention || null;
+    var r = {
+      book: book, chapter: chapter, v: verse.v, ref: ref, verseTxt: verse.txt, deep: deep,
+      lens: lens.code, lensLbl: lens.lbl, lensId: lens.id, promptVersionId: p.promptVersionId,
+      question: String(j.question || '').slice(0, 400),
+      reponse: String(j.reponse || '').slice(0, 800),
+      domaine: String(j.domaine || '').slice(0, 200),
+      formule: String(j.formule || '').slice(0, 300),
+      present: Array.isArray(j.present) ? j.present : [],
+      absent: Array.isArray(j.absent) ? j.absent : [],
+      mystere: String(j.mystere || '').slice(0, 250),
+      piste: String(j.piste || '').slice(0, 250),
+      similitude: { formule: String(sim.formule || '').slice(0, 300), reference: String(sim.reference || '').slice(0, 250), doi_or_arxiv: String(sim.doi_or_arxiv || '').slice(0, 120), correspondance: String(sim.correspondance || '').slice(0, 400), confiance: U.clamp(sim.confiance, 0, 10), texte: String(sim.texte || '').slice(0, 500) },
+      singularity: { relation: String(sing.relation || '').slice(0, 200), reference: String(sing.reference || '').slice(0, 250), doi_or_arxiv: String(sing.doi_or_arxiv || '').slice(0, 120), missing_term: String(sing.missing_term || '').slice(0, 100), terme_verse: String(sing.terme_verse || '').slice(0, 150), correspondance: String(sing.correspondance || '').slice(0, 400), confiance: U.clamp(sing.confiance, 0, 10) },
+      invention: inv ? { formule: String(inv.formule || '').slice(0, 300), texte: String(inv.texte || '').slice(0, 500), pourquoi: String(inv.pourquoi || '').slice(0, 400), lien: String(inv.lien || '').slice(0, 300), protocole: String(inv.protocole || '').slice(0, 400) } : null,
+      decouverte: !!j.decouverte, desc_decouverte: String(j.desc_decouverte || '').slice(0, 500),
+      rigueur: U.clamp(j.rigueur, 0, 10), risque: String(j.risque || 'moyen').toLowerCase(),
+      coherence: U.clamp(j.coherence, 0, 10), sci: U.clamp(j.sci, 0, 10), txt_fid: U.clamp(j.txt_fid, 0, 10),
+      novelty: U.clamp(j.novelty, 0, 10), question_clarity: U.clamp(j.question_clarity, 0, 10),
+      reasoning: String(j.reasoning || '').slice(0, 600), image_prompt: String(j.image_prompt || '').slice(0, 400), time: Date.now()
+    };
+    var pen = r.risque === 'eleve' ? 0.7 : r.risque === 'moyen' ? 0.9 : 1;
+    r.method_score = +((r.rigueur * 0.20 + r.coherence * 0.20 + r.question_clarity * 0.25 + r.sci * 0.20 + r.txt_fid * 0.15) * pen).toFixed(2);
+    r.score = +((r.method_score * 0.6 + r.novelty * 0.25 + r.txt_fid * 0.15)).toFixed(2);
+    return r;
+  },
+  isDiscovery: function(r){ return (r.method_score >= CONFIG.DISCOVERY_MIN_METHOD && r.question_clarity >= CONFIG.DISCOVERY_MIN_QUESTION && r.novelty >= CONFIG.DISCOVERY_MIN_NOVELTY) || (r.decouverte && r.method_score >= 7); },
+  isSimilitude: function(r){ var s = r.similitude || {}; return !!(s.formule && s.formule.toLowerCase() !== 'aucune' && s.reference && s.reference.length >= 4 && s.confiance >= CONFIG.SIM_MIN_SCORE); },
+  isSingularity: function(r){ var s = r.singularity || {}; return !!(s.relation && s.relation.toLowerCase() !== 'aucune' && s.reference && s.reference.length >= 8 && s.confiance >= CONFIG.SIM_MIN_SCORE); },
+  process: async function(r){
+    STATE.readings.push(r);
+    STATE.readCount++;
+    UI.setText('sRead', String(STATE.readings.length));
+    try { await DB.add('readings', r); } catch(e){}
+    for (var i = 0; i < STATE.lenses.length; i++){
+      if (STATE.lenses[i].id === r.lensId){
+        var l = STATE.lenses[i];
+        l.p.n++;
+        l.p.avg = +(((l.p.avg * (l.p.n - 1)) + r.score) / l.p.n).toFixed(2);
+        l.p.best = Math.max(l.p.best, r.score);
+        break;
+      }
+    }
+    for (var j = 0; j < r.present.length; j++) if (STATE.cumul.present.indexOf(r.present[j]) < 0) STATE.cumul.present.push(r.present[j]);
+    if (r.absent.length) STATE.cumul.absent = r.absent;
+    if (r.domaine && STATE.cumul.domains.indexOf(r.domaine) < 0) STATE.cumul.domains.push(r.domaine);
+    if (this.isSimilitude(r)){
+      STATE.similitudes.push(r);
+      try { await DB.add('similitudes', r); } catch(e){}
+      UI.log('≅ ' + r.ref + ' — ' + r.similitude.formule, 'disc', 'SIM');
+      UI.say('Genesis·Decoder', '≅ <strong>Similitude</strong> [' + r.lens + '] ' + U.esc(r.ref) + '<div class="inv"><b>' + U.esc(r.similitude.formule) + '</b>Réf : ' + U.esc(r.similitude.reference) + '</div>', 'disc');
+    }
+    if (this.isSingularity(r)){
+      var entry = { id: 'SING-' + U.uid(), time: Date.now(), ref: r.ref, relation: r.singularity.relation, reference: r.singularity.reference, doi_or_arxiv: r.singularity.doi_or_arxiv, missing_term: r.singularity.missing_term, terme_verse: r.singularity.terme_verse, correspondance: r.singularity.correspondance, confiance: r.singularity.confiance, status: 'candidate', note: 'Motif reproduit — à vérifier via LBD.' };
+      STATE.singularityRegistry.push(entry);
+      try { await DB.add('singularityRegistry', entry); } catch(e){}
+      UI.setText('sSing', String(STATE.singularityRegistry.length - 1));
+      UI.log('✦ SINGULARITÉ · ' + r.ref + ' — ' + r.singularity.relation, 'disc', 'SING');
+      addExperience('Singularité', r.ref + ' complète ' + r.singularity.relation, 'ouverte', 'Confiance ' + r.singularity.confiance + '/10');
+    }
+    if (this.isDiscovery(r)){
+      STATE.discoveries.push(r);
+      try { await DB.add('discoveries', r); } catch(e){}
+      UI.setText('sDisc', String(STATE.discoveries.length));
+      UI.log('💎 Découverte ' + r.ref, 'disc', 'DISC');
+      var exp = addExperience('Découverte', r.ref + ' [' + r.lens + '] method ' + r.method_score, 'ouverte', 'En attente LBD');
+      UI.setText('sExp', String(STATE.experiences.filter(function(e){ return e.status === 'ouverte'; }).length));
+      var discHtml = '💎 <strong>Découverte</strong> [' + r.lens + '] ' + U.esc(r.ref) + '<br>' + U.esc(r.desc_decouverte || r.reponse.slice(0, 200));
+      if (r.invention && (r.invention.texte || r.invention.formule)){
+        STATE.inventions.push({ formule: r.invention.formule, texte: r.invention.texte, pourquoi: r.invention.pourquoi, lien: r.invention.lien, protocole: r.invention.protocole, ref: r.ref, lens: r.lens, time: Date.now() });
+        try { await DB.add('inventions', r.invention); } catch(e){}
+        UI.setText('sInv', String(STATE.inventions.length));
+        discHtml += '<div class="inv">' + (r.invention.formule ? '<b>Formule</b>' + U.esc(r.invention.formule) + '<br>' : '') + (r.invention.texte ? '<b>Invention</b>' + U.esc(r.invention.texte) + '<br>' : '') + (r.invention.protocole ? '<b>Protocole</b>' + U.esc(r.invention.protocole) : '') + '</div>';
+      }
+      UI.say('Genesis·Decoder', discHtml, 'disc');
+      if (CONFIG.LBD_ENABLED && Keys.anyActive()) Queue.push({ type: 'lbd', reading: r }).catch(function(){});
+    }
+    if (this.isSimilitude(r) && CONFIG.LBD_ENABLED && Keys.anyActive()) Queue.push({ type: 'lbd', reading: r }).catch(function(){});
+    if (STATE.readCount > 0 && STATE.readCount % CONFIG.META_EVERY === 0) Queue.push({ type: 'meta_reflect' }).catch(function(){});
+    if (STATE.readCount > 0 && STATE.readCount % CONFIG.EVOLVE_LENS_EVERY === 0) Queue.push({ type: 'evolve_lens' }).catch(function(){});
+    if (STATE.readCount > 0 && STATE.readCount % CONFIG.EVOLVE_METHOD_EVERY === 0) Queue.push({ type: 'evolve_method' }).catch(function(){});
+    var cls = r.score >= 7.5 ? 'ok' : (r.score >= 5 ? 'warn' : '');
+    UI.log('★' + r.score.toFixed(1) + ' [méth ' + r.method_score.toFixed(1) + '] ' + r.ref + ' · ' + r.lens, cls, 'READ');
+    if (r.question) UI.say('❓ ' + r.lens, U.esc(r.question.slice(0, 180)));
+    if (r.formule) UI.say('', U.esc(r.formule), 'formula');
+    if (r.score >= CONFIG.IMG_MIN_SCORE){
+      var cap = this.buildImageCaption(r);
+      if (cap) Queue.push({ type: 'image', reading: r, caption: cap }).catch(function(){});
+    }
+    UI.setText('sVerse', String(STATE.verseCount));
+    Renderer.conv();
+  },
+  buildImageCaption: function(r){
+    var parts = [];
+    if (r.domaine) parts.push('scientific visualization of ' + r.domaine);
+    if (r.formule) parts.push('featuring formula ' + r.formule);
+    if (r.mystere) parts.push('evoking ' + r.mystere);
+    parts.push('dark cosmic abstract, reference ' + r.ref);
+    return parts.join(', ').slice(0, 1800);
+  }
+};
+
+var Meta = {
+  recentStats: function(){
+    var rec = STATE.readings.slice(-40);
+    if (!rec.length) return { avg: 0, min: 0, max: 0, n: 0, weaknesses: 'pas assez de données' };
+    var ms = [], weak = [], qc = 0, tf = 0, sc = 0, nv = 0, sim = 0;
+    for (var i = 0; i < rec.length; i++){ ms.push(rec[i].method_score); if (rec[i].question_clarity < 7) qc++; if (rec[i].txt_fid < 7) tf++; if (rec[i].sci < 7) sc++; if (rec[i].novelty < 6) nv++; if (Analyzer.isSimilitude(rec[i])) sim++; }
+    var avg = 0; for (var a = 0; a < ms.length; a++) avg += ms[a]; avg = avg / ms.length;
+    if (qc > rec.length * 0.3) weak.push('questions pas claires');
+    if (tf > rec.length * 0.3) weak.push('fidélité faible');
+    if (sc > rec.length * 0.3) weak.push('rigueur faible');
+    if (nv > rec.length * 0.5) weak.push('manque nouveauté');
+    if (sim < 2) weak.push('peu de similitudes');
+    return { avg: +avg.toFixed(2), min: +Math.min.apply(null, ms).toFixed(2), max: +Math.max.apply(null, ms).toFixed(2), n: ms.length, weaknesses: weak.length ? weak.join(' ; ') : 'aucune' };
+  },
+  reflect: async function(){
+    if (!Keys.anyActive()) return;
+    UI.log('Réflexion méta', 'ai', 'META');
+    var stats = this.recentStats();
+    var cur = PromptStore.getForCall();
+    var p = Prompts.metaReflect(cur.text, stats);
+    try {
+      var raw = await API.text(p.system, p.user, 1800, 0.6);
+      var j = Parser.json(raw);
+      if (!j || !j.nouveau_prompt){ addExperience('Méta', 'Proposition prompt', 'rejetée', 'Réponse invalide'); return; }
+      var candId = PromptStore.propose(j.nouveau_prompt, j.rationale || '');
+      if (candId){ addExperience('Méta', 'Nouveau prompt testé A/B', 'ouverte', 'Rationale : ' + (j.rationale || '')); STATE.metaJournal.push({ time: Date.now(), type: 'reflection', rationale: j.rationale || '', changements: j.changements || [] }); }
+      UI.say('Genesis·Decoder', '🧠 <strong>Proposition méta</strong> testée en A/B. Rationale : ' + U.esc((j.rationale || '').slice(0, 150)), 'meta');
+    } catch(e){ UI.log('Méta : ' + e.message, 'warn', 'META'); }
+  }
+};
+
+var Evolver = {
+  lenses: async function(){
+    if (!Keys.anyActive()) return;
+    var top = STATE.lenses.slice().sort(function(a, b){ return ((b.p && b.p.avg) || 0) - ((a.p && a.p.avg) || 0); }).slice(0, 6);
+    var bot = STATE.lenses.slice().sort(function(a, b){ return ((a.p && a.p.avg) || 0) - ((b.p && b.p.avg) || 0); }).slice(0, 3);
+    var p = Prompts.evolveLenses(top, bot, STATE.lenses.length);
+    try {
+      var raw = await API.text(p.system, p.user, 1200, 0.9);
+      var j = Parser.json(raw);
+      if (!j || !Array.isArray(j.lenses)) return;
+      var added = 0;
+      for (var i = 0; i < j.lenses.length; i++){
+        var nl = j.lenses[i];
+        if (!nl.code || !nl.lbl || !nl.q) continue;
+        var id = 'LE_' + U.uid();
+        var l = { id: id, code: String(nl.code).slice(0, 14), lbl: String(nl.lbl).slice(0, 40), q: String(nl.q).slice(0, 500), status: 'exp', p: { n: 0, avg: 0, best: 0 } };
+        STATE.lenses.push(l);
+        DB.put('lenses', l).catch(function(){});
+        added++;
+      }
+      UI.setText('sLens', String(STATE.lenses.length));
+      UI.log('+' + added + ' angles', 'evo', 'EVO');
+    } catch(e){ UI.log('Evolve lenses : ' + e.message, 'warn', 'EVO'); }
+  },
+  method: async function(){
+    if (!Keys.anyActive()) return;
+    var p = Prompts.evolveMethod(STATE.method);
+    try {
+      var raw = await API.text(p.system, p.user, 800, 0.9);
+      var j = Parser.json(raw);
+      if (!j || !Array.isArray(j.rules)) return;
+      var added = 0;
+      for (var i = 0; i < j.rules.length; i++){
+        var nr = j.rules[i];
+        var exists = false;
+        for (var k = 0; k < STATE.method.length; k++) if (STATE.method[k].id === nr.id) exists = true;
+        if (!nr.id || !nr.name || exists) continue;
+        STATE.method.push({ id: nr.id, name: String(nr.name), desc: String(nr.desc || '').slice(0, 300), w: 0.8, externalHits: 0, externalTotal: 0 });
+        DB.put('method', STATE.method[STATE.method.length - 1]).catch(function(){});
+        added++;
+      }
+      UI.log('+' + added + ' règles', 'evo', 'EVO');
+    } catch(e){ UI.log('Evolve method : ' + e.message, 'warn', 'EVO'); }
+  },
+  image: async function(task){
+    try {
+      var url = await API.image(task.caption);
+      var e = { url: url, verse: task.reading.ref, lens: task.reading.lens, formule: task.reading.formule || (task.reading.similitude && task.reading.similitude.formule), caption: 'Prompt construit depuis l\'analyse', domaine: task.reading.domaine, time: Date.now() };
+      STATE.images.push(e);
+      try { await DB.add('images', e); } catch(e){}
+      UI.setText('sImg', String(STATE.images.length));
+      UI.bump('sImg');
+    } catch(e){ UI.log('IMG : ' + e.message, 'warn', 'IMG'); }
+  }
+};
+
+var Queue = {
+  push: function(task){ return new Promise(function(res){ (function loop(){ if (STATE.stopped) return res(); if (STATE.queue.length < CONFIG.MAX_QUEUE){ STATE.queue.push(task); return res(); } setTimeout(loop, 200); })(); }); },
+  pop: function(){ return new Promise(function(res){ (function loop(){ if (STATE.stopped) return res(null); if (STATE.queue.length) return res(STATE.queue.shift()); setTimeout(loop, 150); })(); }); }
+};
+
+function selectLenses(deep){
+  var base = [], deepL = [];
+  for (var i = 0; i < STATE.lenses.length; i++){ var l = STATE.lenses[i]; if (l.status === 'pru') continue; if (l.status === 'deep') deepL.push(l); else base.push(l); }
+  var all = deep ? base.concat(deepL) : base;
+  all.sort(function(a, b){ return ((b.p && b.p.avg) || 0) - ((a.p && a.p.avg) || 0); });
+  return all.slice(0, deep ? 9 : 6);
+}
+
+function workerLoop(){
+  function step(){
+    if (STATE.stopped) return;
+    if (STATE.paused){ setTimeout(step, 400); return; }
+    if (!Keys.anyActive()){ setTimeout(step, 2500); return; }
+    Queue.pop().then(function(task){
+      if (!task){ setTimeout(step, 200); return; }
+      STATE.inFlight++;
+      var chain;
+      try {
+        if (task.type === 'read') chain = Analyzer.readVerse(task.book, task.chapter, task.verse, task.lens).then(function(r){ return Analyzer.process(r); });
+        else if (task.type === 'lbd') chain = LBD.autoFor(task.reading);
+        else if (task.type === 'meta_reflect') chain = Meta.reflect();
+        else if (task.type === 'evolve_lens') chain = Evolver.lenses();
+        else if (task.type === 'evolve_method') chain = Evolver.method();
+        else if (task.type === 'image') chain = Evolver.image(task);
+        else chain = Promise.resolve();
+      } catch(e){ chain = Promise.reject(e); }
+      chain.then(function(){ STATE.inFlight--; step(); }).catch(function(e){
+        STATE.inFlight--;
+        if (e && e.message !== 'Arrêt') UI.log('Task ' + task.type + ' : ' + e.message, 'err', 'TASK');
+        step();
+      });
+    });
+  }
+  step();
+}
+
+function startWorkers(){
+  var n = 1;
+  for (var i = 0; i < STATE.keys.length; i++) if (STATE.keys[i].active) n++;
+  for (var j = 0; j < Math.min(n, 4); j++) workerLoop();
+  UI.log(n + ' workers', 'lock', 'POOL');
+}
+
+function coordinator(){
+  function step(){
+    if (STATE.stopped) return;
+    if (STATE.paused){ setTimeout(step, 600); return; }
+    var chain;
+    if (!STATE.bootstrapped) chain = Analyzer.bootstrap().then(function(){ return null; });
+    else if (!STATE.books.length) chain = Analyzer.fetchBooks().then(function(books){ STATE.books = books; STATE.pos = { book: 0, chapter: 1 }; return null; });
+    else {
+      var bk = STATE.books[STATE.pos.book];
+      if (!bk){ STATE.pos = { book: 0, chapter: 1 }; setTimeout(step, 200); return; }
+      UI.setText('posBook', bk.name);
+      UI.setText('posVerse', 'Chapitre ' + STATE.pos.chapter + ' / ' + bk.chapters);
+      var pct = Math.round(100 * (STATE.pos.chapter - 1) / Math.max(1, bk.chapters));
+      var pb = U.$('posBar'); if (pb) pb.style.width = pct + '%';
+      chain = Analyzer.fetchChapter(bk.name, STATE.pos.chapter).then(function(verses){
+        UI.say('Genesis·Decoder', '<span class="verse-ref">📖 ' + bk.name + ' ' + STATE.pos.chapter + '</span> — ' + verses.length + ' versets', 'verse');
+        var startV = (STATE.pos.book === 0 && STATE.pos.chapter === 1) ? 4 : 1;
+        var promises = [];
+        for (var i = 0; i < verses.length; i++){
+          var v = verses[i];
+          if (v.v < startV) continue;
+          var deep = Analyzer.isDeepVerse(v);
+          var lenses = selectLenses(deep);
+          for (var j = 0; j < lenses.length; j++) promises.push(Queue.push({ type: 'read', book: bk.name, chapter: STATE.pos.chapter, verse: v, lens: lenses[j] }));
+        }
+        return Promise.all(promises).then(function(){
+          var count = 0;
+          for (var k = 0; k < verses.length; k++) if (verses[k].v >= startV) count++;
+          STATE.verseCount += count;
+          UI.setText('sVerse', String(STATE.verseCount));
+          STATE.pos.chapter++;
+          if (STATE.pos.chapter > bk.chapters){ STATE.pos.chapter = 1; STATE.pos.book++; }
+          if (STATE.pos.book >= STATE.books.length){ STATE.pos.book = 0; STATE.cycle++; UI.setText('sCycle', String(STATE.cycle)); UI.log('Cycle ' + STATE.cycle, 'gold', 'CYCLE'); }
+          return U.sleep(400);
+        });
+      }).catch(function(e){ UI.log('CHAPITRE ' + bk.name + ' ' + STATE.pos.chapter + ' : ' + e.message, 'err', 'CHAP'); STATE.pos.chapter++; if (STATE.pos.chapter > bk.chapters){ STATE.pos.chapter = 1; STATE.pos.book++; } });
+    }
+    chain.then(function(){ setTimeout(step, 200); }).catch(function(e){
+      if (e && e.message !== 'Arrêt') UI.log('Coord : ' + e.message, 'err', 'COORD');
+      setTimeout(step, 5000);
+    });
+  }
+  step();
+}
+
+var Modal = {
+  open: function(title, html, verseTxt){ U.$('modalTitle').textContent = title; U.$('modalBody').innerHTML = (verseTxt ? '<div class="versefull">' + U.esc(verseTxt) + '</div>' : '') + html; U.$('modalBk').classList.add('on'); },
+  close: function(){ U.$('modalBk').classList.remove('on'); },
+  field: function(label, value, mono){ if (!value) return ''; return '<div class="field"><div class="lab">' + U.esc(label) + '</div><div class="val' + (mono ? ' vf' : '') + '">' + U.esc(value) + '</div></div>'; },
+  openReading: function(r){
+    var h = '';
+    h += Modal.field('Question', r.question);
+    h += Modal.field('Réponse', r.reponse);
+    h += Modal.field('Domaine', r.domaine);
+    h += Modal.field('Formule', r.formule, true);
+    h += Modal.field('Mystère', r.mystere);
+    h += Modal.field('Piste', r.piste);
+    if (r.similitude && r.similitude.formule){ h += Modal.field('Similitude', r.similitude.formule, true); h += Modal.field('Référence', r.similitude.reference); h += Modal.field('Correspondance', r.similitude.correspondance); }
+    if (r.singularity && r.singularity.relation){ h += Modal.field('Singularité — relation', r.singularity.relation, true); h += Modal.field('Référence', r.singularity.reference); h += Modal.field('Terme apporté', r.singularity.terme_verse); }
+    if (r.invention && (r.invention.texte || r.invention.formule)){ h += Modal.field('Invention', r.invention.texte); h += Modal.field('Protocole', r.invention.protocole); }
+    h += Modal.field('Scores', 'méth ' + r.method_score + ' · q ' + r.question_clarity + ' · sci ' + r.sci + ' · nov ' + r.novelty);
+    Modal.open('Lecture · ' + r.ref + ' [' + r.lens + ']', h, r.verseTxt);
+  },
+  openThesis: function(t){
+    var h = '';
+    h += Modal.field('Référence', t.ref + ' [' + t.lens + ']');
+    h += Modal.field('Description', t.reading.desc);
+    h += Modal.field('Question', t.reading.question);
+    h += Modal.field('Formule', t.reading.formule, true);
+    h += Modal.field('Mots-clés', t.keywords.join(', '), true);
+    h += Modal.field('Verdict LBD', t.arbitration.verdict + ' · ' + t.arbitration.confidence + '/10');
+    h += Modal.field('Synthèse', t.arbitration.synthese);
+    if (t.thesis){
+      h += '<div class="field"><div class="lab">Thèse</div><div class="val">';
+      h += '<strong>Hypothèse :</strong> ' + U.esc(t.thesis.hypothesis || '—') + '<br><br>';
+      h += '<strong>Littérature :</strong> ' + U.esc(t.thesis.literature_state || '—') + '<br><br>';
+      h += '<strong>Objections :</strong> ' + U.esc(t.thesis.objections || '—') + '<br><br>';
+      h += '<strong>Conclusion :</strong> ' + U.esc(t.thesis.conclusion_grade || '—');
+      h += '</div></div>';
+    }
+    h += '<div class="field"><div class="lab">Références (' + t.papers.length + ')</div><div class="val">';
+    for (var i = 0; i < t.papers.length; i++){
+      var p = t.papers[i];
+      h += '<div style="margin-bottom:6px;padding:6px;background:#0a0a14;border-radius:3px">';
+      h += '<strong>' + U.esc(p.title) + '</strong><br>';
+      h += '<span style="color:#666">' + U.esc(p.source) + ' · ' + (p.year || 's.d.') + (p.doi ? ' · DOI:' + p.doi : '') + '</span>';
+      if (p.url) h += '<br><a href="' + U.esc(p.url) + '" target="_blank" style="color:#39d0d8;font-size:10px">Ouvrir ↗</a>';
+      h += '</div>';
+    }
+    h += '</div></div>';
+    Modal.open('Thèse · ' + t.ref, h);
+  },
+  openExperience: function(e){
+    var h = '';
+    h += Modal.field('ID', e.id);
+    h += Modal.field('Axe', e.axis);
+    h += Modal.field('Hypothèse', e.hypothesis);
+    h += Modal.field('Statut', e.status);
+    h += Modal.field('Preuve', e.evidence);
+    h += Modal.field('Créée', new Date(e.time).toLocaleString('fr-FR'));
+    Modal.open('Expérience · ' + e.id, h);
+  }
+};
+
+var Renderer = {
+  best: function(){
+    var v = U.$('bestView'); if (!v) return;
+    var top = STATE.readings.slice().sort(function(a, b){ return b.score - a.score; }).slice(0, 50);
+    if (!top.length){ v.innerHTML = '<div class="hint">Aucune analyse encore.</div>'; return; }
+    var html = '<div class="hint" style="margin-bottom:8px"><button class="ghost" id="btnRefreshBest" type="button">↻ Actualiser</button></div>';
+    for (var i = 0; i < top.length; i++){
+      var r = top[i];
+      var cls = r.score >= 7.5 ? 'sh' : r.score >= 5 ? 'sm' : 'sl';
+      html += '<div class="ritem' + (i < 3 ? ' best' : '') + '" data-ref="' + U.esc(r.ref) + '" data-lens="' + U.esc(r.lens) + '" data-time="' + r.time + '">' +
+        '<div class="h"><span class="lens">' + U.esc(r.lens) + '</span><span class="ref">' + U.esc(r.ref) + '</span><span class="sc ' + cls + '">★ ' + r.score.toFixed(1) + '</span></div>' +
+        (r.question ? '<div class="w">❓ ' + U.esc(r.question.slice(0, 200)) + '</div>' : '') +
+        (r.formule ? '<div class="f">' + U.esc(r.formule) + '</div>' : '') +
+        '<div class="readmore">▸ Lire en entier</div></div>';
+    }
+    v.innerHTML = html;
+    safeOn('btnRefreshBest', 'click', function(){ Renderer.best(); });
+    v.querySelectorAll('[data-ref]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var ref = el.getAttribute('data-ref'), lens = el.getAttribute('data-lens'), time = parseInt(el.getAttribute('data-time'), 10);
+        var r = STATE.readings.find(function(x){ return x.ref === ref && x.lens === lens && x.time === time; });
+        if (r) Modal.openReading(r);
+      });
+    });
+  },
+  disc: function(){
+    var v = U.$('discView'); if (!v) return;
+    if (!STATE.discoveries.length){ v.innerHTML = '<div class="hint">Aucune découverte encore.</div>'; return; }
+    var html = '<div class="hint" style="margin-bottom:8px"><button class="ghost" id="btnRefreshDisc" type="button">↻ Actualiser</button></div>';
+    var rev = STATE.discoveries.slice().reverse();
+    for (var i = 0; i < rev.length; i++){
+      var r = rev[i];
+      html += '<div class="ritem disc" data-ref="' + U.esc(r.ref) + '" data-lens="' + U.esc(r.lens) + '" data-time="' + r.time + '"><div class="h"><span class="lens">' + U.esc(r.lens) + '</span><span class="ref">' + U.esc(r.ref) + '</span><span class="sc sh">★ ' + r.score.toFixed(1) + '</span></div>' +
+        (r.desc_decouverte ? '<div class="w" style="color:#ff64d0">💎 ' + U.esc(r.desc_decouverte) + '</div>' : '') +
+        '<div class="readmore">▸ Lire</div></div>';
+    }
+    v.innerHTML = html;
+    safeOn('btnRefreshDisc', 'click', function(){ Renderer.disc(); });
+    v.querySelectorAll('[data-ref]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var ref = el.getAttribute('data-ref'), lens = el.getAttribute('data-lens'), time = parseInt(el.getAttribute('data-time'), 10);
+        var r = STATE.readings.find(function(x){ return x.ref === ref && x.lens === lens && x.time === time; });
+        if (r) Modal.openReading(r);
+      });
+    });
+  },
+  sim: function(){
+    var v = U.$('simView'); if (!v) return;
+    if (!STATE.similitudes.length){ v.innerHTML = '<div class="hint">Aucune similitude validée encore.</div>'; return; }
+    var html = '<div class="hint" style="margin-bottom:8px"><button class="ghost" id="btnRefreshSim" type="button">↻ Actualiser</button></div>';
+    var rev = STATE.similitudes.slice().reverse();
+    for (var i = 0; i < rev.length; i++){
+      var r = rev[i];
+      html += '<div class="ritem" data-ref="' + U.esc(r.ref) + '" data-lens="' + U.esc(r.lens) + '" data-time="' + r.time + '"><div class="h"><span class="lens">' + U.esc(r.lens) + '</span><span class="ref">' + U.esc(r.ref) + '</span></div><div class="f">' + U.esc(r.similitude.formule) + '</div><div class="w">📚 ' + U.esc(r.similitude.reference) + '</div><div class="readmore">▸ Lire</div></div>';
+    }
+    v.innerHTML = html;
+    safeOn('btnRefreshSim', 'click', function(){ Renderer.sim(); });
+    v.querySelectorAll('[data-ref]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var ref = el.getAttribute('data-ref'), lens = el.getAttribute('data-lens'), time = parseInt(el.getAttribute('data-time'), 10);
+        var r = STATE.readings.find(function(x){ return x.ref === ref && x.lens === lens && x.time === time; });
+        if (r) Modal.openReading(r);
+      });
+    });
+  },
+  lbd: function(){
+    var v = U.$('lbdView'); if (!v) return;
+    var html = '<div class="card"><h2>LBD — sources</h2><div class="src-status">';
+    var keys = Object.keys(LBD.sources);
+    for (var i = 0; i < keys.length; i++){
+      var k = keys[i], h = LBD.health[k];
+      var status = !h ? 'unknown' : h.healthy ? 'healthy' : 'dead';
+      var label = status === 'healthy' ? 'OK' : status === 'dead' ? 'KO' : '?';
+      html += '<div class="s ' + status + '">' + U.esc(LBD.sources[k].name) + '<br><strong>' + label + '</strong></div>';
+    }
+    html += '</div><div class="row"><button class="cyan" id="btnProbeAll" type="button">🔍 Sonder les sources</button><button class="sec" id="btnRefreshLBD" type="button">↻ Actualiser</button></div></div>';
+    html += '<div class="card"><h2>Requêtes par thèse</h2>';
+    if (STATE.theses.length){
+      var recent = STATE.theses.slice(-15).reverse();
+      for (var j = 0; j < recent.length; j++){
+        var t = recent[j];
+        html += '<div class="ritem" data-idx="' + j + '"><div class="h"><span class="lens">' + U.esc(t.lens) + '</span><span class="ref">' + U.esc(t.ref) + '</span><span class="sc ' + (t.arbitration.verdict === 'valide' ? 'sh' : t.arbitration.verdict === 'contredit' ? 'sl' : 'sm') + '">' + U.esc(t.arbitration.verdict) + ' · ' + t.arbitration.confidence + '</span></div>' +
+          '<div class="w">Mots-clés : ' + U.esc(t.keywords.join(', ')) + '</div>' +
+          '<div class="w">Principale : ' + U.esc(t.queries.primary || '—') + '</div>' +
+          (t.queries.generic ? '<div class="w">Antériorité : ' + U.esc(t.queries.generic) + '</div>' : '') +
+          (t.queries.contradict ? '<div class="w">Contradiction : ' + U.esc(t.queries.contradict) + '</div>' : '') +
+          '<div class="w">' + t.papers.length + ' article(s) · ' + t.totalFound + ' trouvés</div></div>';
+      }
+    } else html += '<div class="hint">Aucune recherche encore.</div>';
+    html += '</div>';
+    v.innerHTML = html;
+    safeOn('btnProbeAll', 'click', function(){ LBD.probeAll().then(function(){ Renderer.lbd(); toast('Sondage OK', 'ok'); }); });
+    safeOn('btnRefreshLBD', 'click', function(){ Renderer.lbd(); });
+  },
+  theses: function(){
+    var v = U.$('thesesView'); if (!v) return;
+    var html = '<div class="hint" style="margin-bottom:8px"><button class="ghost" id="btnRefreshTheses" type="button">↻ Actualiser</button></div>';
+    if (!STATE.theses.length){ html += '<div class="hint">Aucune thèse encore. Chaque découverte déclenche une recherche LBD qui produit une thèse.</div>'; }
+    else {
+      var recent = STATE.theses.slice(-30).reverse();
+      for (var i = 0; i < recent.length; i++){
+        var t = recent[i];
+        var cls = t.arbitration.verdict === 'valide' ? 'confirm' : t.arbitration.verdict === 'contredit' ? 'contradicted' : 'partial';
+        html += '<div class="ritem ' + cls + '" data-idx="' + i + '"><div class="h"><span class="lens">' + U.esc(t.lens) + '</span><span class="ref">' + U.esc(t.ref) + '</span><span class="sc ' + (t.arbitration.verdict === 'valide' ? 'sh' : 'sm') + '">' + U.esc(t.arbitration.verdict) + ' · ' + t.arbitration.confidence + '</span></div>' +
+          '<div class="w"><strong>Hypothèse :</strong> ' + U.esc((t.thesis.hypothesis || '').slice(0, 180)) + '</div>' +
+          '<div class="w"><strong>Conclusion :</strong> ' + U.esc(t.thesis.conclusion_grade || '—') + '</div>' +
+          '<div class="w">' + t.papers.length + ' référence(s)</div>' +
+          '<div class="readmore">▸ Lire la thèse complète</div></div>';
+      }
+    }
+    v.innerHTML = html;
+    safeOn('btnRefreshTheses', 'click', function(){ Renderer.theses(); });
+    v.querySelectorAll('[data-idx]').forEach(function(item){
+      item.addEventListener('click', function(){
+        var idx = parseInt(item.getAttribute('data-idx'), 10);
+        var t = STATE.theses.slice(-30).reverse()[idx];
+        if (t) Modal.openThesis(t);
+      });
+    });
+  },
+  exp: function(){
+    var v = U.$('expView'); if (!v) return;
+    var html = '<div class="hint" style="margin-bottom:8px"><button class="ghost" id="btnRefreshExp" type="button">↻ Actualiser</button></div>';
+    if (!STATE.experiences.length){ html += '<div class="hint">Aucune expérience.</div>'; }
+    else {
+      var sorted = STATE.experiences.slice().reverse();
+      for (var i = 0; i < sorted.length && i < 50; i++){
+        var e = sorted[i];
+        var cls = e.status === 'ouverte' ? 'open' : e.status === 'supportée' ? 'supported' : e.status === 'rejetée' ? 'rejected' : 'stale';
+        html += '<div class="exp-card ' + cls + '"><div class="st">' + U.esc(e.id) + ' · ' + U.esc(e.axis) + '</div><div>' + U.esc(e.hypothesis) + '</div><div class="meta">' + U.esc(e.status) + ' · ' + new Date(e.time).toLocaleString('fr-FR') + '</div>' + (e.evidence ? '<div class="meta">' + U.esc(e.evidence.slice(0, 200)) + '</div>' : '') + '</div>';
+      }
+    }
+    v.innerHTML = html;
+    safeOn('btnRefreshExp', 'click', function(){ Renderer.exp(); });
+  },
+  sing: function(){
+    var v = U.$('singView'); if (!v) return;
+    var html = '<div class="hint" style="margin-bottom:8px">Motifs de lecture reproduits. Documente le MOTIF, pas la preuve.</div>';
+    if (!STATE.singularityRegistry.length){ html += '<div class="hint">Aucune entrée.</div>'; }
+    else {
+      for (var i = STATE.singularityRegistry.length - 1; i >= 0; i--){
+        var s = STATE.singularityRegistry[i];
+        if (s.id === 'SING-EMC2'){
+          html += '<div class="sing-card"><div class="st">✦ ' + U.esc(s.name) + ' (MOTIF DE RÉFÉRENCE)</div><div class="ref">' + U.esc(s.description) + '</div><div class="map">' + U.esc(s.rule) + '</div><div class="ref" style="margin-top:6px">Relation : ' + U.esc(s.relation) + '<br>Référence : ' + U.esc(s.reference) + '</div></div>';
+        } else {
+          html += '<div class="sing-card"><div class="st">' + U.esc(s.relation || s.id) + '</div><div class="ref">' + U.esc(s.ref) + ' · conf ' + s.confiance + '/10 · ' + U.esc(s.status) + '</div>' +
+            (s.missing_term ? '<div class="ref">Terme manquant : ' + U.esc(s.missing_term) + '</div>' : '') +
+            (s.terme_verse ? '<div class="ref">Terme apporté : ' + U.esc(s.terme_verse) + '</div>' : '') +
+            (s.correspondance ? '<div class="map">' + U.esc(s.correspondance) + '</div>' : '') +
+            '<div class="ref" style="margin-top:6px">Réf : ' + U.esc(s.reference || '—') + '</div>' +
+            '<div class="ref" style="color:#d8983f;margin-top:4px">' + U.esc(s.note || '') + '</div></div>';
+        }
+      }
+    }
+    v.innerHTML = html;
+  },
+  meta: function(){
+    var v = U.$('metaView'); if (!v) return;
+    var stats = PromptStore.stats();
+    var html = '<div class="card"><h2>Méta-conscience</h2><h3>Versions du prompt</h3>';
+    for (var i = 0; i < stats.length; i++){
+      var s = stats[i];
+      var active = s.active ? ' ★' : (s.isAB ? ' (A/B)' : '');
+      html += '<div style="padding:6px 10px;background:#0c0c14;border:1px solid #1a1a28;border-radius:4px;margin-bottom:4px;font:11px ui-monospace">' +
+        U.esc(s.id) + active + ' · auto ' + s.auto.toFixed(2) + ' · ext ' + (s.ext == null ? 'n/a' : s.ext.toFixed(2)) + ' · combiné ' + s.combined.toFixed(2) + ' · n=' + s.n + '</div>';
+    }
+    html += '<h3 style="margin-top:14px">Journal méta</h3>';
+    for (var j = STATE.metaJournal.length - 1; j >= Math.max(0, STATE.metaJournal.length - 20); j--){
+      var m = STATE.metaJournal[j];
+      html += '<div style="padding:4px 8px;font:10px ui-monospace;color:#888;border-bottom:1px solid #14141f"><span style="color:#666">' + new Date(m.time).toLocaleTimeString('fr-FR') + '</span> · <span style="color:#39d0d8">' + U.esc(m.type) + '</span> · ' + U.esc(m.text || '') + '</div>';
+    }
+    html += '<div class="row" style="margin-top:10px"><button class="cyan" id="btnTriggerReflect" type="button">🧠 Déclencher réflexion</button></div></div>';
+    v.innerHTML = html;
+    safeOn('btnTriggerReflect', 'click', function(){ if (!Keys.anyActive()){ toast('Aucune clé', 'err'); return; } Meta.reflect().then(function(){ Renderer.meta(); }); });
+  },
+  novel: function(){
+    Novel.assemble().then(function(){ Novel.render(); });
+  },
+  inv: function(){
+    var v = U.$('invView'); if (!v) return;
+    if (!STATE.inventions.length){ v.innerHTML = '<div class="hint">Aucune invention encore.</div>'; return; }
+    var html = '<div class="hint" style="margin-bottom:8px"><button class="ghost" id="btnRefreshInv" type="button">↻ Actualiser</button></div>';
+    var rev = STATE.inventions.slice().reverse();
+    for (var i = 0; i < rev.length; i++){
+      var inv = rev[i];
+      html += '<div class="ritem disc"><div class="h"><span class="lens">' + U.esc(inv.lens) + '</span><span class="ref">' + U.esc(inv.ref) + '</span></div>' + (inv.formule ? '<div class="f">' + U.esc(inv.formule) + '</div>' : '') + (inv.texte ? '<div class="w" style="color:#ff64d0">⚗ ' + U.esc(inv.texte) + '</div>' : '') + (inv.protocole ? '<div class="w">🧪 ' + U.esc(inv.protocole) + '</div>' : '') + '</div>';
+    }
+    v.innerHTML = html;
+    safeOn('btnRefreshInv', 'click', function(){ Renderer.inv(); });
+  },
+  gallery: function(){
+    var g = U.$('gallery'); if (!g) return;
+    if (!STATE.images.length){ g.innerHTML = '<div class="hint" style="padding:20px;text-align:center;grid-column:1/-1">Les images apparaîtront quand le score dépasse ' + CONFIG.IMG_MIN_SCORE + '.</div>'; return; }
+    var html = '<div class="hint" style="grid-column:1/-1;margin-bottom:6px"><button class="ghost" id="btnRefreshGal" type="button">↻ Actualiser</button></div>';
+    var rev = STATE.images.slice().reverse();
+    for (var i = 0; i < rev.length; i++){ var im = rev[i]; html += '<div class="g"><img src="' + U.esc(im.url) + '" loading="lazy" onclick="window.open(this.src)"><div class="c"><b>' + U.esc(im.verse || '') + '</b>' + U.esc(im.lens || '') + '</div></div>'; }
+    g.innerHTML = html;
+    safeOn('btnRefreshGal', 'click', function(){ Renderer.gallery(); });
+  },
+  self: function(){
+    var v = U.$('selfView'); if (!v) return;
+    var sorted = STATE.lenses.slice().sort(function(a, b){ return ((b.p && b.p.avg) || 0) - ((a.p && a.p.avg) || 0); });
+    var html = '<div class="hint" style="margin-bottom:8px"><button class="ghost" id="btnRefreshSelf" type="button">↻ Actualiser</button></div>';
+    html += '<h2>🔬 Angles (' + STATE.lenses.length + ')</h2>';
+    for (var i = 0; i < sorted.length; i++){ var l = sorted[i]; html += '<div class="lc"><div class="h"><span class="code">' + U.esc(l.code) + '</span><span class="lbl">' + U.esc(l.lbl) + '</span><span class="perf">avg ' + ((l.p && l.p.avg) || 0) + ' · n=' + ((l.p && l.p.n) || 0) + '</span></div></div>'; }
+    html += '<h2 style="margin-top:14px">📐 Méthode (' + STATE.method.length + ')</h2>';
+    for (var j = 0; j < STATE.method.length; j++){ var r = STATE.method[j]; html += '<div class="lc"><div class="h"><span class="code">' + U.esc(r.id) + '</span><span class="lbl">' + U.esc(r.name) + '</span></div><div class="q">' + U.esc(r.desc) + '</div></div>'; }
+    v.innerHTML = html;
+    safeOn('btnRefreshSelf', 'click', function(){ Renderer.self(); });
+  },
+  conv: function(){
+    var top = STATE.readings.map(function(r){ return r.method_score; }).sort(function(a, b){ return b - a; }).slice(0, 10);
+    if (top.length < 3){ UI.setText('convVal', '0 %'); UI.setText('convTxt', 'collecte'); var b = U.$('convBar'); if (b) b.style.width = '0%'; return; }
+    var avg = 0; for (var i = 0; i < top.length; i++) avg += top[i]; avg = avg / top.length;
+    var conv = Math.min(1, Math.max(0, (avg - 6) / 3));
+    UI.setText('convVal', (conv * 100).toFixed(0) + ' %');
+    UI.setText('convTxt', 'méth. top10 : ' + avg.toFixed(2) + '/10');
+    var bar = U.$('convBar'); if (bar) bar.style.width = (conv * 100).toFixed(0) + '%';
+  }
+};
+window.Renderer = Renderer;
+window.Modal = Modal;
+
+function updateCtl(){
+  var pb = U.$('pauseBtn'), sb = U.$('stopBtn'), st = U.$('startBtn');
+  if (pb){ pb.style.display = STATE.running ? '' : 'none'; pb.textContent = STATE.paused ? '▶ Reprendre' : '⏸ Pause'; }
+  if (sb) sb.style.display = STATE.running ? '' : 'none';
+  if (st) st.disabled = STATE.running;
+  var fb = U.$('freezeBtn');
+  if (fb) fb.textContent = STATE.freezeUI ? '🌊 Dégeler' : '🧊 Geler l\'affichage';
+  UI.setText('freezeStatus', STATE.freezeUI ? '🧊 Gelé' : 'Flux actif');
+  var hb = U.$('hb'), hbT = U.$('hbTxt');
+  if (hb){ hb.className = STATE.running ? (STATE.paused ? 'pause' : (STATE.freezeUI ? 'freeze' : '')) : 'stop'; if (hbT) hbT.textContent = STATE.running ? (STATE.paused ? 'Pause' : (STATE.freezeUI ? 'Affichage gelé' : 'En cours')) : 'Inactif'; }
+}
+
+var TAB_RENDER = {
+  live: null,
+  best: function(){ Renderer.best(); },
+  disc: function(){ Renderer.disc(); },
+  sim: function(){ Renderer.sim(); },
+  lbd: function(){ Renderer.lbd(); },
+  theses: function(){ Renderer.theses(); },
+  exp: function(){ Renderer.exp(); },
+  sing: function(){ Renderer.sing(); },
+  meta: function(){ Renderer.meta(); },
+  novel: function(){ Renderer.novel(); },
+  inv: function(){ Renderer.inv(); },
+  img: function(){ Renderer.gallery(); },
+  self: function(){ Renderer.self(); },
+  cons: null,
+  set: function(){ loadSettingsUI(); }
+};
+var tabs = document.querySelectorAll('#tabs button');
+for (var ti = 0; ti < tabs.length; ti++){
+  (function(t){
+    t.addEventListener('click', function(){
+      for (var k = 0; k < tabs.length; k++) tabs[k].classList.remove('on');
+      t.classList.add('on');
+      STATE.activeTab = t.getAttribute('data-t');
+      var map = { live:'pLive', best:'pBest', disc:'pDisc', sim:'pSim', lbd:'pLBD', theses:'pTheses', exp:'pExp', sing:'pSing', meta:'pMeta', novel:'pNovel', inv:'pInv', img:'pImg', self:'pSelf', cons:'pCons', set:'pSet' };
+      for (var key in map){ var el = U.$(map[key]); if (el) el.classList.add('hide'); }
+      var panel = U.$(map[t.getAttribute('data-t')]);
+      if (panel) panel.classList.remove('hide');
+      if (TAB_RENDER[t.getAttribute('data-t')]){ try { TAB_RENDER[t.getAttribute('data-t')](); } catch(e){ console.error(e); } }
+    });
+  })(tabs[ti]);
+}
+
+function updateTabBadges(){
+  var map = { disc: STATE.discoveries.length, sim: STATE.similitudes.length, theses: STATE.theses.length, exp: STATE.experiences.filter(function(e){ return e.status === 'ouverte'; }).length, sing: Math.max(0, STATE.singularityRegistry.length - 1), inv: STATE.inventions.length, img: STATE.images.length };
+  for (var i = 0; i < tabs.length; i++){
+    var t = tabs[i], k = t.getAttribute('data-t');
+    if (!(k in map)) continue;
+    var b = t.querySelector('.bdg');
+    if (map[k] > 0){ if (!b){ b = document.createElement('span'); b.className = 'bdg'; t.appendChild(b); } b.textContent = map[k]; }
+    else if (b) b.remove();
+  }
+}
+
+var TAB_SET_STATE = false;
+function loadSettingsUI(){
+  var fields = [
+    ['setApi', CONFIG.API], ['setModelText', CONFIG.MODEL_TEXT], ['setModelImg', CONFIG.MODEL_IMG],
+    ['setRpm', CONFIG.RPM_PER_KEY], ['setMinMethod', CONFIG.DISCOVERY_MIN_METHOD],
+    ['setMinQuestion', CONFIG.DISCOVERY_MIN_QUESTION], ['setMinNovelty', CONFIG.DISCOVERY_MIN_NOVELTY],
+    ['setImgMin', CONFIG.IMG_MIN_SCORE],
+    ['setLbdEnabled', CONFIG.LBD_ENABLED ? '1' : '0'], ['setLbdMax', CONFIG.LBD_ARXIV_MAX],
+    ['setLbdEmail', CONFIG.LBD_EMAIL],
+    ['setMetaEvery', CONFIG.META_EVERY], ['setMetaSamples', CONFIG.META_MIN_SAMPLES],
+    ['setMetaDelta', CONFIG.META_PROMOTE_DELTA], ['setMetaAutoW', CONFIG.META_AUTO_WEIGHT],
+    ['setMetaExtW', CONFIG.META_EXT_WEIGHT], ['setPersist', CONFIG.PERSIST ? '1' : '0']
+  ];
+  for (var i = 0; i < fields.length; i++){ var el = U.$(fields[i][0]); if (el) el.value = fields[i][1]; }
+  Storage.infoText().then(function(txt){ var el = U.$('storageInfo'); if (el) el.textContent = txt; });
+}
+
+function startEngine(){
+  if (STATE.running) return;
+  if (!STATE.keys.length){ toast('Valide tes clés d\'abord', 'err'); return; }
+  STATE.running = true; STATE.paused = false; STATE.stopped = false;
+  updateCtl();
+  UI.say('Genesis·Decoder', '🚀 <strong>Moteur lancé.</strong> ' + STATE.keys.length + ' clé(s). Cadrage critique. LBD multi-source.', 'valid');
+  UI.log('Engine démarré', 'lock', 'SYS');
+  startWorkers();
+  coordinator();
+  if (CONFIG.LBD_ENABLED) LBD.probeAll().catch(function(){});
+}
+function stopEngine(){
+  STATE.stopped = true; STATE.running = false; updateCtl();
+  UI.say('Système', 'Moteur arrêté.', 'verse');
+}
+function toggleFreeze(){
+  STATE.freezeUI = !STATE.freezeUI;
+  updateCtl();
+  toast(STATE.freezeUI ? 'Affichage gelé' : 'Affichage réactivé', 'ok');
+}
+
+safeOn('startBtn', 'click', startEngine);
+safeOn('pauseBtn', 'click', function(){ STATE.paused = !STATE.paused; updateCtl(); });
+safeOn('stopBtn', 'click', stopEngine);
+safeOn('freezeBtn', 'click', toggleFreeze);
+safeOn('freezeBtn2', 'click', toggleFreeze);
+safeOn('keysHead', 'click', function(){
+  var c = U.$('keysCard');
+  c.classList.toggle('closed');
+  var ki = U.$('keyInfo');
+  if (ki) ki.textContent = c.classList.contains('closed') ? (STATE.keys.length + ' clé(s) · fermé') : (STATE.keys.length + ' clé(s)');
+});
+safeOn('validateKeysBtn', 'click', function(){
+  console.log('[validateKeysBtn] clicked');
+  Keys.validate();
+  if (STATE.keys.length){
+    var card = U.$('keysCard');
+    if (card) card.classList.add('closed');
+  }
+});
+safeOn('testKeysBtn', 'click', function(){
+  console.log('[testKeysBtn] clicked');
+  var ta = U.$('keysIn');
+  var raw = ta ? (ta.value || '').trim() : '';
+  if (!raw && STATE.keys.length) raw = STATE.keys[0].key;
+  var cands = Keys.parseInput(raw).filter(function(k){ return k.length >= 8; });
+  if (!cands.length){ setKeyStatus('⚠ Aucune clé à tester', 'err'); return; }
+  setKeyStatus('🔌 Test en cours…', 'warn');
+  API.testKey(cands[0]).then(function(res){
+    if (res.ok){ setKeyStatus('✅ OK (HTTP ' + res.status + ')', 'ok'); toast('Connexion OK', 'ok'); }
+    else { var msg = res.error || ('HTTP ' + res.status + (res.body ? ' — ' + res.body.slice(0, 100) : '')); setKeyStatus('❌ ' + msg, 'err'); toast('Échec', 'err'); }
+  });
+});
+safeOn('editKeysBtn', 'click', function(e){ if (e && e.stopPropagation) e.stopPropagation(); Keys.edit(); });
+safeOn('clearKeysBtn', 'click', function(){
+  var ta = U.$('keysIn'); if (ta) ta.value = '';
+  STATE.keys = []; Keys.save([]); Keys.render();
+  var km = U.$('keyMask'); if (km) km.classList.add('hide');
+  if (ta) ta.classList.remove('hide');
+  setKeyStatus('Aucune clé', 'warn');
+  var ki = U.$('keyInfo'); if (ki){ ki.textContent = '—'; ki.style.color = '#666'; }
+});
+safeOn('saveSetBtn', 'click', function(){
+  CONFIG.API = (U.$('setApi').value || '').trim() || DEFAULTS.API;
+  CONFIG.MODEL_TEXT = (U.$('setModelText').value || '').trim() || DEFAULTS.MODEL_TEXT;
+  CONFIG.MODEL_IMG = (U.$('setModelImg').value || '').trim() || DEFAULTS.MODEL_IMG;
+  CONFIG.RPM_PER_KEY = U.clamp(U.$('setRpm').value, 1, 60);
+  CONFIG.DISCOVERY_MIN_METHOD = U.clamp(U.$('setMinMethod').value, 0, 10);
+  CONFIG.DISCOVERY_MIN_QUESTION = U.clamp(U.$('setMinQuestion').value, 0, 10);
+  CONFIG.DISCOVERY_MIN_NOVELTY = U.clamp(U.$('setMinNovelty').value, 0, 10);
+  CONFIG.IMG_MIN_SCORE = U.clamp(U.$('setImgMin').value, 0, 10);
+  CONFIG.LBD_ENABLED = U.$('setLbdEnabled').value === '1';
+  CONFIG.LBD_ARXIV_MAX = U.clamp(U.$('setLbdMax').value, 5, 50);
+  CONFIG.LBD_EMAIL = (U.$('setLbdEmail').value || '').trim();
+  CONFIG.META_EVERY = U.clamp(U.$('setMetaEvery').value, 5, 200);
+  CONFIG.META_MIN_SAMPLES = U.clamp(U.$('setMetaSamples').value, 3, 50);
+  CONFIG.META_PROMOTE_DELTA = U.clamp(U.$('setMetaDelta').value, 0, 2);
+  CONFIG.META_AUTO_WEIGHT = U.clamp(U.$('setMetaAutoW').value, 0, 1);
+  CONFIG.META_EXT_WEIGHT = U.clamp(U.$('setMetaExtW').value, 0, 1);
+  CONFIG.PERSIST = U.$('setPersist').value === '1';
+  try { localStorage.setItem(DEFAULTS.LS_SET, JSON.stringify(CONFIG)); } catch(e){}
+  toast('Enregistré', 'ok');
+});
+safeOn('btnExportAll', 'click', function(){
+  downloadJSON('genesis-v15-full.json', {
+    generatedAt: U.iso(), config: CONFIG,
+    state: { readings: STATE.readings, theses: STATE.theses, experiences: STATE.experiences, metaJournal: STATE.metaJournal, singularityRegistry: STATE.singularityRegistry, lenses: STATE.lenses, method: STATE.method },
+    promptStore: PromptStore.data
+  });
+});
+safeOn('btnExportTheses', 'click', function(){ downloadJSON('genesis-v15-theses.json', STATE.theses); });
+safeOn('btnExportJournal', 'click', function(){ downloadJSON('genesis-v15-journal.json', { experiences: STATE.experiences, metaJournal: STATE.metaJournal }); });
+safeOn('modalClose', 'click', Modal.close);
+safeOn('modalBk', 'click', function(e){ if (e.target && e.target.id === 'modalBk') Modal.close(); });
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') Modal.close(); });
+
+(async function init(){
+  try {
+    console.log('[init] Genesis·Decoder v15 démarrage');
+    setBanner('⏳ Initialisation…');
+    if (CONFIG.PERSIST) await Storage.requestPersist();
+    await PromptStore.load();
+    var ks = Keys.load();
+    if (ks.length){
+      STATE.keys = ks.map(function(k){ return { key: k, cool: 0, last: 0, n: 0, busy: 0, errors: 0, active: true }; });
+      var ta = U.$('keysIn'); if (ta) ta.classList.add('hide');
+      var km = U.$('keyMask'); if (km) km.classList.remove('hide');
+      var kmt = U.$('keyMaskTxt');
+      if (kmt) kmt.textContent = ks.map(function(k){ return k.slice(0, 6) + '…' + k.slice(-3); }).join('  ·  ');
+      setKeyStatus(ks.length + ' clé(s) restaurée(s) · ' + (ks.length * CONFIG.RPM_PER_KEY) + ' req/min', 'ok');
+      var ki = U.$('keyInfo'); if (ki){ ki.textContent = ks.length + ' clé(s)'; ki.style.color = '#4cc38a'; }
+    }
+    Keys.render();
+    try {
+      var lens = await DB.all('lenses');
+      STATE.lenses = SEED_LENSES.concat(DEEP_LENSES);
+      lens.forEach(function(l){ if (!STATE.lenses.find(function(x){ return x.id === l.id; })) STATE.lenses.push(l); });
+      var meth = await DB.all('method');
+      STATE.method = SEED_METHOD.slice();
+      meth.forEach(function(m){ if (!STATE.method.find(function(x){ return x.id === m.id; })) STATE.method.push(m); });
+      var rs = await DB.all('readings'); if (rs.length){ STATE.readings = rs; STATE.readCount = rs.length; }
+      var dc = await DB.all('discoveries'); if (dc.length) STATE.discoveries = dc;
+      var sm = await DB.all('similitudes'); if (sm.length) STATE.similitudes = sm;
+      var iv = await DB.all('inventions'); if (iv.length) STATE.inventions = iv;
+      var th = await DB.all('theses'); if (th.length) STATE.theses = th;
+      var ex = await DB.all('experiences'); if (ex.length){ STATE.experiences = ex; STATE.experienceCounter = ex.length; }
+      var mj = await DB.all('metaJournal'); if (mj.length) STATE.metaJournal = mj;
+      var sr = await DB.all('singularityRegistry'); if (sr.length) STATE.singularityRegistry = sr;
+    } catch(e){ console.warn('[init] DB restore', e); STATE.lenses = SEED_LENSES.concat(DEEP_LENSES); STATE.method = SEED_METHOD.slice(); }
+    UI.setText('sRead', String(STATE.readings.length));
+    UI.setText('sDisc', String(STATE.discoveries.length));
+    UI.setText('sSim', String(STATE.similitudes.length));
+    UI.setText('sInv', String(STATE.inventions.length));
+    UI.setText('sLens', String(STATE.lenses.length));
+    UI.setText('sTheses', String(STATE.theses.length));
+    UI.setText('sExp', String(STATE.experiences.filter(function(e){ return e.status === 'ouverte'; }).length));
+    UI.setText('sSing', String(Math.max(0, STATE.singularityRegistry.length - 1)));
+    updateTabBadges();
+    updateCtl();
+    UI.say('Genesis·Decoder', 'Prêt. Valide tes clés API, clique <strong>Tester</strong> pour vérifier, puis <strong>Valider</strong>, puis <strong>DÉMARRER</strong>.', 'valid');
+    UI.say('Genesis·Decoder', 'Cadrage critique. LBD multi-source. Conscience opérationnelle (A/B avec feedback externe). Journal opérationnel. Ouvre F12 pour les logs.', 'verse');
+    setBanner('✓ Prêt', '');
+    if (STATE.keys.length){
+      setTimeout(function(){ try { startEngine(); } catch(e){ console.error(e); } }, 2000);
+    }
+    setInterval(function(){
+      if (STATE.freezeUI) return;
+      try { Keys.render(); Renderer.conv(); updateTabBadges(); staleCheckExperiences(); } catch(e){ console.error(e); }
+    }, 3000);
+    setInterval(function(){ if (!CONFIG.LBD_ENABLED) return; LBD.probeAll().catch(function(){}); }, 3600000);
+    console.log('[init] ✓ Terminé');
+  } catch(e){
+    console.error('[init] ERREUR', e);
+    setBanner('❌ Erreur init : ' + e.message, 'err');
+    toast('Erreur init : ' + e.message, 'err');
+  }
+})();
+</script>
+</body>
+</html>
